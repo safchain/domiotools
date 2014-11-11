@@ -37,14 +37,14 @@ enum COMMAND {
 void _write_bit(int gpio, char bit) {
     if (bit) {
         digitalWrite(gpio, HIGH);
-        delayMicroseconds(280);
+        delayMicroseconds(300);
         digitalWrite(gpio, LOW);
         delayMicroseconds(1300);
     } else {
         digitalWrite(gpio, HIGH);
-        delayMicroseconds(280);
+        delayMicroseconds(300);
         digitalWrite(gpio, LOW);
-        delayMicroseconds(280);
+        delayMicroseconds(300);
     }
 }
 
@@ -60,11 +60,11 @@ void write_bit(int gpio, char bit) {
 
 void sync_transmit(int gpio) {
     digitalWrite(gpio, HIGH);
-    delayMicroseconds(280);
+    delayMicroseconds(300);
     digitalWrite(gpio, LOW);
     delayMicroseconds(9900);
     digitalWrite(gpio, HIGH);
-    delayMicroseconds(280);
+    delayMicroseconds(300);
     digitalWrite(gpio, LOW);
     delayMicroseconds(2680);
     digitalWrite(gpio, HIGH);
