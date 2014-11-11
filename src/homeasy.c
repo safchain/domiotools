@@ -60,19 +60,19 @@ void write_bit(int gpio, char bit) {
 
 void sync_transmit(int gpio) {
     digitalWrite(gpio, HIGH);
-    delayMicroseconds(300);
+    delayMicroseconds(275);
     digitalWrite(gpio, LOW);
     delayMicroseconds(9900);
     digitalWrite(gpio, HIGH);
-    delayMicroseconds(300);
+    delayMicroseconds(275);
     digitalWrite(gpio, LOW);
-    delayMicroseconds(2680);
+    delayMicroseconds(2600);
     digitalWrite(gpio, HIGH);
 }
 
 void write_interval_gap(int gpio) {
     digitalWrite(gpio, HIGH);
-    delayMicroseconds(280);
+    delayMicroseconds(275);
     digitalWrite(gpio, LOW);
     delay(10);
 }
@@ -123,11 +123,12 @@ static void usage(char *name) {
 int main(int argc, char** argv) {
     struct option long_options[] = { { "gpio", 1, 0, 0 },
         { "address", 1, 0, 0 }, { "command", 1, 0, 0 }, { "receiver", 1, 0, 0 },
-        { NULL, 0, 0, 0 } };
+        { "retry", 1, 0, 0 }, { NULL, 0, 0, 0 } };
     unsigned int address = 0;
     unsigned char receiver = 1;
     int gpio = -1;
     char command = UNKNOWN;
+    int retry = 5;
     int i;
     int c;
 
@@ -150,6 +151,8 @@ int main(int argc, char** argv) {
                     receiver = atoi(optarg);
                 } else if (strcmp(long_options[i].name, "command") == 0) {
                     command = get_command_char(optarg);
+                } else if (strcmp(long_options[i].name, "command") == 0) {
+                    retry = atoi(optarg);
                 }
                 break;
             default:
@@ -168,17 +171,20 @@ int main(int argc, char** argv) {
 
     pinMode(gpio, OUTPUT);
 
-    openlog("homeasy", LOG_PID | LOG_CONS, LOG_USER);
-    syslog(LOG_INFO, "remote: %d, receiver, %d, command: %d\n", address,
-           receiver, command);
-    closelog();
-    scheduler_realtime();
+    for (c = 0; c != retry; c++) {
+        openlog("homeasy", LOG_PID | LOG_CONS, LOG_USER);
+        syslog(LOG_INFO, "remote: %d, receiver, %d, command: %d\n", address,
+               receiver, command);
+        closelog();
+        scheduler_realtime();
 
-    for (i = 0; i < 5; i++) {
-        transmit(gpio, address, receiver, command);
+        for (i = 0; i < 5; i++) {
+            transmit(gpio, address, receiver, command);
+        }
+
+        scheduler_standard();
+        sleep(1);
     }
-
-    scheduler_standard();
 
     return 0;
 }
