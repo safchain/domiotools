@@ -129,45 +129,6 @@ static void write_interval_gap(int gpio) {
     delayMicroseconds(30400);
 }
 
-static int do_mkdir(const char *path, mode_t mode) {
-    struct stat st;
-    int status = 0;
-
-    if (stat(path, &st) != 0) {
-        if (mkdir(path, mode) != 0 && errno != EEXIST) {
-            status = -1;
-        }
-    } else if (!S_ISDIR(st.st_mode)) {
-        errno = ENOTDIR;
-        status = -1;
-    }
-
-    return status;
-}
-
-static int mkpath(const char *path, mode_t mode) {
-    char *pp, *sp;
-    int status;
-    char *copypath = strdup(path);
-
-    status = 0;
-    pp = copypath;
-    while (status == 0 && (sp = strchr(pp, '/')) != 0) {
-        if (sp != pp) {
-            *sp = '\0';
-            status = do_mkdir(copypath, mode);
-            *sp = '/';
-        }
-        pp = sp + 1;
-    }
-    if (status == 0) {
-        status = do_mkdir(path, mode);
-    }
-    free(copypath);
-
-    return status;
-}
-
 static unsigned short get_next_code(char *progname, unsigned short address) {
     char *path, code[10];
     FILE *fp;
@@ -217,7 +178,7 @@ static void store_code(char *progname, unsigned short address, unsigned short ne
     sprintf(path, "/var/lib/%s/%d", progname, address);
 
     if ((fp = fopen(path, "w+")) == NULL) {
-        fprintf(stderr, "Unable to open state file: %s", path);
+        fprintf(stderr, "Unable to open the state file: %s", path);
         exit(-1);
     }
 
@@ -344,6 +305,10 @@ int main(int argc, char **argv) {
     if (command == UNKNOWN || address == 0 || gpio == -1) {
         usage(argv[0]);
     }
+
+    // store pid and lock it
+    store_pid();
+
     srand(time(NULL));
     key = rand() % 255;
 

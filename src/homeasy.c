@@ -164,6 +164,9 @@ int main(int argc, char** argv) {
         usage(argv[0]);
     }
 
+    // store pid and lock it
+    store_pid();
+
     if (wiringPiSetup() == -1) {
         fprintf(stderr, "Wiring Pi not installed");
         return -1;
