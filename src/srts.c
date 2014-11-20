@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h>
+#include <libgen.h>
 
 #include "common.h"
 
@@ -275,6 +276,7 @@ int main(int argc, char **argv) {
     unsigned short code = 0;
     int gpio = -1;
     char command = UNKNOWN;
+    char *progname;
     int i;
     int c;
 
@@ -322,14 +324,16 @@ int main(int argc, char **argv) {
     openlog("srts", LOG_PID | LOG_CONS, LOG_USER);
     scheduler_realtime();
 
-    code = get_next_code(argv[0], address);
+    progname = basename(argv[0]);
+
+    code = get_next_code(progname, address);
     syslog(LOG_INFO, "remote: %d, command: %d, code: %d\n", address, command,
            code);
     closelog();
 
     transmit(gpio, key, address, command, code, 0);
 
-    c = 5;
+    c = 7;
     if (command == PROG) {
         c = 20;
     }
@@ -337,7 +341,7 @@ int main(int argc, char **argv) {
     for (i = 0; i < c; i++) {
         transmit(gpio, key, address, command, code, 1);
     }
-    store_code(argv[0], address, code);
+    store_code(progname, address, code);
     scheduler_standard();
 
     return 0;
