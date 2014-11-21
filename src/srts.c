@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <libgen.h>
+#include <errno.h>
+#include <limits.h>
 
 #include "common.h"
 
@@ -274,11 +276,10 @@ int main(int argc, char **argv) {
     unsigned char key;
     unsigned short address = 0;
     unsigned short code = 0;
-    int gpio = -1;
+    long int a2i;
+    int gpio = -1, i, c;
     char command = UNKNOWN;
-    char *progname;
-    int i;
-    int c;
+    char *progname, *end;
 
     if (setuid(0)) {
         perror("setuid");
@@ -292,9 +293,17 @@ int main(int argc, char **argv) {
         switch (c) {
             case 0:
                 if (strcmp(long_options[i].name, "gpio") == 0) {
-                    gpio = atoi(optarg);
+                    a2i = strtol(optarg, &end, 10);
+                    if (errno == ERANGE && (a2i == LONG_MAX || a2i == LONG_MIN)) {
+                        break;
+                    }
+                    gpio = a2i;
                 } else if (strcmp(long_options[i].name, "address") == 0) {
-                    address = atoi(optarg);
+                    a2i = strtol(optarg, &end, 10);
+                    if (errno == ERANGE && (a2i == LONG_MAX || a2i == LONG_MIN)) {
+                        break;
+                    }
+                    address = a2i;
                 } else if (strcmp(long_options[i].name, "command") == 0) {
                     command = get_command_char(optarg);
                 }
