@@ -328,10 +328,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    pinMode(gpio, OUTPUT);
-
     openlog("srts", LOG_PID | LOG_CONS, LOG_USER);
-    scheduler_realtime();
 
     progname = basename(argv[0]);
 
@@ -340,6 +337,8 @@ int main(int argc, char **argv) {
            code);
     closelog();
 
+    piHiPri (99);
+    pinMode(gpio, OUTPUT);
     transmit(gpio, key, address, command, code, 0);
 
     c = 7;
@@ -351,7 +350,6 @@ int main(int argc, char **argv) {
         transmit(gpio, key, address, command, code, 1);
     }
     store_code(progname, address, code);
-    scheduler_standard();
 
     return 0;
 }

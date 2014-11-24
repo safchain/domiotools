@@ -190,20 +190,19 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    openlog("homeasy", LOG_PID | LOG_CONS, LOG_USER);
+    syslog(LOG_INFO, "remote: %d, receiver, %d, command: %d\n", address,
+           receiver, command);
+    closelog();
+
     pinMode(gpio, OUTPUT);
+    piHiPri(99);
 
     for (c = 0; c != retry; c++) {
-        openlog("homeasy", LOG_PID | LOG_CONS, LOG_USER);
-        syslog(LOG_INFO, "remote: %d, receiver, %d, command: %d\n", address,
-               receiver, command);
-        closelog();
-        scheduler_realtime();
-
         for (i = 0; i < 5; i++) {
             transmit(gpio, address, receiver, command);
         }
 
-        scheduler_standard();
         sleep(1);
     }
 

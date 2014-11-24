@@ -17,8 +17,6 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-void scheduler_standard();
-void scheduler_realtime();
 int mkpath(const char *path, mode_t mode);
 void store_pid();
 
