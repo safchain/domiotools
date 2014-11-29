@@ -33,31 +33,9 @@
 #include <limits.h>
 
 #include "common.h"
+#include "srts.h"
 
-enum COMMAND {
-    UNKNOWN = 0,
-    MY = 1,
-    UP,
-    MY_UP,
-    DOWN,
-    MY_DOWN,
-    UP_DOWN,
-    PROG = 8,
-    SUN_FLAG,
-    FLAG,
-};
-
-struct srts_payload {
-    unsigned char key;
-    unsigned char checksum :4;
-    unsigned char ctrl :4;
-    unsigned short code;
-    struct address {
-        unsigned char byte1;
-        unsigned char byte2;
-        unsigned char byte3;
-    } address;
-};
+extern int verbose;
 
 static void obfuscate_payload(struct srts_payload *payload) {
     unsigned char *p = (unsigned char *) payload;
@@ -67,22 +45,6 @@ static void obfuscate_payload(struct srts_payload *payload) {
         p[i] = p[i] ^ p[i - 1];
     }
 }
-
-/*
-static void unfuscate_payload(struct srts_payload *payload) {
-    struct srts_payload crypted;
-    unsigned char *p, *c;
-    int i = 0;
-
-    memcpy((char *) &crypted, (char *) payload, sizeof(struct srts_payload));
-    p = (unsigned char *) payload;
-    c = (unsigned char *) &crypted;
-
-    for (i = 1; i < 7; i++) {
-        p[i] = p[i] ^ c[i - 1];
-    }
-}
-*/
 
 static void checksum_payload(struct srts_payload *payload) {
     unsigned char *p = (unsigned char *) payload;
@@ -115,6 +77,7 @@ static void write_byte(int gpio, unsigned char byte) {
 
     for (mask = 0b10000000; mask != 0x0; mask >>= 1) {
         write_bit(gpio, byte & mask);
+        printf("BIT: %d\n", byte & mask);
     }
 }
 
@@ -130,68 +93,6 @@ static void write_payload(int gpio, struct srts_payload *payload) {
 static void write_interval_gap(int gpio) {
     digitalWrite(gpio, LOW);
     delayMicroseconds(30400);
-}
-
-static unsigned short get_next_code(char *progname, unsigned short address) {
-    char *path, code[10];
-    FILE *fp;
-    int size;
-
-    size = snprintf(NULL, 0, "/var/lib/%s/%d", progname, address);
-    if ((path = (char *) malloc(size + 1)) == NULL) {
-        fprintf(stderr, "Memory allocation error\n");
-        exit(-1);
-    }
-    sprintf(path, "/var/lib/%s", progname);
-    if (mkpath(path, 0755) == -1) {
-        fprintf(stderr, "Unable to create the state path: %s\n", path);
-        exit(-1);
-    }
-    sprintf(path, "/var/lib/%s/%d", progname, address);
-
-    if ((fp = fopen(path, "r")) == NULL) {
-        return 1;
-    }
-
-    memset(code, sizeof(code), 0);
-    if (fgets(code, sizeof(code), fp) == NULL) {
-        fclose(fp);
-        return 1;
-    }
-    fclose(fp);
-
-    return ((unsigned short) atoi(code)) + 1;
-}
-
-static void store_code(char *progname, unsigned short address, unsigned short new_code) {
-    char *path, code[10];
-    FILE *fp;
-    int size;
-
-    size = snprintf(NULL, 0, "/var/lib/%s/%d", progname, address);
-    if ((path = (char *) malloc(size + 1)) == NULL) {
-        fprintf(stderr, "Memory allocation error\n");
-        exit(-1);
-    }
-    sprintf(path, "/var/lib/%s", progname);
-    if (mkpath(path, 0755) == -1) {
-        fprintf(stderr, "Unable to create the state path: %s\n", path);
-        exit(-1);
-    }
-    sprintf(path, "/var/lib/%s/%d", progname, address);
-
-    if ((fp = fopen(path, "w+")) == NULL) {
-        fprintf(stderr, "Unable to open the state file: %s", path);
-        exit(-1);
-    }
-
-    sprintf(code, "%d\n", new_code);
-    if (fputs(code, fp) < 0) {
-        fclose(fp);
-        exit(-1);
-    }
-
-    fclose(fp);
 }
 
 static void sync_transmit(int gpio, int repeated) {
@@ -214,8 +115,8 @@ static void sync_transmit(int gpio, int repeated) {
     }
 }
 
-static void transmit(int gpio, unsigned char key, unsigned short address,
-              unsigned char command, unsigned short code, int repeated) {
+void srts_transmit(int gpio, unsigned char key, unsigned short address,
+        unsigned char command, unsigned short code, int repeated) {
     struct srts_payload payload;
 
     sync_transmit(gpio, repeated);
@@ -235,121 +136,175 @@ static void transmit(int gpio, unsigned char key, unsigned short address,
 
     checksum_payload(&payload);
     obfuscate_payload(&payload);
+
     write_payload(gpio, &payload);
     write_interval_gap(gpio);
 }
 
-static char get_command_char(char *command) {
-    if (strcasecmp(command, "my") == 0) {
-        return MY;
-    } else if (strcasecmp(command, "up") == 0) {
-        return UP;
-    } else if (strcasecmp(command, "my_up") == 0) {
-        return MY_UP;
-    } else if (strcasecmp(command, "down") == 0) {
-        return DOWN;
-    } else if (strcasecmp(command, "my_down") == 0) {
-        return MY_DOWN;
-    } else if (strcasecmp(command, "up_down") == 0) {
-        return UP_DOWN;
-    } else if (strcasecmp(command, "prog") == 0) {
-        return PROG;
-    } else if (strcasecmp(command, "sun_flag") == 0) {
-        return SUN_FLAG;
-    } else if (strcasecmp(command, "flag") == 0) {
-        return FLAG;
+static void unfuscate_payload(char *bytes, struct srts_payload *payload) {
+    unsigned char *p;
+    int i = 0;
+
+    p = (unsigned char *) payload;
+
+    p[0] = bytes[0];
+    for (i = 1; i < 7; i++) {
+        p[i] = bytes[i] ^ bytes[i - 1];
+    }
+}
+
+static int validate_checksum(struct srts_payload *payload) {
+    unsigned char *p = (unsigned char *) payload;
+    unsigned char payload_chk = payload->checksum;
+    unsigned char checksum = 0;
+    int i = 0;
+
+    payload->checksum = 0;
+    for (i = 0; i < 7; i++) {
+        checksum = checksum ^ p[i] ^ (p[i] >> 4);
+    }
+    checksum = checksum & 0xf;
+
+    payload->checksum = payload_chk;
+    if (payload_chk == checksum) {
+        return 1;
     }
 
-    return UNKNOWN;
+    return 0;
 }
 
-static void usage(char *name) {
-    printf(
-        "Usage: %s --gpio <gpio pin> --address <remote address> --comand <command>\n",
-        name);
-    exit(-1);
+static int is_on_time(int duration, int expected) {
+    int v = expected * 10 / 100;
+
+    return duration > (expected - v) && duration < (expected + v);
 }
 
-int main(int argc, char **argv) {
-    struct option long_options[] = { { "gpio", 1, 0, 0 },
-        { "address", 1, 0, 0 }, { "command", 1, 0, 0 }, { NULL, 0, 0, 0 } };
-    unsigned char key;
-    unsigned short address = 0;
-    unsigned short code = 0;
-    long int a2i;
-    int gpio = -1, i, c;
-    char command = UNKNOWN;
-    char *progname, *end;
+static int detect_sync(int type, int *duration) {
+    static unsigned int init_sync = 0;
+    static unsigned int hard_sync = 0;
+    static unsigned int soft_sync = 0;
 
-    if (setuid(0)) {
-        perror("setuid");
+    if (type && is_on_time(*duration, 12400)) {
+        init_sync = 1;
+    } else if (! type && init_sync == 1 && is_on_time(*duration, 80600)) {
+        init_sync = 2;
+        hard_sync = 10;
+    } else if (init_sync == 2 && hard_sync != 14 && is_on_time(*duration, 2560)) {
+        hard_sync++;
+    } else if (hard_sync == 14 && soft_sync == 0 && is_on_time(*duration, 4800)) {
+        soft_sync = 1;
+    } else if (soft_sync == 1 && *duration > 660) {
+        *duration -= 800;
+        soft_sync = 2;
+
+        /* full sync, hard and soft */
+        if (verbose) {
+            fprintf(stderr, "Found the sync part of a message\n");
+        }
+        return 1;
+    } else {
+        hard_sync = 0;
+        soft_sync = 0;
+    }
+
+    return 0;
+}
+
+static int read_bit(int type, int *duration, char *bit, int last) {
+    static unsigned int pass = 0;
+
+    /* maximum transmit length for a bit is around 1600 */
+    if (! last && *duration > 2000) {
+        pass = 0;
+
         return -1;
     }
 
-    while (1) {
-        c = getopt_long(argc, argv, "", long_options, &i);
-        if (c == -1)
-            break;
-        switch (c) {
-            case 0:
-                if (strcmp(long_options[i].name, "gpio") == 0) {
-                    a2i = strtol(optarg, &end, 10);
-                    if (errno == ERANGE && (a2i == LONG_MAX || a2i == LONG_MIN)) {
-                        break;
-                    }
-                    gpio = a2i;
-                } else if (strcmp(long_options[i].name, "address") == 0) {
-                    a2i = strtol(optarg, &end, 10);
-                    if (errno == ERANGE && (a2i == LONG_MAX || a2i == LONG_MIN)) {
-                        break;
-                    }
-                    address = a2i;
-                } else if (strcmp(long_options[i].name, "command") == 0) {
-                    command = get_command_char(optarg);
-                }
-                break;
-            default:
-                usage(argv[0]);
+    /* duration to low to be a part of only one bit, so split into two parts */
+    if (*duration > 1100) {
+        *duration /= 2;
+    } else {
+        *duration = 0;
+    }
+
+    /* got the two part of a bit */
+    if (pass) {
+        *bit = type;
+        pass = 0;
+
+        return 1;
+    }
+    pass++;
+
+    return 0;
+}
+
+static int read_byte(char bit, char *byte) {
+    static char b = 0;
+    static char d = 7;
+
+    if (d != 0) {
+        b |= bit << d--;
+
+        return 0;
+    }
+    *byte = b | bit;
+
+    b = 0;
+    d = 7;
+
+    return 1;
+}
+
+int srts_receive(int type, int duration, struct srts_payload *payload) {
+    static unsigned int sync = 0;
+    static unsigned int index = 0;
+    static char bytes[7];
+    char bit;
+    int rtv;
+
+    if (!sync) {
+        sync = detect_sync(type, &duration);
+        if (! sync) {
+            return -1;
+        }
+        memset(bytes, 0, 7);
+
+        /* to short, ignore trailling signal */
+        if (duration < 400) {
+            return 0;
         }
     }
 
-    if (command == UNKNOWN || address == 0 || gpio == -1) {
-        usage(argv[0]);
+    while(duration > 0) {
+        rtv = read_bit(type, &duration, &bit, index == 6);
+        if (rtv == -1) {
+            if (verbose) {
+                fprintf(stderr, "Error while reading a bit\n");
+            }
+            sync = 0;
+            index = 0;
+
+            return -1;
+        }
+        if (rtv == 1) {
+            rtv = read_byte(bit, bytes + index);
+            if (rtv) {
+                if (++index == 7) {
+                    sync = 0;
+                    index = 0;
+
+                    unfuscate_payload(bytes, payload);
+                    rtv = validate_checksum(payload);
+                    if (rtv == 0 && verbose) {
+                        fprintf(stderr, "Checksum error\n");
+                    }
+
+                    return rtv;
+                }
+            }
+        }
     }
-
-    // store pid and lock it
-    store_pid();
-
-    srand(time(NULL));
-    key = rand() % 255;
-
-    if (wiringPiSetup() == -1) {
-        fprintf(stderr, "Wiring Pi not installed");
-        return -1;
-    }
-
-    openlog("srts", LOG_PID | LOG_CONS, LOG_USER);
-
-    progname = basename(argv[0]);
-
-    code = get_next_code(progname, address);
-    syslog(LOG_INFO, "remote: %d, command: %d, code: %d\n", address, command,
-           code);
-    closelog();
-
-    piHiPri (99);
-    pinMode(gpio, OUTPUT);
-    transmit(gpio, key, address, command, code, 0);
-
-    c = 7;
-    if (command == PROG) {
-        c = 20;
-    }
-
-    for (i = 0; i < c; i++) {
-        transmit(gpio, key, address, command, code, 1);
-    }
-    store_code(progname, address, code);
 
     return 0;
 }

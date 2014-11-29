@@ -24,6 +24,8 @@
 #include <sys/file.h>
 #include <string.h>
 
+int verbose = 0;
+
 static int do_mkdir(const char *path, mode_t mode) {
     struct stat st;
     int status = 0;
