@@ -15,43 +15,51 @@
  */
 
 #include <wiringPi.h>
-#include <stdio.h>
-#include <sys/time.h>
-#include <time.h>
-#include <stdlib.h>
-#include <sched.h>
-#include <syslog.h>
-#include <getopt.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
 #include <arpa/inet.h>
-#include <libgen.h>
-#include <errno.h>
-#include <limits.h>
+#include <libconfig.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "common.h"
 #include "srts.h"
 
 extern int verbose;
+extern int debug;
 
 int somfy_handler(int type, int duration) {
     struct srts_payload payload;
+    unsigned short addr;
+    unsigned char *ptr;
     int rtv;
 
     rtv = srts_receive(type, duration, &payload);
     if (rtv == 1 && verbose) {
         printf("Message correctly received\n");
+        if (debug) {
+            printf("key: %d\n", payload.key);
+            printf("checksum: %d\n", payload.checksum);
+            printf("ctrl: %d\n", payload.ctrl);
+            printf("code: %d\n", payload.code);
+            printf("address 1: %d\n", payload.address.byte1);
+            printf("address 2: %d\n", payload.address.byte2);
+            printf("address 3: %d\n", payload.address.byte3);
+
+            ptr = (unsigned char *)&addr;
+            ptr[0] = payload.address.byte1;
+            ptr[1] = payload.address.byte2;
+
+            printf("address: %d\n", addr);
+        }
     }
     return rtv;
 }
 
 void handle_interrupt() {
     static unsigned int last_change = 0;
-    static int duration = 0;
-    static int accu = 0;
+    static unsigned int total_duration = 0;
+    unsigned int duration = 0;
+    long time;
     int type;
 
     type = digitalRead (2);
@@ -61,7 +69,7 @@ void handle_interrupt() {
         type = LOW;
     }
 
-    long time = micros();
+    time = micros();
     if (last_change) {
         duration = time - last_change;
     } else {
@@ -70,31 +78,12 @@ void handle_interrupt() {
     }
     last_change = time;
 
-    somfy_handler(type, duration);
-
-    return;
-//    printf("CHG: %d - %d:%d\n", time - last_change, accu, duration);
-
-    /* noise reduction */
-    if ((accu - duration) <= 0) {
-        if (type == HIGH) {
-            type = LOW;
-        } else {
-            type = HIGH;
-        }
-        //printf("Somfy\n");
-    //    somfy(type, duration);
-
-        accu = duration;
-        if (accu > 50) {
-            accu = 50;
-        }
+    /* simple noise reduction */
+    total_duration += duration;
+    if (duration > 200) {
+        somfy_handler(type, total_duration);
+        total_duration = 0;
     }
-    else {
-        accu -= duration;
-    }
-
-    last_change = time;
 }
 
 int main(int argc, char **argv) {
@@ -109,6 +98,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Wiring Pi not installed");
         return -1;
     }
+
+    verbose = 1;
 
     piHiPri (99);
     pinMode(gpio, INPUT);

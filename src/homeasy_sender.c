@@ -16,17 +16,15 @@
 
 #include <wiringPi.h>
 #include <stdio.h>
-#include <sys/time.h>
-#include <time.h>
-#include <stdlib.h>
-#include <sched.h>
 #include <syslog.h>
 #include <getopt.h>
+#include <sys/types.h>
+#include <limits.h>
+#include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <limits.h>
-#include <errno.h>
+#include <stdlib.h>
 
 #include "common.h"
 
@@ -36,7 +34,7 @@ enum COMMAND {
     UNKNOWN
 };
 
-void _write_bit(int gpio, char bit) {
+static void _write_bit(int gpio, char bit) {
     if (bit) {
         digitalWrite(gpio, HIGH);
         delayMicroseconds(300);
@@ -50,7 +48,7 @@ void _write_bit(int gpio, char bit) {
     }
 }
 
-void write_bit(int gpio, char bit) {
+static void write_bit(int gpio, char bit) {
     if (bit) {
         _write_bit(gpio, 1);
         _write_bit(gpio, 0);
@@ -60,7 +58,7 @@ void write_bit(int gpio, char bit) {
     }
 }
 
-void sync_transmit(int gpio) {
+static void sync_transmit(int gpio) {
     digitalWrite(gpio, HIGH);
     delayMicroseconds(275);
     digitalWrite(gpio, LOW);
@@ -72,7 +70,7 @@ void sync_transmit(int gpio) {
     digitalWrite(gpio, HIGH);
 }
 
-void write_interval_gap(int gpio) {
+static void write_interval_gap(int gpio) {
     digitalWrite(gpio, HIGH);
     delayMicroseconds(275);
     digitalWrite(gpio, LOW);

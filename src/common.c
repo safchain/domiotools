@@ -14,17 +14,17 @@
  * 02110-1301, USA.
  */
 
-#include <sched.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <stdio.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <errno.h>
 #include <sys/file.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int verbose = 0;
+int debug = 0;
 
 static int do_mkdir(const char *path, mode_t mode) {
     struct stat st;

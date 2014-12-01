@@ -16,23 +16,9 @@
 
 #include <wiringPi.h>
 #include <stdio.h>
-#include <sys/time.h>
-#include <time.h>
-#include <stdlib.h>
-#include <sched.h>
-#include <syslog.h>
-#include <getopt.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
 #include <arpa/inet.h>
-#include <libgen.h>
-#include <errno.h>
-#include <limits.h>
+#include <string.h>
 
-#include "common.h"
 #include "srts.h"
 
 extern int verbose;
@@ -77,7 +63,6 @@ static void write_byte(int gpio, unsigned char byte) {
 
     for (mask = 0b10000000; mask != 0x0; mask >>= 1) {
         write_bit(gpio, byte & mask);
-        printf("BIT: %d\n", byte & mask);
     }
 }
 
