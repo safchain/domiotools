@@ -14,10 +14,14 @@
  * 02110-1301, USA.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-int mkpath(const char *path, mode_t mode);
-void store_pid();
+#ifndef __HL_H
+#define __HL_H
 
-#endif                          /* COMMON_H_ */
+#include "list.h"
+#include "hash.h"
+
+#endif

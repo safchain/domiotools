@@ -14,10 +14,21 @@
  * 02110-1301, USA.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef __URLPARSER_H__
+#define __URLPARSER_H__
 
-int mkpath(const char *path, mode_t mode);
-void store_pid();
+struct url {
+  char *scheme;
+  char *username;
+  char *password;
+  char *hostname;
+  unsigned short port;
+  char *path;
+  char *query;
+  char *fragment;
+};
 
-#endif                          /* COMMON_H_ */
+void free_url(struct url *url);
+struct url *parse_url(const char *str);
+
+#endif

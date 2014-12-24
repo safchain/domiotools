@@ -16,15 +16,28 @@ AC_LANG([C])
 
 # Checks for libraries.
 AC_CHECK_LIB([wiringPi], [wiringPiSetup])
+AC_CHECK_LIB([config], [config_init])
+AC_CHECK_LIB([pthread], pthread_create)
+AC_CHECK_LIB([mosquitto], mosquitto_lib_init)
+
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.8])
 
 PKG_CHECK_MODULES([WIRINGPI], [wiringPi], [have_libwiringpi=yes], [have_libwiringpi=no])
 AM_CONDITIONAL([WIRINGPI],  [test "$have_libwiringpi" = "yes"])
 
+PKG_CHECK_MODULES([LIBCONFIG], [libconfig], [have_libconfig=yes], [have_libconfig=no])
+AM_CONDITIONAL([LIBCONFIG],  [test "$have_libconfig" = "yes"])
+
+PKG_CHECK_MODULES([LIBMOSQUITTO], [libmosquitto], [have_libmosquitto=yes], [have_libmosquitto=no])
+AM_CONDITIONAL([LIBMOSQUITTO],  [test "$have_libmosquitto" = "yes"])
+
 # Checks for header files.
-AC_CHECK_HEADERS([stdlib.h string.h sys/time.h syslog.h unistd.h])
+AC_CHECK_HEADERS([stdlib.h string.h sys/time.h syslog.h unistd.h pthread.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_MODE_T
+
+AM_PROG_CC_C_O
 
 # Checks for library functions.
 AC_FUNC_MALLOC
@@ -47,5 +60,6 @@ AM_COND_IF(DEBUG,
 
 
 AC_CONFIG_FILES([Makefile
+                 tests/Makefile
                  src/Makefile])
 AC_OUTPUT
