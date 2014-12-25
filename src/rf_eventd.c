@@ -259,7 +259,8 @@ static int publish_to_mqtt(const char *output, const char *value)
           goto clean;
       }
       broker_ptr = &broker;
-      hl_hash_put(mqtt_brokers, url->hostname, broker_ptr, sizeof(struct mqtt_broker *));
+      hl_hash_put(mqtt_brokers, url->hostname, broker_ptr,
+              sizeof(struct mqtt_broker *));
   } else {
     broker = *broker_ptr;
   }
@@ -298,19 +299,38 @@ clean:
     return 0;
 }
 
+static const char *translate_value(config_setting_t *config, const char *value)
+{
+  config_setting_t *translations;
+  const char *translation;
+
+  translations = config_setting_get_member (config, "translations");
+  if (translations == NULL) {
+    return value;
+  }
+
+  if (config_setting_lookup_string (translations, value,
+              (const char **) &translation) == CONFIG_TRUE) {
+    return translation;
+  }
+
+  return value;
+}
+
 static int publish(config_setting_t *config, const char *value)
 {
   const char *output;
   int rc;
 
-  if (!config_setting_lookup_string(config, "output", (const char **) &output)) {
+  if (config_setting_lookup_string(config, "output",
+              (const char **) &output) != CONFIG_TRUE) {
     fprintf(stderr, "No output defined for the publisher line: %d\n",
             config_setting_source_line(config));
     return -1;
   }
 
   if (strstr(output, "mqtt://") == output) {
-    rc = publish_to_mqtt(output, value);
+    rc = publish_to_mqtt(output, translate_value(config, value));
   } else {
     fprintf(stderr, "Output unknown for the publisher line: %d\n",
             config_setting_source_line(config));
@@ -335,7 +355,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
   do {
     h = config_setting_get_elem(hs, i);
     if (h != NULL) {
-      if (!config_setting_lookup_string(h, "type", &type)) {
+      if (config_setting_lookup_string(h, "type", &type) != CONFIG_TRUE) {
         fprintf(stderr, "No address defined for the publisher line: %d\n",
                 config_setting_source_line(h));
         continue;
@@ -344,7 +364,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
         continue;
       }
 
-      if (!config_setting_lookup_int(h, "address", &value)) {
+      if (config_setting_lookup_int(h, "address", &value) != CONFIG_TRUE) {
         fprintf(stderr, "No address defined for the publisher line: %d\n",
                 config_setting_source_line(h));
         continue;

@@ -21,7 +21,7 @@
 
 #include "srts.h"
 
-extern int verbose;
+int srts_verbose;
 
 static void obfuscate_payload(struct srts_payload *payload)
 {
@@ -195,7 +195,7 @@ static int detect_sync(int type, int *duration)
     soft_sync = 2;
 
     /* full sync, hard and soft */
-    if (verbose) {
+    if (srts_verbose) {
       fprintf(stderr, "Found the sync part of a message\n");
     }
     return 1;
@@ -330,7 +330,7 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
   while (duration > 0) {
     rc = read_bit(type, &duration, &bit, index == 6);
     if (rc == -1) {
-      if (verbose) {
+      if (srts_verbose) {
         fprintf(stderr, "Error while reading a bit\n");
       }
       sync = 0;
@@ -347,7 +347,7 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
 
           unfuscate_payload(bytes, payload);
           rc = validate_checksum(payload);
-          if (rc == 0 && verbose) {
+          if (rc == 0 && srts_verbose) {
             fprintf(stderr, "Checksum error\n");
           }
 
