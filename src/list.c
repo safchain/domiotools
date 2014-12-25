@@ -20,12 +20,6 @@
 
 #include "list.h"
 
-static void _free0(void **ptr)
-{
-  free(*ptr);
-  *ptr = NULL;
-}
-
 LIST *hl_list_alloc()
 {
   LIST *list;
@@ -41,62 +35,55 @@ int hl_list_push(LIST *list, void *value, unsigned int size)
 {
   LIST_NODE *node_ptr;
 
-  if (list->nodes == NULL) {
-    if ((list->nodes = malloc(sizeof(LIST_NODE) + size)) == NULL) {
-      return -1;
-    }
-    node_ptr = list->nodes;
-  } else {
-    node_ptr = list->last;
-    if ((node_ptr->next = malloc(sizeof(LIST_NODE) + size)) == NULL) {
-      return -1;
-    }
-    node_ptr = node_ptr->next;
+  if ((node_ptr = malloc(sizeof(LIST_NODE) + size)) == NULL) {
+    return -1;
   }
   node_ptr->next = NULL;
-  memcpy((char *) node_ptr + sizeof(LIST_NODE), value, size);
 
+  if (list->nodes == NULL) {
+    list->nodes = node_ptr;
+    node_ptr->prev = NULL;
+  } else {
+    list->last->next = node_ptr;
+    node_ptr->prev = list->last;
+  }
   list->last = node_ptr;
+
+  memcpy((char *) node_ptr + sizeof(LIST_NODE), value, size);
 
   return 0;
 }
 
+static void hl_list_remove(LIST *list, LIST_NODE *node_ptr)
+{
+  if (list->nodes == node_ptr) {
+     list->nodes = node_ptr->next;
+     if (list->nodes != NULL) {
+       list->nodes->prev = NULL;
+     } else {
+       list->last = NULL;
+     }
+  } else if (list->last == node_ptr) {
+     list->last = node_ptr->prev;
+     list->last->next = NULL;
+  } else {
+    node_ptr->prev->next = node_ptr->next;
+    node_ptr->next->prev = node_ptr->prev;
+  }
+  free(node_ptr);
+}
+
 void hl_list_pop(LIST *list)
 {
-  LIST_NODE *node_ptr = list->last;
-
-  if (list->nodes == NULL) {
-    return;
-  }
-
-  if (list->nodes->next == NULL) {
-    _free0((void *) &list->nodes);
-    list->last = NULL;
-  } else {
-    while (node_ptr->next->next != NULL) {
-      node_ptr = node_ptr->next;
-    }
-
-    _free0((void *) &node_ptr->next);
-    list->last = node_ptr;
-  }
+  hl_list_remove(list, list->last);
 }
 
 void *hl_list_get_last(LIST *list)
 {
-  LIST_NODE *node_ptr = list->last;
-
-  if (node_ptr == NULL) {
-    return NULL;
+  if (list->last != NULL) {
+    return ((char *) list->last + sizeof(LIST_NODE));
   }
-
-  if (node_ptr->next != NULL) {
-    while (node_ptr->next->next != NULL) {
-      node_ptr = node_ptr->next;
-    }
-  }
-
-  return ((char *) node_ptr + sizeof(LIST_NODE));
+  return NULL;
 }
 
 void *hl_list_get(LIST *list, unsigned int index)
@@ -112,19 +99,6 @@ void *hl_list_get(LIST *list, unsigned int index)
   }
 
   return NULL;
-}
-
-void hl_list_round_robin(LIST *list)
-{
-  LIST_NODE *node_ptr = list->nodes;
-
-  if (node_ptr->next != NULL) {
-    list->nodes = node_ptr->next;
-    list->last->next = node_ptr;
-    node_ptr->next = NULL;
-
-    list->last = node_ptr;
-  }
 }
 
 void hl_list_init_iterator(LIST *list, LIST_ITERATOR *iterator)
@@ -168,7 +142,7 @@ inline void hl_list_reset(LIST *list)
     free(list->nodes);
     list->nodes = next_ptr;
   }
-  list->last = list->nodes;
+  list->last = NULL;
 }
 
 void hl_list_free(LIST *list)

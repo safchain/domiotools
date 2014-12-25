@@ -32,6 +32,7 @@ struct list_s {
 
 /* append value just behind the next pointer, then only one malloc/free for each node */
 struct list_node_s {
+  LIST_NODE *prev;
   LIST_NODE *next;
 };
 
@@ -50,6 +51,5 @@ void *hl_list_iterate(LIST_ITERATOR *);
 unsigned int hl_list_count(LIST *);
 void hl_list_reset(LIST *);
 void hl_list_free(LIST *);
-void hl_list_round_robin(LIST *);
 
 #endif
