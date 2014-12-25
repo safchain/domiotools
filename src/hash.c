@@ -41,7 +41,7 @@ HCODE *hl_hash_alloc(unsigned int size)
     return NULL;
   }
 
-  if ((hcode->nodes = calloc(size + 1, sizeof(HNODE))) == NULL) {
+  if ((hcode->nodes = calloc(size, sizeof(HNODE))) == NULL) {
     free(hcode);
     return NULL;
   }
@@ -50,15 +50,22 @@ HCODE *hl_hash_alloc(unsigned int size)
   return hcode;
 }
 
-static inline int _hl_hash_get_key(HCODE *hcode, const char *key)
+static inline unsigned int hl_hash_get_key(HCODE *hcode, const char *key)
 {
-  unsigned int index = 0;
+  unsigned int hash = 0;
+  const char *c = key;
 
-  while (*key != '\0') {
-    index = index * 33 + *key++;
+  while(*c != '\0') {
+    hash += *c++;
+    hash += (hash << 10);
+    hash ^= (hash >> 6);
   }
 
-  return index & hcode->hsize;
+  hash += (hash << 3);
+  hash ^= (hash >> 11);
+  hash += (hash << 15);
+
+  return hash % hcode->hsize;
 }
 
 HNODE *hl_hash_put(HCODE *hcode, const char *key, const void *value,
@@ -67,7 +74,7 @@ HNODE *hl_hash_put(HCODE *hcode, const char *key, const void *value,
   HNODE *hnode_ptr = hcode->nodes;
   unsigned int index = 0;
 
-  index = _hl_hash_get_key(hcode, key);
+  index = hl_hash_get_key(hcode, key);
 
   hnode_ptr = (HNODE *) (hnode_ptr + index);
   do {
@@ -119,7 +126,7 @@ void *hl_hash_get(HCODE *hcode, const char *key)
   HNODE *hnode_ptr = hcode->nodes;
   unsigned int index = 0;
 
-  index = _hl_hash_get_key(hcode, key);
+  index = hl_hash_get_key(hcode, key);
 
   hnode_ptr = (HNODE *) (hnode_ptr + index);
   do {
@@ -209,7 +216,7 @@ void hl_hash_reset(HCODE *hcode)
       free(hnode_ptr->value);
 
       next_ptr = hnode_ptr->next;
-      _free0((void *) &hnode_ptr);
+      free(hnode_ptr);
 
       hnode_ptr = next_ptr;
     }
