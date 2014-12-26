@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.59])
 AC_INIT([domiotools], [0.1], [safchain@gmail.com])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([include/common.h])
