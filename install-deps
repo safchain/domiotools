@@ -1,0 +1,20 @@
+#!/bin/sh
+
+cd /tmp
+
+# mosquitto
+sudo apt-get -y install libc-ares-dev
+git clone http://git.eclipse.org/gitroot/mosquitto/org.eclipse.mosquitto.git
+cd org.eclipse.mosquitto/lib
+make
+sudo make install
+
+# wiringPI
+git clone git://git.drogon.net/wiringPi
+cd wiringPi
+./build
+
+# libconfig
+sudo apt-get -y install libconfig-dev
+
+sudo ldconfig
