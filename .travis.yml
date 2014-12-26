@@ -1,5 +1,8 @@
 language: c
 compiler:
   - gcc
-install: cd safchain/domiotools && ./install-deps
-script: cd safchain/domiotools && ./configure && make check
+install:
+  - ./install-deps
+script:
+  - ./configure
+  - make check
