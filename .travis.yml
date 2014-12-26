@@ -1,4 +1,5 @@
 language: c
 compiler:
   - gcc
-script: ./configure && make check
+install: cd safchain/domiotools && ./install-deps
+script: cd safchain/domiotools && ./configure && make check
