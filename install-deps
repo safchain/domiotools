@@ -2,7 +2,7 @@
 
 cd /tmp
 
-sudo apt-get -y install libconfig9 check libc-ares-dev make gcc libssl-dev g++ \
+sudo apt-get -y install check libc-ares-dev make gcc libssl-dev g++ \
     autoconf automake libtool flex bison
 
 # libconfig
