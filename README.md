@@ -15,7 +15,7 @@ Home Easy protocol client for Raspberry.
 
 rf_eventd
 -------------
-Daemon that listens on GPIO pins in order to detect RF protocols and trigger MQTT message, and listens for MQTT message in order to trigger RF calls. Currently the aim of rf_eventd is to be used with OpenHAB, but could be used with other projects.
+Daemon that listens on GPIO pins in order to detect RF protocols and publish MQTT messages. It can also listen for MQTT messages in order to trigger RF calls. Currently the aim of rf_eventd is to be used with OpenHAB, but could be used with other projects.
 
 Dependencies
 -------------------
@@ -25,9 +25,7 @@ Dependencies
 
 Installation
 ----------------
-./configure
-make
-sudo make install
+ - ./configure && make && sudo make install
 
 rf_eventd configuration file
 -------------------------------------
