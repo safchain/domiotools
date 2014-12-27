@@ -3,16 +3,13 @@
 Makefile
 aclocal.m4
 app.info
-compile
 config.h
 config.log
 config.status
 configure.scan
 coverage_report
-depcomp
 libtool
 m4
-missing
 stamp-h1
 *~
 *.html

@@ -15,9 +15,9 @@ EXTERNAL_CFLAGS="$CFLAGS"
 AC_LANG([C])
 
 # Checks for libraries.
+AC_CHECK_LIB([pthread], pthread_create)
 AC_CHECK_LIB([wiringPi], [wiringPiSetup])
 AC_CHECK_LIB([config], [config_init])
-AC_CHECK_LIB([pthread], pthread_create)
 AC_CHECK_LIB([mosquitto], mosquitto_lib_init)
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.8])

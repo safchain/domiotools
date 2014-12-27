@@ -2,7 +2,7 @@
 
 cd /tmp
 
-sudo apt-get -y install libconfig-dev check libc-ares-dev
+sudo apt-get -y install libconfig-dev check libc-ares-dev make gcc libssl-dev g++
 
 # mosquitto
 git clone http://git.eclipse.org/gitroot/mosquitto/org.eclipse.mosquitto.git
