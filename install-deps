@@ -2,7 +2,18 @@
 
 cd /tmp
 
-sudo apt-get -y install libconfig9 check libc-ares-dev make gcc libssl-dev g++
+sudo apt-get -y install libconfig9 check libc-ares-dev make gcc libssl-dev g++ \
+    autoconf automake libtool flex bison
+
+# libconfig
+git clone https://github.com/hyperrealm/libconfig.git
+cd libconfig
+aclocal
+autoconf
+automake
+./configure
+make
+sudo make install
 
 # mosquitto
 git clone http://git.eclipse.org/gitroot/mosquitto/org.eclipse.mosquitto.git
@@ -15,8 +26,6 @@ git clone git://git.drogon.net/wiringPi
 cd wiringPi
 ./build
 sudo ldconfig
-
-./build
 
 # to debug
 ls /usr/local/lib
