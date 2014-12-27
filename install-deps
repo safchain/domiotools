@@ -14,5 +14,9 @@ sudo make install
 git clone git://git.drogon.net/wiringPi
 cd wiringPi
 ./build
-
 sudo ldconfig
+
+./build
+
+# to debug
+ls /usr/local/lib
