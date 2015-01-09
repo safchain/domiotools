@@ -14,29 +14,19 @@
  * 02110-1301, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
-#include <check.h>
-#include <check_suites.h>
+#ifndef MQTT_H_
+#define MQTT_H_
 
-int main(void)
-{
-  Suite *s;
-  SRunner *sr;
-  int number_failed;
-  int rc;
+enum {
+  MQTT_SUCCESS = 1,
+  MQTT_BAD_URL = -1,
+  MQTT_CONNECTION_ERROR = -2,
+  MQTT_NOT_INITIALIZED = -3,
+  MQTT_MESSAGE_ERROR = -4,
+};
 
-  sr = srunner_create(urlparser_suite());
-  srunner_add_suite (sr, hl_suite ());
-  srunner_add_suite (sr, mqtt_suite ());
+int mqtt_init();
+void mqtt_destroy();
+int mqtt_publish(const char *output, const char *value);
 
-  srunner_run_all(sr, CK_VERBOSE);
-
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
-
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+#endif

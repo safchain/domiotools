@@ -116,12 +116,12 @@ HNODE *hl_hash_put(HCODE *hcode, const char *key, const void *value,
   return hnode_ptr;
 
 error:
-  free(hnode_ptr->key);
+  _free0((void *) &hnode_ptr->key);
 
   return hnode_ptr;
 }
 
-void *hl_hash_get(HCODE *hcode, const char *key)
+static HNODE *hl_hash_get_node(HCODE *hcode, const char *key)
 {
   HNODE *hnode_ptr = hcode->nodes;
   unsigned int index = 0;
@@ -132,12 +132,23 @@ void *hl_hash_get(HCODE *hcode, const char *key)
   do {
     if (hnode_ptr->key != NULL) {
       if (strcmp(key, hnode_ptr->key) == 0) {
-        return hnode_ptr->value;
+        return hnode_ptr;
       }
     }
 
     hnode_ptr = hnode_ptr->next;
   } while (hnode_ptr != NULL);
+
+  return NULL;
+}
+
+
+void *hl_hash_get(HCODE *hcode, const char *key)
+{
+  HNODE *hnode_ptr = hl_hash_get_node(hcode, key);
+  if (hnode_ptr != NULL) {
+    return hnode_ptr->value;
+  }
 
   return NULL;
 }
@@ -210,9 +221,12 @@ void hl_hash_reset(HCODE *hcode)
     _free0((void *) &hnode_ptr->key);
     free(hnode_ptr->value);
 
-    hnode_ptr = hnode_ptr->next;
+    next_ptr = hnode_ptr->next;
+    hnode_ptr->next = NULL;
+
+    hnode_ptr = next_ptr;
     while (hnode_ptr != NULL) {
-      _free0((void *) &hnode_ptr->key);
+      free(hnode_ptr->key);
       free(hnode_ptr->value);
 
       next_ptr = hnode_ptr->next;
@@ -255,15 +269,21 @@ inline HNODE *hl_hash_iterate(HCODE_ITERATOR *iterator)
   return NULL;
 }
 
-int hl_hash_del(char *key)
-{
-  return 0;
-}
-
 void hl_hash_free_node(HNODE *hnode)
 {
   _free0((void *) &hnode->key);
   free(hnode->value);
+}
+
+int hl_hash_del(HCODE *hcode, const char *key)
+{
+  HNODE *hnode_ptr = hl_hash_get_node(hcode, key);
+  if (hnode_ptr != NULL) {
+    hl_hash_free_node(hnode_ptr);
+    return 1;
+  }
+
+  return 0;
 }
 
 void hl_hash_free(HCODE *hcode)

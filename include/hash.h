@@ -56,5 +56,6 @@ void hl_hash_free(HCODE *);
 void hl_hash_free_node(HNODE *);
 HNODE *hl_hash_iterate(HCODE_ITERATOR *);
 void hl_hash_init_iterator(HCODE *, HCODE_ITERATOR *);
+int hl_hash_del(HCODE *, const char *);
 
 #endif

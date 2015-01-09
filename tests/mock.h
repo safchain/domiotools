@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -14,29 +14,24 @@
  * 02110-1301, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
-#include <check.h>
-#include <check_suites.h>
+#ifndef MOCK_H_
+#define MOCK_H_
 
-int main(void)
-{
-  Suite *s;
-  SRunner *sr;
-  int number_failed;
-  int rc;
+enum {
+  MOCK_RETURNED_ONCE = 1,
+  MOCK_RETURNED_ALWAYS,
+  MOCK_RETURNED_FNC
+};
 
-  sr = srunner_create(urlparser_suite());
-  srunner_add_suite (sr, hl_suite ());
-  srunner_add_suite (sr, mqtt_suite ());
+void mock_init();
+void mock_destroy();
+void mock_will_return(const char *fnc, void *value, int type);
+void *mock_returns(const char *fnc, ...);
+void mock_called(const char *fnc);
+int mock_calls(const char *fnc);
+int mock_wait_for_call_num_higher_than(const char *fnc, int limit, int timeout);
+int mock_wait_to_be_called(const char *fnc, int timeout);
+void mock_reset_calls();
+void mock_reset_calls_for(const char *fnc);
 
-  srunner_run_all(sr, CK_VERBOSE);
-
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
-
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+#endif

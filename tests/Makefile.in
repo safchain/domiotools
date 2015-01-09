@@ -62,9 +62,14 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_check_domiotools_OBJECTS =  \
 	check_domiotools-check_domiotools.$(OBJEXT) \
+	check_domiotools-check_urlparser.$(OBJEXT) \
+	check_domiotools-check_mqtt.$(OBJEXT) \
+	check_domiotools-check_hl.$(OBJEXT) \
+	check_domiotools-mock.$(OBJEXT) \
 	check_domiotools-urlparser.$(OBJEXT) \
 	check_domiotools-list.$(OBJEXT) \
-	check_domiotools-hash.$(OBJEXT)
+	check_domiotools-hash.$(OBJEXT) \
+	check_domiotools-mqtt.$(OBJEXT)
 check_domiotools_OBJECTS = $(am_check_domiotools_OBJECTS)
 check_domiotools_DEPENDENCIES =
 check_domiotools_LINK = $(CCLD) $(check_domiotools_CFLAGS) $(CFLAGS) \
@@ -117,10 +122,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
-LIBCONFIG_CFLAGS = @LIBCONFIG_CFLAGS@
-LIBCONFIG_LIBS = @LIBCONFIG_LIBS@
-LIBMOSQUITTO_CFLAGS = @LIBMOSQUITTO_CFLAGS@
-LIBMOSQUITTO_LIBS = @LIBMOSQUITTO_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -142,8 +143,6 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-WIRINGPI_CFLAGS = @WIRINGPI_CFLAGS@
-WIRINGPI_LIBS = @WIRINGPI_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -187,12 +186,17 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 check_domiotools_SOURCES = check_domiotools.c \
+						   check_urlparser.c \
+						   check_mqtt.c \
+						   check_hl.c \
+						   mock.c \
 						   $(top_builddir)/src/urlparser.c \
 						   $(top_builddir)/src/list.c \
-						   $(top_builddir)/src/hash.c
+						   $(top_builddir)/src/hash.c \
+						   $(top_builddir)/src/mqtt.c
 
-check_domiotools_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include
-check_domiotools_LDADD = @CHECK_LIBS@
+check_domiotools_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include -DTEST
+check_domiotools_LDADD = @CHECK_LIBS@ -lpthread
 all: all-am
 
 .SUFFIXES:
@@ -206,9 +210,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu tests/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu tests/Makefile
+	  $(AUTOMAKE) --foreign tests/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -241,8 +245,13 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_domiotools.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_hl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_mqtt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-mock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-mqtt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-urlparser.Po@am__quote@
 
 .c.o:
@@ -272,6 +281,62 @@ check_domiotools-check_domiotools.obj: check_domiotools.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_domiotools.c' object='check_domiotools-check_domiotools.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_domiotools.obj `if test -f 'check_domiotools.c'; then $(CYGPATH_W) 'check_domiotools.c'; else $(CYGPATH_W) '$(srcdir)/check_domiotools.c'; fi`
+
+check_domiotools-check_urlparser.o: check_urlparser.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_urlparser.o -MD -MP -MF $(DEPDIR)/check_domiotools-check_urlparser.Tpo -c -o check_domiotools-check_urlparser.o `test -f 'check_urlparser.c' || echo '$(srcdir)/'`check_urlparser.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_urlparser.Tpo $(DEPDIR)/check_domiotools-check_urlparser.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_urlparser.c' object='check_domiotools-check_urlparser.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_urlparser.o `test -f 'check_urlparser.c' || echo '$(srcdir)/'`check_urlparser.c
+
+check_domiotools-check_urlparser.obj: check_urlparser.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_urlparser.obj -MD -MP -MF $(DEPDIR)/check_domiotools-check_urlparser.Tpo -c -o check_domiotools-check_urlparser.obj `if test -f 'check_urlparser.c'; then $(CYGPATH_W) 'check_urlparser.c'; else $(CYGPATH_W) '$(srcdir)/check_urlparser.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_urlparser.Tpo $(DEPDIR)/check_domiotools-check_urlparser.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_urlparser.c' object='check_domiotools-check_urlparser.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_urlparser.obj `if test -f 'check_urlparser.c'; then $(CYGPATH_W) 'check_urlparser.c'; else $(CYGPATH_W) '$(srcdir)/check_urlparser.c'; fi`
+
+check_domiotools-check_mqtt.o: check_mqtt.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_mqtt.o -MD -MP -MF $(DEPDIR)/check_domiotools-check_mqtt.Tpo -c -o check_domiotools-check_mqtt.o `test -f 'check_mqtt.c' || echo '$(srcdir)/'`check_mqtt.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_mqtt.Tpo $(DEPDIR)/check_domiotools-check_mqtt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_mqtt.c' object='check_domiotools-check_mqtt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_mqtt.o `test -f 'check_mqtt.c' || echo '$(srcdir)/'`check_mqtt.c
+
+check_domiotools-check_mqtt.obj: check_mqtt.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_mqtt.obj -MD -MP -MF $(DEPDIR)/check_domiotools-check_mqtt.Tpo -c -o check_domiotools-check_mqtt.obj `if test -f 'check_mqtt.c'; then $(CYGPATH_W) 'check_mqtt.c'; else $(CYGPATH_W) '$(srcdir)/check_mqtt.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_mqtt.Tpo $(DEPDIR)/check_domiotools-check_mqtt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_mqtt.c' object='check_domiotools-check_mqtt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_mqtt.obj `if test -f 'check_mqtt.c'; then $(CYGPATH_W) 'check_mqtt.c'; else $(CYGPATH_W) '$(srcdir)/check_mqtt.c'; fi`
+
+check_domiotools-check_hl.o: check_hl.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_hl.o -MD -MP -MF $(DEPDIR)/check_domiotools-check_hl.Tpo -c -o check_domiotools-check_hl.o `test -f 'check_hl.c' || echo '$(srcdir)/'`check_hl.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_hl.Tpo $(DEPDIR)/check_domiotools-check_hl.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_hl.c' object='check_domiotools-check_hl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_hl.o `test -f 'check_hl.c' || echo '$(srcdir)/'`check_hl.c
+
+check_domiotools-check_hl.obj: check_hl.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_hl.obj -MD -MP -MF $(DEPDIR)/check_domiotools-check_hl.Tpo -c -o check_domiotools-check_hl.obj `if test -f 'check_hl.c'; then $(CYGPATH_W) 'check_hl.c'; else $(CYGPATH_W) '$(srcdir)/check_hl.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_hl.Tpo $(DEPDIR)/check_domiotools-check_hl.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_hl.c' object='check_domiotools-check_hl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_hl.obj `if test -f 'check_hl.c'; then $(CYGPATH_W) 'check_hl.c'; else $(CYGPATH_W) '$(srcdir)/check_hl.c'; fi`
+
+check_domiotools-mock.o: mock.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-mock.o -MD -MP -MF $(DEPDIR)/check_domiotools-mock.Tpo -c -o check_domiotools-mock.o `test -f 'mock.c' || echo '$(srcdir)/'`mock.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-mock.Tpo $(DEPDIR)/check_domiotools-mock.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mock.c' object='check_domiotools-mock.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-mock.o `test -f 'mock.c' || echo '$(srcdir)/'`mock.c
+
+check_domiotools-mock.obj: mock.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-mock.obj -MD -MP -MF $(DEPDIR)/check_domiotools-mock.Tpo -c -o check_domiotools-mock.obj `if test -f 'mock.c'; then $(CYGPATH_W) 'mock.c'; else $(CYGPATH_W) '$(srcdir)/mock.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-mock.Tpo $(DEPDIR)/check_domiotools-mock.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mock.c' object='check_domiotools-mock.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-mock.obj `if test -f 'mock.c'; then $(CYGPATH_W) 'mock.c'; else $(CYGPATH_W) '$(srcdir)/mock.c'; fi`
 
 check_domiotools-urlparser.o: $(top_builddir)/src/urlparser.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-urlparser.o -MD -MP -MF $(DEPDIR)/check_domiotools-urlparser.Tpo -c -o check_domiotools-urlparser.o `test -f '$(top_builddir)/src/urlparser.c' || echo '$(srcdir)/'`$(top_builddir)/src/urlparser.c
@@ -314,6 +379,20 @@ check_domiotools-hash.obj: $(top_builddir)/src/hash.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/hash.c' object='check_domiotools-hash.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-hash.obj `if test -f '$(top_builddir)/src/hash.c'; then $(CYGPATH_W) '$(top_builddir)/src/hash.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/hash.c'; fi`
+
+check_domiotools-mqtt.o: $(top_builddir)/src/mqtt.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-mqtt.o -MD -MP -MF $(DEPDIR)/check_domiotools-mqtt.Tpo -c -o check_domiotools-mqtt.o `test -f '$(top_builddir)/src/mqtt.c' || echo '$(srcdir)/'`$(top_builddir)/src/mqtt.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-mqtt.Tpo $(DEPDIR)/check_domiotools-mqtt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mqtt.c' object='check_domiotools-mqtt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-mqtt.o `test -f '$(top_builddir)/src/mqtt.c' || echo '$(srcdir)/'`$(top_builddir)/src/mqtt.c
+
+check_domiotools-mqtt.obj: $(top_builddir)/src/mqtt.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-mqtt.obj -MD -MP -MF $(DEPDIR)/check_domiotools-mqtt.Tpo -c -o check_domiotools-mqtt.obj `if test -f '$(top_builddir)/src/mqtt.c'; then $(CYGPATH_W) '$(top_builddir)/src/mqtt.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mqtt.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-mqtt.Tpo $(DEPDIR)/check_domiotools-mqtt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mqtt.c' object='check_domiotools-mqtt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-mqtt.obj `if test -f '$(top_builddir)/src/mqtt.c'; then $(CYGPATH_W) '$(top_builddir)/src/mqtt.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mqtt.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

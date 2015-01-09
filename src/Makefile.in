@@ -65,17 +65,16 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_homeasy_sender_OBJECTS = homeasy_sender.$(OBJEXT) common.$(OBJEXT)
 homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
-am__DEPENDENCIES_1 =
-homeasy_sender_DEPENDENCIES = $(am__DEPENDENCIES_1)
+homeasy_sender_DEPENDENCIES =
 am_rf_eventd_OBJECTS = rf_eventd.$(OBJEXT) common.$(OBJEXT) \
 	srts.$(OBJEXT) hash.$(OBJEXT) list.$(OBJEXT) \
 	urlparser.$(OBJEXT)
 rf_eventd_OBJECTS = $(am_rf_eventd_OBJECTS)
-rf_eventd_DEPENDENCIES = $(am__DEPENDENCIES_1)
+rf_eventd_DEPENDENCIES =
 am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) \
 	srts_sender.$(OBJEXT)
 srts_sender_OBJECTS = $(am_srts_sender_OBJECTS)
-srts_sender_DEPENDENCIES = $(am__DEPENDENCIES_1)
+srts_sender_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -124,10 +123,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
-LIBCONFIG_CFLAGS = @LIBCONFIG_CFLAGS@
-LIBCONFIG_LIBS = @LIBCONFIG_LIBS@
-LIBMOSQUITTO_CFLAGS = @LIBMOSQUITTO_CFLAGS@
-LIBMOSQUITTO_LIBS = @LIBMOSQUITTO_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
@@ -149,8 +144,6 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-WIRINGPI_CFLAGS = @WIRINGPI_CFLAGS@
-WIRINGPI_LIBS = @WIRINGPI_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -193,13 +186,13 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = $(WIRINGPI_CFLAGS) $(CONFIG_CFLAGS) -I$(top_srcdir)/include -Wall
+AM_CFLAGS = -I$(top_srcdir)/include -Wall
 srts_sender_SOURCES = srts.c common.c srts_sender.c
-srts_sender_LDADD = $(WIRINGPI_LIBS)
+srts_sender_LDADD = -lwiringPi
 homeasy_sender_SOURCES = homeasy_sender.c common.c
-homeasy_sender_LDADD = $(WIRINGPI_LIBS)
+homeasy_sender_LDADD = -lwiringPi
 rf_eventd_SOURCES = rf_eventd.c common.c srts.c hash.c list.c urlparser.c
-rf_eventd_LDADD = $(WIRINGPI_LIBS) $(CONFIG_LIBS) $(MOSQUITTO_LIBS) $(URIPARSER_LIBS) -lpthread
+rf_eventd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread
 all: all-am
 
 .SUFFIXES:
@@ -213,9 +206,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --foreign src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

@@ -20,4 +20,4 @@
 int mkpath(const char *path, mode_t mode);
 void store_pid();
 
-#endif                          /* COMMON_H_ */
+#endif
