@@ -23,7 +23,7 @@
 
 #include "hl.h"
 
-START_TEST(test_list)
+START_TEST(test_list_push_pop)
 {
   LIST *list;
   char *string1 = "string1";
@@ -57,7 +57,55 @@ START_TEST(test_list)
 }
 END_TEST
 
-START_TEST(test_hash)
+START_TEST(test_list_push_unshift)
+{
+  LIST *list;
+  char *string1 = "string1";
+  char *string2 = "string2";
+  char *ptr;
+
+  list = hl_list_alloc();
+  ck_assert(list != NULL);
+
+  hl_list_push(list, string1, strlen(string1) + 1);
+  ck_assert_int_eq(1, hl_list_count(list));
+  ck_assert_str_eq(string1, hl_list_get(list, 0));
+  ck_assert_str_eq(string1, hl_list_get_last(list));
+
+  hl_list_unshift(list, string2, strlen(string2) + 1);
+  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_str_eq(string2, hl_list_get(list, 0));
+  ck_assert_str_eq(string1, hl_list_get_last(list));
+
+  hl_list_free(list);
+}
+END_TEST
+
+START_TEST(test_list_unshift)
+{
+  LIST *list;
+  char *string1 = "string1";
+  char *string2 = "string2";
+  char *ptr;
+
+  list = hl_list_alloc();
+  ck_assert(list != NULL);
+
+  hl_list_unshift(list, string1, strlen(string1) + 1);
+  ck_assert_int_eq(1, hl_list_count(list));
+  ck_assert_str_eq(string1, hl_list_get(list, 0));
+  ck_assert_str_eq(string1, hl_list_get_last(list));
+
+  hl_list_unshift(list, string2, strlen(string2) + 1);
+  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_str_eq(string2, hl_list_get(list, 0));
+  ck_assert_str_eq(string1, hl_list_get_last(list));
+
+  hl_list_free(list);
+}
+END_TEST
+
+START_TEST(test_hash_put_get)
 {
   HCODE *hash;
   LIST *list;
@@ -87,21 +135,67 @@ START_TEST(test_hash)
   ck_assert_int_eq(2, hl_list_count(list));
   hl_list_free(list);
 
-  /* check override the value of a specific key */
-  hl_hash_put(hash, string2, string1, strlen(string1) + 1);
-  value = hl_hash_get(hash, string2);
+  hl_hash_free(hash);
+}
+END_TEST
+
+START_TEST(test_hash_override)
+{
+  HCODE *hash;
+  char *string1 = "string1";
+  char *string2 = "string2";
+  char *value;
+  int rc;
+
+  hash = hl_hash_alloc(30);
+  ck_assert(hash != NULL);
+
+  hl_hash_put(hash, string1, string1, strlen(string1) + 1);
+  value = hl_hash_get(hash, string1);
   ck_assert_str_eq(string1, value);
 
-  /* check the deletion */
+  hl_hash_put(hash, string1, string2, strlen(string2) + 1);
+  value = hl_hash_get(hash, string1);
+  ck_assert_str_eq(string2, value);
+
+  hl_hash_free(hash);
+}
+END_TEST
+
+START_TEST(test_hash_delete)
+{
+  HCODE *hash;
+  char *string1 = "string1";
+  char *value;
+  int rc;
+
+  hash = hl_hash_alloc(30);
+  ck_assert(hash != NULL);
+
+  hl_hash_put(hash, string1, string1, strlen(string1) + 1);
+  value = hl_hash_get(hash, string1);
+  ck_assert_str_eq(string1, value);
+
   rc = hl_hash_del(hash, string1);
   ck_assert_int_eq(rc, 1);
   value = hl_hash_get(hash, string1);
   ck_assert(value == NULL);
 
   hl_hash_free(hash);
+}
+END_TEST
 
-  /* test collisions */
+START_TEST(test_hash_collision)
+{
+  HCODE *hash;
+  LIST *list;
+  char *string1 = "string1";
+  char *string2 = "string2";
+  char *value;
+  int rc;
+
   hash = hl_hash_alloc(1);
+  ck_assert(hash != NULL);
 
   hl_hash_put(hash, string1, string1, strlen(string1) + 1);
   hl_hash_put(hash, string2, string2, strlen(string2) + 1);
@@ -126,9 +220,14 @@ Suite *hl_suite(void)
   s = suite_create("hl");
   tc_hl = tcase_create("hl");
 
-  tcase_add_test(tc_hl, test_list);
-  tcase_add_test(tc_hl, test_hash);
+  tcase_add_test(tc_hl, test_list_push_pop);
+  tcase_add_test(tc_hl, test_list_push_unshift);
+  tcase_add_test(tc_hl, test_list_unshift);
 
+  tcase_add_test(tc_hl, test_hash_put_get);
+  tcase_add_test(tc_hl, test_hash_override);
+  tcase_add_test(tc_hl, test_hash_delete);
+  tcase_add_test(tc_hl, test_hash_collision);
   suite_add_tcase(s, tc_hl);
 
   return s;

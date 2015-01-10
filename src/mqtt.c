@@ -311,7 +311,7 @@ int mqtt_publish(const char *output, const char *value)
     rc = MQTT_MESSAGE_ERROR;
     goto clean;
   }
-  hl_list_push(broker->queue, &message, sizeof(struct mqtt_message));
+  hl_list_unshift(broker->queue, &message, sizeof(struct mqtt_message));
   pthread_mutex_unlock(&(broker->queue_mutex));
 
   free_url(url);

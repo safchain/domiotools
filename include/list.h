@@ -42,6 +42,7 @@ struct list_iterator_s {
 
 /* prototypes */
 LIST *hl_list_alloc();
+int hl_list_unshift(LIST *, void *, unsigned int);
 int hl_list_push(LIST *, void *, unsigned int);
 void hl_list_pop(LIST *);
 void *hl_list_get_last(LIST *);

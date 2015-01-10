@@ -31,6 +31,30 @@ LIST *hl_list_alloc()
   return list;
 }
 
+int hl_list_unshift(LIST *list, void *value, unsigned int size)
+{
+  LIST_NODE *node_ptr;
+
+  if ((node_ptr = malloc(sizeof(LIST_NODE) + size)) == NULL) {
+    return -1;
+  }
+  node_ptr->prev = NULL;
+
+  if (list->nodes != NULL) {
+    list->nodes->prev = node_ptr;
+    node_ptr->next = list->nodes;
+    list->nodes = node_ptr;
+  } else {
+    list->nodes = node_ptr;
+    node_ptr->next = NULL;
+    list->last = node_ptr;
+  }
+
+  memcpy((char *) node_ptr + sizeof(LIST_NODE), value, size);
+
+  return 0;
+}
+
 int hl_list_push(LIST *list, void *value, unsigned int size)
 {
   LIST_NODE *node_ptr;
