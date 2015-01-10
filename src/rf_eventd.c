@@ -251,6 +251,7 @@ static int publish_to_mqtt(const char *output, const char *value)
       fprintf(stderr, "Unable to parse the output mqtt url\n");
       return 0;
   }
+  memset(&message, 0, sizeof(struct mqtt_message));
 
   broker_ptr = hl_hash_get(mqtt_brokers, url->hostname);
   if (broker_ptr == NULL) {
@@ -265,7 +266,6 @@ static int publish_to_mqtt(const char *output, const char *value)
     broker = *broker_ptr;
   }
 
-  memset(&message, 0, sizeof(struct mqtt_message));
   message.topic = strdup(url->path);
   message.payload = strdup(value);
   if (message.topic == NULL || message.payload == NULL) {

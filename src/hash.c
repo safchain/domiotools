@@ -155,7 +155,7 @@ void *hl_hash_get(HCODE *hcode, const char *key)
 
 LIST *hl_hash_keys(HCODE *hcode)
 {
-  HNODE *hnode_ptr = hcode->nodes;
+  HNODE *hnode_ptr;
   LIST *list;
   unsigned int i;
 
@@ -179,7 +179,7 @@ LIST *hl_hash_keys(HCODE *hcode)
 
 LIST *hl_hash_values(HCODE *hcode)
 {
-  HNODE *hnode_ptr = hcode->nodes;
+  HNODE *hnode_ptr;
   LIST *list;
   unsigned int i;
 
