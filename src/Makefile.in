@@ -50,7 +50,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = srts_sender$(EXEEXT) homeasy_sender$(EXEEXT) \
-	rf_eventd$(EXEEXT)
+	rf_gatewayd$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -66,11 +66,11 @@ PROGRAMS = $(bin_PROGRAMS)
 am_homeasy_sender_OBJECTS = homeasy_sender.$(OBJEXT) common.$(OBJEXT)
 homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
 homeasy_sender_DEPENDENCIES =
-am_rf_eventd_OBJECTS = rf_eventd.$(OBJEXT) common.$(OBJEXT) \
+am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) common.$(OBJEXT) \
 	srts.$(OBJEXT) hash.$(OBJEXT) list.$(OBJEXT) \
-	urlparser.$(OBJEXT)
-rf_eventd_OBJECTS = $(am_rf_eventd_OBJECTS)
-rf_eventd_DEPENDENCIES =
+	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT)
+rf_gatewayd_OBJECTS = $(am_rf_gatewayd_OBJECTS)
+rf_gatewayd_DEPENDENCIES =
 am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) \
 	srts_sender.$(OBJEXT)
 srts_sender_OBJECTS = $(am_srts_sender_OBJECTS)
@@ -83,9 +83,9 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(homeasy_sender_SOURCES) $(rf_eventd_SOURCES) \
+SOURCES = $(homeasy_sender_SOURCES) $(rf_gatewayd_SOURCES) \
 	$(srts_sender_SOURCES)
-DIST_SOURCES = $(homeasy_sender_SOURCES) $(rf_eventd_SOURCES) \
+DIST_SOURCES = $(homeasy_sender_SOURCES) $(rf_gatewayd_SOURCES) \
 	$(srts_sender_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -191,8 +191,8 @@ srts_sender_SOURCES = srts.c common.c srts_sender.c
 srts_sender_LDADD = -lwiringPi -lpthread
 homeasy_sender_SOURCES = homeasy_sender.c common.c
 homeasy_sender_LDADD = -lwiringPi -lpthread
-rf_eventd_SOURCES = rf_eventd.c common.c srts.c hash.c list.c urlparser.c
-rf_eventd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread
+rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hash.c list.c urlparser.c mqtt.c rf_gateway.c
+rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread
 all: all-am
 
 .SUFFIXES:
@@ -270,9 +270,9 @@ clean-binPROGRAMS:
 homeasy_sender$(EXEEXT): $(homeasy_sender_OBJECTS) $(homeasy_sender_DEPENDENCIES) $(EXTRA_homeasy_sender_DEPENDENCIES) 
 	@rm -f homeasy_sender$(EXEEXT)
 	$(LINK) $(homeasy_sender_OBJECTS) $(homeasy_sender_LDADD) $(LIBS)
-rf_eventd$(EXEEXT): $(rf_eventd_OBJECTS) $(rf_eventd_DEPENDENCIES) $(EXTRA_rf_eventd_DEPENDENCIES) 
-	@rm -f rf_eventd$(EXEEXT)
-	$(LINK) $(rf_eventd_OBJECTS) $(rf_eventd_LDADD) $(LIBS)
+rf_gatewayd$(EXEEXT): $(rf_gatewayd_OBJECTS) $(rf_gatewayd_DEPENDENCIES) $(EXTRA_rf_gatewayd_DEPENDENCIES) 
+	@rm -f rf_gatewayd$(EXEEXT)
+	$(LINK) $(rf_gatewayd_OBJECTS) $(rf_gatewayd_LDADD) $(LIBS)
 srts_sender$(EXEEXT): $(srts_sender_OBJECTS) $(srts_sender_DEPENDENCIES) $(EXTRA_srts_sender_DEPENDENCIES) 
 	@rm -f srts_sender$(EXEEXT)
 	$(LINK) $(srts_sender_OBJECTS) $(srts_sender_LDADD) $(LIBS)
@@ -287,7 +287,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy_sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_eventd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mqtt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gateway.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gatewayd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts_sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/urlparser.Po@am__quote@

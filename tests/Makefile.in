@@ -65,6 +65,7 @@ am_check_domiotools_OBJECTS =  \
 	check_domiotools-check_urlparser.$(OBJEXT) \
 	check_domiotools-check_mqtt.$(OBJEXT) \
 	check_domiotools-check_hl.$(OBJEXT) \
+	check_domiotools-check_rf_gateway.$(OBJEXT) \
 	check_domiotools-mock.$(OBJEXT) \
 	check_domiotools-urlparser.$(OBJEXT) \
 	check_domiotools-list.$(OBJEXT) \
@@ -189,6 +190,7 @@ check_domiotools_SOURCES = check_domiotools.c \
 						   check_urlparser.c \
 						   check_mqtt.c \
 						   check_hl.c \
+						   check_rf_gateway.c \
 						   mock.c \
 						   $(top_builddir)/src/urlparser.c \
 						   $(top_builddir)/src/list.c \
@@ -247,6 +249,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_domiotools.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_hl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_mqtt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_rf_gateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-check_urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_domiotools-list.Po@am__quote@
@@ -323,6 +326,20 @@ check_domiotools-check_hl.obj: check_hl.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_hl.c' object='check_domiotools-check_hl.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_hl.obj `if test -f 'check_hl.c'; then $(CYGPATH_W) 'check_hl.c'; else $(CYGPATH_W) '$(srcdir)/check_hl.c'; fi`
+
+check_domiotools-check_rf_gateway.o: check_rf_gateway.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_rf_gateway.o -MD -MP -MF $(DEPDIR)/check_domiotools-check_rf_gateway.Tpo -c -o check_domiotools-check_rf_gateway.o `test -f 'check_rf_gateway.c' || echo '$(srcdir)/'`check_rf_gateway.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_rf_gateway.Tpo $(DEPDIR)/check_domiotools-check_rf_gateway.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_rf_gateway.c' object='check_domiotools-check_rf_gateway.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_rf_gateway.o `test -f 'check_rf_gateway.c' || echo '$(srcdir)/'`check_rf_gateway.c
+
+check_domiotools-check_rf_gateway.obj: check_rf_gateway.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-check_rf_gateway.obj -MD -MP -MF $(DEPDIR)/check_domiotools-check_rf_gateway.Tpo -c -o check_domiotools-check_rf_gateway.obj `if test -f 'check_rf_gateway.c'; then $(CYGPATH_W) 'check_rf_gateway.c'; else $(CYGPATH_W) '$(srcdir)/check_rf_gateway.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_domiotools-check_rf_gateway.Tpo $(DEPDIR)/check_domiotools-check_rf_gateway.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_rf_gateway.c' object='check_domiotools-check_rf_gateway.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -c -o check_domiotools-check_rf_gateway.obj `if test -f 'check_rf_gateway.c'; then $(CYGPATH_W) 'check_rf_gateway.c'; else $(CYGPATH_W) '$(srcdir)/check_rf_gateway.c'; fi`
 
 check_domiotools-mock.o: mock.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_domiotools_CFLAGS) $(CFLAGS) -MT check_domiotools-mock.o -MD -MP -MF $(DEPDIR)/check_domiotools-mock.Tpo -c -o check_domiotools-mock.o `test -f 'mock.c' || echo '$(srcdir)/'`mock.c

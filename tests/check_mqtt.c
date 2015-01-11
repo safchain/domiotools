@@ -38,6 +38,14 @@ static int rc_success = MOSQ_ERR_SUCCESS;
 static int rc_error = MOSQ_ERR_UNKNOWN;
 int verbose = 0;
 
+int mosquitto_lib_init(void)
+{
+}
+
+int mosquitto_lib_cleanup(void)
+{
+}
+
 const char *mosquitto_strerror(int mosq_errno)
 {
   return "";

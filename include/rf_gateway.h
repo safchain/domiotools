@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -14,31 +14,11 @@
  * 02110-1301, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
-#include <check.h>
+#ifndef RF_GATEWAY_H_
+#define RF_GATEWAY_H_
 
-#include "check_suites.h"
+void rf_gw_handle_interrupt(int type, long time);
+int rf_gw_read_config(char *in, int file);
+void rf_gw_loop();
 
-int main(void)
-{
-  Suite *s;
-  SRunner *sr;
-  int number_failed;
-  int rc;
-
-  sr = srunner_create(urlparser_suite());
-  srunner_add_suite (sr, hl_suite ());
-  srunner_add_suite (sr, mqtt_suite ());
-  srunner_add_suite (sr, rf_suite ());
-
-  srunner_run_all(sr, CK_VERBOSE);
-
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
-
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+#endif

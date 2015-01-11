@@ -4,6 +4,7 @@ check_domiotools_SOURCES = check_domiotools.c \
 						   check_urlparser.c \
 						   check_mqtt.c \
 						   check_hl.c \
+						   check_rf_gateway.c \
 						   mock.c \
 						   $(top_builddir)/src/urlparser.c \
 						   $(top_builddir)/src/list.c \

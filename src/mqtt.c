@@ -331,13 +331,12 @@ clean:
 }
 
 int mqtt_init() {
-  int rc;
-
   mqtt_brokers = hl_hash_alloc(32);
   if (mqtt_brokers == NULL) {
     fprintf(stderr, "Memory allocation error during mqtt initialization\n");
     return 0;
   }
+  mosquitto_lib_init();
 
   return 1;
 }
@@ -370,4 +369,6 @@ void mqtt_destroy() {
 
   hl_hash_free(mqtt_brokers);
   mqtt_brokers = NULL;
+
+  mosquitto_lib_cleanup();
 }

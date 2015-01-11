@@ -22,5 +22,6 @@
 Suite *urlparser_suite(void);
 Suite *hl_suite(void);
 Suite *mqtt_suite(void);
+Suite *rf_suite(void);
 
 #endif

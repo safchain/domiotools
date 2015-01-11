@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -20,25 +20,43 @@
 #include <limits.h>
 #include <errno.h>
 #include <check.h>
+#include <assert.h>
+#include <stdarg.h>
 
-#include "check_suites.h"
+#include "mock.h"
+#include "rf_gateway.h"
 
-int main(void)
+int srts_handler(int type, int duration)
+{
+
+}
+
+void test_rf_setup()
+{
+}
+
+void test_rf_teardown()
+{
+}
+
+START_TEST(test_srts_publish)
+{
+}
+END_TEST
+
+Suite *rf_suite(void)
 {
   Suite *s;
-  SRunner *sr;
-  int number_failed;
+  TCase *tc_rf;
   int rc;
 
-  sr = srunner_create(urlparser_suite());
-  srunner_add_suite (sr, hl_suite ());
-  srunner_add_suite (sr, mqtt_suite ());
-  srunner_add_suite (sr, rf_suite ());
+  s = suite_create("rf_gateway");
+  tc_rf = tcase_create("rf_gateway");
 
-  srunner_run_all(sr, CK_VERBOSE);
+  tcase_add_checked_fixture(tc_rf, test_rf_setup, test_rf_teardown);
+  tcase_add_test(tc_rf, test_srts_publish);
 
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
+  suite_add_tcase(s, tc_rf);
 
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return s;
 }
