@@ -161,9 +161,6 @@ void rf_gw_handle_interrupt(int type, long time)
 
   if (last_change) {
     duration = time - last_change;
-  } else {
-    last_change = time;
-    return;
   }
   last_change = time;
 

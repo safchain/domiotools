@@ -25,22 +25,70 @@
 
 #include "mock.h"
 #include "rf_gateway.h"
+#include "srts.h"
+#include "mqtt.h"
 
-int srts_handler(int type, int duration)
+int debug;
+int verbose;
+
+int mqtt_publish(const char *output, const char *value)
 {
+  mock_called("mqtt_publish");
 
+  return MQTT_SUCCESS;
+}
+
+void srts_print_payload(struct srts_payload *payload)
+{
+}
+
+int srts_get_address(struct srts_payload *payload)
+{
+  return *((int *) mock_returns("srts_get_address"));
+}
+
+const char *srts_get_ctrl_str(struct srts_payload *payload)
+{
+  return NULL;
+}
+
+int srts_receive(int type, int duration, struct srts_payload *payload)
+{
+  mock_called("srts_receive");
+
+  return 1;
 }
 
 void test_rf_setup()
 {
+  mock_init();
 }
 
 void test_rf_teardown()
 {
+  mock_destroy();
 }
 
 START_TEST(test_srts_publish)
 {
+  char *conf = "config:{"
+    "publishers:({"
+        "type: \"srts\";"
+        "address: 3333;"
+        "output: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, address = 3333;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 1);
+
+  mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
+
+  rf_gw_handle_interrupt(0, 50);
+  rf_gw_handle_interrupt(1, 1500);
+
+  rc = mock_calls("srts_receive");
+  ck_assert_int_eq(rc, 1);
 }
 END_TEST
 
@@ -59,4 +107,19 @@ Suite *rf_suite(void)
   suite_add_tcase(s, tc_rf);
 
   return s;
+}
+
+int main(void)
+{
+  Suite *s;
+  SRunner *sr;
+  int number_failed;
+
+  sr = srunner_create(rf_suite ());
+  srunner_run_all(sr, CK_VERBOSE);
+
+  number_failed = srunner_ntests_failed(sr);
+  srunner_free(sr);
+
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
