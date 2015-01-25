@@ -50,7 +50,7 @@ struct mqtt_message {
     unsigned int payload_len;
 };
 
-static HCODE *mqtt_brokers;
+static HMAP *mqtt_brokers;
 
 static struct mqtt_broker *mqtt_broker_alloc(struct mosquitto *mosq)
 {
@@ -281,7 +281,7 @@ int mqtt_publish(const char *output, const char *value)
     goto clean;
   }
 
-  broker_ptr = hl_hash_get(mqtt_brokers, url->hostname);
+  broker_ptr = hl_hmap_get(mqtt_brokers, url->hostname);
   if (broker_ptr == NULL) {
       broker = mqtt_connect(url);
       if (broker == NULL) {
@@ -289,7 +289,7 @@ int mqtt_publish(const char *output, const char *value)
           goto clean;
       }
       broker_ptr = &broker;
-      hl_hash_put(mqtt_brokers, url->hostname, broker_ptr,
+      hl_hmap_put(mqtt_brokers, url->hostname, broker_ptr,
               sizeof(struct mqtt_broker *));
   } else {
     broker = *broker_ptr;
@@ -330,8 +330,13 @@ clean:
   return rc;
 }
 
+int mqtt_subscribe(const char *input, int type, int address)
+{
+  return 0;
+}
+
 int mqtt_init() {
-  mqtt_brokers = hl_hash_alloc(32);
+  mqtt_brokers = hl_hmap_alloc(32);
   if (mqtt_brokers == NULL) {
     fprintf(stderr, "Memory allocation error during mqtt initialization\n");
     return 0;
@@ -343,7 +348,7 @@ int mqtt_init() {
 
 void mqtt_destroy() {
   struct mqtt_broker *broker;
-  HCODE_ITERATOR iterator;
+  HMAP_ITERATOR iterator;
   HNODE *hnode;
   int rc;
 
@@ -351,8 +356,8 @@ void mqtt_destroy() {
     return;
   }
 
-  hl_hash_init_iterator(mqtt_brokers, &iterator);
-  while((hnode = hl_hash_iterate(&iterator)) != NULL) {
+  hl_hmap_init_iterator(mqtt_brokers, &iterator);
+  while((hnode = hl_hmap_iterate(&iterator)) != NULL) {
     broker = *((struct mqtt_broker **) hnode->value);
     rc = pthread_rwlock_wrlock(&(broker->running_rwlock));
     if (rc == 0) {
@@ -367,7 +372,7 @@ void mqtt_destroy() {
     pthread_join(broker->thread, NULL);
   }
 
-  hl_hash_free(mqtt_brokers);
+  hl_hmap_free(mqtt_brokers);
   mqtt_brokers = NULL;
 
   mosquitto_lib_cleanup();

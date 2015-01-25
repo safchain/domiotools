@@ -18,16 +18,16 @@
 #include "config.h"
 #endif
 
-#ifndef __HCODE_H
-#define __HCODE_H
+#ifndef __HMAP_H
+#define __HMAP_H
 
 #include "list.h"
 
-typedef struct hcode_s HCODE;
+typedef struct hmap_s HMAP;
 typedef struct hnode_s HNODE;
-typedef struct hl_hash_iterator_s HCODE_ITERATOR;
+typedef struct hl_hmap_iterator_s HMAP_ITERATOR;
 
-struct hcode_s {
+struct hmap_s {
   HNODE *nodes;
   unsigned int hsize;
 };
@@ -38,24 +38,24 @@ struct hnode_s {
   HNODE *next;
 };
 
-struct hl_hash_iterator_s {
-  HCODE *hcode;
+struct hl_hmap_iterator_s {
+  HMAP *hmap;
   unsigned int index;
   HNODE *current;
 };
 
 /* prototypes */
-char *hl_hash_get_error(void);
-HCODE *hl_hash_alloc();
-HNODE *hl_hash_put(HCODE *, const char *, const void *, unsigned int);
-void *hl_hash_get(HCODE *, const char *);
-LIST *hl_hash_keys(HCODE *);
-LIST *hl_hash_values(HCODE *);
-void hl_hash_reset(HCODE *);
-void hl_hash_free(HCODE *);
-void hl_hash_free_node(HNODE *);
-HNODE *hl_hash_iterate(HCODE_ITERATOR *);
-void hl_hash_init_iterator(HCODE *, HCODE_ITERATOR *);
-int hl_hash_del(HCODE *, const char *);
+char *hl_hmap_get_error(void);
+HMAP *hl_hmap_alloc();
+HNODE *hl_hmap_put(HMAP *, const char *, const void *, unsigned int);
+void *hl_hmap_get(HMAP *, const char *);
+LIST *hl_hmap_keys(HMAP *);
+LIST *hl_hmap_values(HMAP *);
+void hl_hmap_reset(HMAP *);
+void hl_hmap_free(HMAP *);
+void hl_hmap_free_node(HNODE *);
+HNODE *hl_hmap_iterate(HMAP_ITERATOR *);
+void hl_hmap_init_iterator(HMAP *, HMAP_ITERATOR *);
+int hl_hmap_del(HMAP *, const char *);
 
 #endif

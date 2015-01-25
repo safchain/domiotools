@@ -6,7 +6,7 @@
  * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ / even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with this program; if
@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "hash.h"
+#include "hmap.h"
 #include "list.h"
 
 #define HSIZE 255
@@ -29,28 +29,28 @@ static void _free0(void **ptr)
   *ptr = NULL;
 }
 
-HCODE *hl_hash_alloc(unsigned int size)
+HMAP *hl_hmap_alloc(unsigned int size)
 {
-  HCODE *hcode;
+  HMAP *hmap;
 
   if (!size) {
     size = HSIZE;
   }
 
-  if ((hcode = malloc(sizeof(HCODE))) == NULL) {
+  if ((hmap = malloc(sizeof(HMAP))) == NULL) {
     return NULL;
   }
 
-  if ((hcode->nodes = calloc(size, sizeof(HNODE))) == NULL) {
-    free(hcode);
+  if ((hmap->nodes = calloc(size, sizeof(HNODE))) == NULL) {
+    free(hmap);
     return NULL;
   }
-  hcode->hsize = size;
+  hmap->hsize = size;
 
-  return hcode;
+  return hmap;
 }
 
-static inline unsigned int hl_hash_get_key(HCODE *hcode, const char *key)
+static inline unsigned int hl_hmap_get_key(HMAP *hmap, const char *key)
 {
   unsigned int hash = 0;
   const char *c = key;
@@ -65,16 +65,16 @@ static inline unsigned int hl_hash_get_key(HCODE *hcode, const char *key)
   hash ^= (hash >> 11);
   hash += (hash << 15);
 
-  return hash % hcode->hsize;
+  return hash % hmap->hsize;
 }
 
-HNODE *hl_hash_put(HCODE *hcode, const char *key, const void *value,
+HNODE *hl_hmap_put(HMAP *hmap, const char *key, const void *value,
                    unsigned int size)
 {
-  HNODE *hnode_ptr = hcode->nodes;
+  HNODE *hnode_ptr = hmap->nodes;
   unsigned int index = 0;
 
-  index = hl_hash_get_key(hcode, key);
+  index = hl_hmap_get_key(hmap, key);
 
   hnode_ptr = (HNODE *) (hnode_ptr + index);
   do {
@@ -121,12 +121,12 @@ error:
   return hnode_ptr;
 }
 
-static HNODE *hl_hash_get_node(HCODE *hcode, const char *key)
+static HNODE *hl_hmap_get_node(HMAP *hmap, const char *key)
 {
-  HNODE *hnode_ptr = hcode->nodes;
+  HNODE *hnode_ptr = hmap->nodes;
   unsigned int index = 0;
 
-  index = hl_hash_get_key(hcode, key);
+  index = hl_hmap_get_key(hmap, key);
 
   hnode_ptr = (HNODE *) (hnode_ptr + index);
   do {
@@ -143,9 +143,9 @@ static HNODE *hl_hash_get_node(HCODE *hcode, const char *key)
 }
 
 
-void *hl_hash_get(HCODE *hcode, const char *key)
+void *hl_hmap_get(HMAP *hmap, const char *key)
 {
-  HNODE *hnode_ptr = hl_hash_get_node(hcode, key);
+  HNODE *hnode_ptr = hl_hmap_get_node(hmap, key);
   if (hnode_ptr != NULL) {
     return hnode_ptr->value;
   }
@@ -153,7 +153,7 @@ void *hl_hash_get(HCODE *hcode, const char *key)
   return NULL;
 }
 
-LIST *hl_hash_keys(HCODE *hcode)
+LIST *hl_hmap_keys(HMAP *hmap)
 {
   HNODE *hnode_ptr;
   LIST *list;
@@ -163,8 +163,8 @@ LIST *hl_hash_keys(HCODE *hcode)
     return NULL;
   }
 
-  for (i = 0; i != hcode->hsize; i++) {
-    hnode_ptr = (HNODE *) (hcode->nodes + i);
+  for (i = 0; i != hmap->hsize; i++) {
+    hnode_ptr = (HNODE *) (hmap->nodes + i);
 
     do {
       if (hnode_ptr->key != NULL) {
@@ -177,7 +177,7 @@ LIST *hl_hash_keys(HCODE *hcode)
   return list;
 }
 
-LIST *hl_hash_values(HCODE *hcode)
+LIST *hl_hmap_values(HMAP *hmap)
 {
   HNODE *hnode_ptr;
   LIST *list;
@@ -187,8 +187,8 @@ LIST *hl_hash_values(HCODE *hcode)
     return NULL;
   }
 
-  for (i = 0; i != hcode->hsize; i++) {
-    hnode_ptr = (HNODE *) (hcode->nodes + i);
+  for (i = 0; i != hmap->hsize; i++) {
+    hnode_ptr = (HNODE *) (hmap->nodes + i);
 
     do {
       if (hnode_ptr->key != NULL) {
@@ -201,15 +201,15 @@ LIST *hl_hash_values(HCODE *hcode)
   return list;
 }
 
-void hl_hash_reset(HCODE *hcode)
+void hl_hmap_reset(HMAP *hmap)
 {
   HNODE *hnodes_ptr;
   HNODE *hnode_ptr;
   HNODE *next_ptr;
-  unsigned int size = hcode->hsize;
+  unsigned int size = hmap->hsize;
   unsigned int i;
 
-  hnodes_ptr = hcode->nodes;
+  hnodes_ptr = hmap->nodes;
 
   for (i = 0; i != size; i++) {
     hnode_ptr = ((HNODE *) hnodes_ptr) + i;
@@ -237,21 +237,21 @@ void hl_hash_reset(HCODE *hcode)
   }
 }
 
-void hl_hash_init_iterator(HCODE *hcode, HCODE_ITERATOR *iterator)
+void hl_hmap_init_iterator(HMAP *hmap, HMAP_ITERATOR *iterator)
 {
-  iterator->hcode = hcode;
+  iterator->hmap = hmap;
   iterator->index = 0;
   iterator->current = NULL;
 }
 
-inline HNODE *hl_hash_iterate(HCODE_ITERATOR *iterator)
+inline HNODE *hl_hmap_iterate(HMAP_ITERATOR *iterator)
 {
   HNODE *hnodes_ptr;
   HNODE *hnode_ptr;
   unsigned int size;
 
-  size = iterator->hcode->hsize;
-  hnodes_ptr = iterator->hcode->nodes;
+  size = iterator->hmap->hsize;
+  hnodes_ptr = iterator->hmap->nodes;
   while (iterator->index != size) {
     if (iterator->current != NULL) {
       hnode_ptr = iterator->current;
@@ -269,26 +269,26 @@ inline HNODE *hl_hash_iterate(HCODE_ITERATOR *iterator)
   return NULL;
 }
 
-void hl_hash_free_node(HNODE *hnode)
+void hl_hmap_free_node(HNODE *hnode)
 {
   _free0((void *) &hnode->key);
   free(hnode->value);
 }
 
-int hl_hash_del(HCODE *hcode, const char *key)
+int hl_hmap_del(HMAP *hmap, const char *key)
 {
-  HNODE *hnode_ptr = hl_hash_get_node(hcode, key);
+  HNODE *hnode_ptr = hl_hmap_get_node(hmap, key);
   if (hnode_ptr != NULL) {
-    hl_hash_free_node(hnode_ptr);
+    hl_hmap_free_node(hnode_ptr);
     return 1;
   }
 
   return 0;
 }
 
-void hl_hash_free(HCODE *hcode)
+void hl_hmap_free(HMAP *hmap)
 {
-  hl_hash_reset(hcode);
-  free(hcode->nodes);
-  free(hcode);
+  hl_hmap_reset(hmap);
+  free(hmap->nodes);
+  free(hmap);
 }

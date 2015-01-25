@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -176,16 +176,71 @@ void rf_gw_handle_interrupt(int type, long time)
   }
 }
 
-static int add_publisher_type(char *type)
+static int str_type_to_int(const char *type)
 {
   if (strcmp(type, "srts") == 0) {
-    publisher_types |= SRTS;
+    return SRTS;
   } else if (strcmp(type, "homeasy") == 0) {
-    publisher_types |= HOMEASY;
-  } else {
+    return HOMEASY;
+  }
+
+  return 0;
+}
+
+static int add_publisher_type(const char *type)
+{
+  int t = str_type_to_int(type);
+  if (!t) {
     fprintf(stderr, "Publisher type unknown: %s\n", type);
     return 0;
   }
+  publisher_types |= t;
+
+  return 1;
+}
+
+static int subscribe()
+{
+  config_setting_t *hs, *h;
+  char *input, *type;
+  int address, t, i = 0;
+
+  hs = config_lookup(&cfg, "config.subscribers");
+  if (hs == NULL) {
+    /* log as warning or info */
+    fprintf(stderr, "No subscriber defined!\n");
+    return 1;
+  }
+
+  do {
+    h = config_setting_get_elem(hs, i);
+    if (h != NULL) {
+      if (!config_setting_lookup_string(h, "input", (const char **) &input)) {
+        fprintf(stderr, "No type defined for the subscriber line: %d\n",
+                config_setting_source_line(h));
+        return 0;
+      }
+      if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
+        fprintf(stderr, "No type defined for the subscriber line: %d\n",
+                config_setting_source_line(h));
+        return 0;
+      }
+      if (!config_setting_lookup_int(h, "address", (int *) &address)) {
+        fprintf(stderr, "No address defined for the subscriber line: %d\n",
+                config_setting_source_line(h));
+        return 0;
+      }
+      t = str_type_to_int(type);
+      if (!t) {
+        fprintf(stderr, "Subscriber type unknown: %s\n", type);
+        return 0;
+      }
+      if (!mqtt_subscribe(input, t, address)) {
+        return 0;
+      }
+    }
+    i++;
+  } while (h != NULL);
 
   return 1;
 }
@@ -193,13 +248,14 @@ static int add_publisher_type(char *type)
 static int read_publisher_types()
 {
   config_setting_t *hs, *h;
-  unsigned int i = 0;
-  char *type;
+  char *type, *output;
+  int address, i = 0;
 
   hs = config_lookup(&cfg, "config.publishers");
   if (hs == NULL) {
+    /* log as warning or info */
     fprintf(stderr, "No publisher defined!\n");
-    return 0;
+    return 1;
   }
 
   do {
@@ -208,10 +264,21 @@ static int read_publisher_types()
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
         fprintf(stderr, "No type defined for the publisher line: %d\n",
                 config_setting_source_line(h));
-      } else {
-        if (!add_publisher_type(type)) {
-          return 0;
-        }
+        return 0;
+      }
+      if (!config_setting_lookup_string(h, "output", (const char **) &output)) {
+        fprintf(stderr, "No output defined for the publisher line: %d\n",
+                config_setting_source_line(h));
+        return 0;
+      }
+      if (!config_setting_lookup_int(h, "address", (int *) &address)) {
+        fprintf(stderr, "No address defined for the publisher line: %d\n",
+                config_setting_source_line(h));
+        return 0;
+      }
+
+      if (!add_publisher_type(type)) {
+        return 0;
       }
     }
     i++;
@@ -240,6 +307,10 @@ int rf_gw_read_config(char *in, int file)
   }
 
   if (!read_publisher_types()) {
+    return 0;
+  }
+
+  if (!subscribe()) {
     return 0;
   }
 

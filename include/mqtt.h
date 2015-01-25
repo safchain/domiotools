@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -28,5 +28,6 @@ enum {
 int mqtt_init();
 void mqtt_destroy();
 int mqtt_publish(const char *output, const char *value);
+int mqtt_subscribe(const char *input, int type, int address);
 
 #endif

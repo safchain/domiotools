@@ -13,5 +13,5 @@ srts_sender_LDADD = -lwiringPi -lpthread
 homeasy_sender_SOURCES = homeasy_sender.c common.c
 homeasy_sender_LDADD = -lwiringPi -lpthread
 
-rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hash.c list.c urlparser.c mqtt.c rf_gateway.c
+rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c mqtt.c rf_gateway.c
 rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread

@@ -22,6 +22,6 @@
 #define __HL_H
 
 #include "list.h"
-#include "hash.h"
+#include "hmap.h"
 
 #endif

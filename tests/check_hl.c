@@ -105,110 +105,110 @@ START_TEST(test_list_unshift)
 }
 END_TEST
 
-START_TEST(test_hash_put_get)
+START_TEST(test_hmap_put_get)
 {
-  HCODE *hash;
+  HMAP *hmap;
   LIST *list;
   char *string1 = "string1";
   char *string2 = "string2";
   char *value;
   int rc;
 
-  hash = hl_hash_alloc(30);
-  ck_assert(hash != NULL);
+  hmap = hl_hmap_alloc(30);
+  ck_assert(hmap != NULL);
 
-  hl_hash_put(hash, string1, string1, strlen(string1) + 1);
-  value = hl_hash_get(hash, string1);
+  hl_hmap_put(hmap, string1, string1, strlen(string1) + 1);
+  value = hl_hmap_get(hmap, string1);
   ck_assert_str_eq(string1, value);
 
-  hl_hash_put(hash, string2, string2, strlen(string2) + 1);
-  value = hl_hash_get(hash, string2);
+  hl_hmap_put(hmap, string2, string2, strlen(string2) + 1);
+  value = hl_hmap_get(hmap, string2);
   ck_assert_str_eq(string2, value);
 
   /* check the keys */
-  list = hl_hash_keys(hash);
+  list = hl_hmap_keys(hmap);
   ck_assert_int_eq(2, hl_list_count(list));
   hl_list_free(list);
 
   /* check the values */
-  list = hl_hash_values(hash);
+  list = hl_hmap_values(hmap);
   ck_assert_int_eq(2, hl_list_count(list));
   hl_list_free(list);
 
-  hl_hash_free(hash);
+  hl_hmap_free(hmap);
 }
 END_TEST
 
-START_TEST(test_hash_override)
+START_TEST(test_hmap_override)
 {
-  HCODE *hash;
+  HMAP *hmap;
   char *string1 = "string1";
   char *string2 = "string2";
   char *value;
   int rc;
 
-  hash = hl_hash_alloc(30);
-  ck_assert(hash != NULL);
+  hmap = hl_hmap_alloc(30);
+  ck_assert(hmap != NULL);
 
-  hl_hash_put(hash, string1, string1, strlen(string1) + 1);
-  value = hl_hash_get(hash, string1);
+  hl_hmap_put(hmap, string1, string1, strlen(string1) + 1);
+  value = hl_hmap_get(hmap, string1);
   ck_assert_str_eq(string1, value);
 
-  hl_hash_put(hash, string1, string2, strlen(string2) + 1);
-  value = hl_hash_get(hash, string1);
+  hl_hmap_put(hmap, string1, string2, strlen(string2) + 1);
+  value = hl_hmap_get(hmap, string1);
   ck_assert_str_eq(string2, value);
 
-  hl_hash_free(hash);
+  hl_hmap_free(hmap);
 }
 END_TEST
 
-START_TEST(test_hash_delete)
+START_TEST(test_hmap_delete)
 {
-  HCODE *hash;
+  HMAP *hmap;
   char *string1 = "string1";
   char *value;
   int rc;
 
-  hash = hl_hash_alloc(30);
-  ck_assert(hash != NULL);
+  hmap = hl_hmap_alloc(30);
+  ck_assert(hmap != NULL);
 
-  hl_hash_put(hash, string1, string1, strlen(string1) + 1);
-  value = hl_hash_get(hash, string1);
+  hl_hmap_put(hmap, string1, string1, strlen(string1) + 1);
+  value = hl_hmap_get(hmap, string1);
   ck_assert_str_eq(string1, value);
 
-  rc = hl_hash_del(hash, string1);
+  rc = hl_hmap_del(hmap, string1);
   ck_assert_int_eq(rc, 1);
-  value = hl_hash_get(hash, string1);
+  value = hl_hmap_get(hmap, string1);
   ck_assert(value == NULL);
 
-  hl_hash_free(hash);
+  hl_hmap_free(hmap);
 }
 END_TEST
 
-START_TEST(test_hash_collision)
+START_TEST(test_hmap_collision)
 {
-  HCODE *hash;
+  HMAP *hmap;
   LIST *list;
   char *string1 = "string1";
   char *string2 = "string2";
   char *value;
   int rc;
 
-  hash = hl_hash_alloc(1);
-  ck_assert(hash != NULL);
+  hmap = hl_hmap_alloc(1);
+  ck_assert(hmap != NULL);
 
-  hl_hash_put(hash, string1, string1, strlen(string1) + 1);
-  hl_hash_put(hash, string2, string2, strlen(string2) + 1);
+  hl_hmap_put(hmap, string1, string1, strlen(string1) + 1);
+  hl_hmap_put(hmap, string2, string2, strlen(string2) + 1);
 
-  list = hl_hash_keys(hash);
+  list = hl_hmap_keys(hmap);
   ck_assert_int_eq(2, hl_list_count(list));
   hl_list_free(list);
 
-  list = hl_hash_values(hash);
+  list = hl_hmap_values(hmap);
   ck_assert_int_eq(2, hl_list_count(list));
   hl_list_free(list);
 
-  hl_hash_free(hash);
+  hl_hmap_free(hmap);
 }
 END_TEST
 
@@ -224,10 +224,10 @@ Suite *hl_suite(void)
   tcase_add_test(tc_hl, test_list_push_unshift);
   tcase_add_test(tc_hl, test_list_unshift);
 
-  tcase_add_test(tc_hl, test_hash_put_get);
-  tcase_add_test(tc_hl, test_hash_override);
-  tcase_add_test(tc_hl, test_hash_delete);
-  tcase_add_test(tc_hl, test_hash_collision);
+  tcase_add_test(tc_hl, test_hmap_put_get);
+  tcase_add_test(tc_hl, test_hmap_override);
+  tcase_add_test(tc_hl, test_hmap_delete);
+  tcase_add_test(tc_hl, test_hmap_collision);
   suite_add_tcase(s, tc_hl);
 
   return s;

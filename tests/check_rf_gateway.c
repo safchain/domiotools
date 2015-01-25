@@ -22,8 +22,8 @@
 #include <check.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <cmocker.h>
 
-#include "mock.h"
 #include "rf_gateway.h"
 #include "srts.h"
 #include "mqtt.h"
@@ -31,13 +31,16 @@
 int debug;
 int verbose;
 
-const char *ctrl = "UP";
-
 int mqtt_publish(const char *output, const char *value)
 {
-  if (strcmp(value, ctrl) == 0) {
-    mock_called("mqtt_publish");
-  }
+  mock_called_with("mqtt_publish", (char *) value);
+
+  return MQTT_SUCCESS;
+}
+
+int mqtt_subscribe(const char *input, int type, int address)
+{
+  mock_called_with("mqtt_subscribe", (char *) input);
 
   return MQTT_SUCCESS;
 }
@@ -53,7 +56,7 @@ int srts_get_address(struct srts_payload *payload)
 
 const char *srts_get_ctrl_str(struct srts_payload *payload)
 {
-  return ctrl;
+  return "UP";
 }
 
 int srts_receive(int type, int duration, struct srts_payload *payload)
@@ -77,6 +80,125 @@ void test_rf_teardown()
 {
   mock_destroy();
 }
+
+START_TEST(test_config_publisher_no_type_error)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "address: 3333;"
+        "output: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 0);
+}
+END_TEST
+
+START_TEST(test_config_publisher_no_output_error)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 0);
+}
+END_TEST
+
+START_TEST(test_config_publisher_no_address_error)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "type: \"srts\";"
+        "output: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 0);
+}
+END_TEST
+
+START_TEST(test_config_publisher_success)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "type: \"srts\";"
+        "address: 3333;"
+        "output: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 1);
+}
+END_TEST
+
+START_TEST(test_config_subscriber_no_type_error)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "address: 3333;"
+        "input: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 0);
+  ck_assert_int_eq(0, mock_calls("mqtt_subscriber"));
+}
+END_TEST
+
+START_TEST(test_config_subscriber_no_output_error)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 0);
+  ck_assert_int_eq(0, mock_calls("mqtt_subscriber"));
+}
+END_TEST
+
+START_TEST(test_config_subscriber_no_address_error)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "type: \"srts\";"
+        "input: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 0);
+  ck_assert_int_eq(0, mock_calls("mqtt_subscriber"));
+}
+END_TEST
+
+START_TEST(test_config_subscriber_success)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "type: \"srts\";"
+        "address: 3333;"
+        "input: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 1);
+  ck_assert_str_eq("mqtt://localhost:1883/3333",
+          mock_call("mqtt_subscribe", 0));
+}
+END_TEST
 
 START_TEST(test_srts_publish)
 {
@@ -117,6 +239,7 @@ START_TEST(test_srts_publish)
 
   rc = mock_calls("mqtt_publish");
   ck_assert_int_eq(rc, 1);
+  ck_assert_str_eq("UP", mock_call("mqtt_publish", 0));
 }
 END_TEST
 
@@ -147,6 +270,7 @@ START_TEST(test_srts_publish_same_twice)
 
   rc = mock_calls("mqtt_publish");
   ck_assert_int_eq(rc, 1);
+  ck_assert_str_eq("UP", mock_call("mqtt_publish", 0));
 
   address = 3333;
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
@@ -161,7 +285,6 @@ START_TEST(test_srts_publish_same_twice)
 }
 END_TEST
 
-
 Suite *rf_suite(void)
 {
   Suite *s;
@@ -172,9 +295,16 @@ Suite *rf_suite(void)
   tc_rf = tcase_create("rf_gateway");
 
   tcase_add_checked_fixture(tc_rf, test_rf_setup, test_rf_teardown);
+  tcase_add_test(tc_rf, test_config_publisher_no_type_error);
+  tcase_add_test(tc_rf, test_config_publisher_no_output_error);
+  tcase_add_test(tc_rf, test_config_publisher_no_address_error);
+  tcase_add_test(tc_rf, test_config_publisher_success);
+  tcase_add_test(tc_rf, test_config_subscriber_no_type_error);
+  tcase_add_test(tc_rf, test_config_subscriber_no_output_error);
+  tcase_add_test(tc_rf, test_config_subscriber_no_address_error);
+  tcase_add_test(tc_rf, test_config_subscriber_success);
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
-
   suite_add_tcase(s, tc_rf);
 
   return s;

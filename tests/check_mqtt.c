@@ -23,8 +23,8 @@
 #include <mosquitto.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <cmocker.h>
 
-#include "mock.h"
 #include "mqtt.h"
 
 struct mosquitto {
