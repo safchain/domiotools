@@ -15,6 +15,13 @@ automake
 make
 sudo make install
 
+# cmocker
+git clone https://github.com/safchain/cmocker.git
+cd cmocker
+./configure
+make
+sudo make install
+
 # mosquitto
 git clone http://git.eclipse.org/gitroot/mosquitto/org.eclipse.mosquitto.git
 cd org.eclipse.mosquitto/lib

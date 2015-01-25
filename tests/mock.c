@@ -33,6 +33,10 @@ struct returned {
   int type;
 };
 
+struct called {
+
+};
+
 static HCODE *returns = NULL;
 static HCODE *calls = NULL;
 static pthread_mutex_t call_mutex;
