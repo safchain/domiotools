@@ -32,6 +32,8 @@ struct mosquitto {
   void *obj;
   void (*on_connect)(struct mosquitto *mosq, void *obj, int rc);
   void (*on_disconnect)(struct mosquitto *mosq, void *obj, int rc);
+  void (*on_message)(struct mosquitto *mosq, void *obj,
+          const struct mosquitto_message *message);
 };
 
 static int rc_success = MOSQ_ERR_SUCCESS;
@@ -99,7 +101,11 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username,
 
 struct mosquitto *mosquitto_new(const char *id, bool clean_session, void *obj)
 {
-  return (struct mosquitto *)malloc(sizeof(struct mosquitto));
+  struct mosquitto *mosq = (struct mosquitto *)malloc(sizeof(struct mosquitto));
+
+  mock_called_with("mosquitto_new", mosq);
+
+  return mosq;
 }
 
 void mosquitto_connect_callback_set(struct mosquitto *mosq,
@@ -128,9 +134,31 @@ void mosquitto_publish_callback_set(struct mosquitto *mosq,
 {
 }
 
+void mosquitto_subscribe_callback_set(struct mosquitto *mosq,
+        void (*on_subscribe)(struct mosquitto *, void *, int, int, const int *))
+{
+}
+
+void mosquitto_message_callback_set(struct mosquitto *mosq,
+        void (*on_message)(struct mosquitto *, void *,
+            const struct mosquitto_message *))
+{
+  mosq->on_message = on_message;
+}
+
 void mosquitto_user_data_set(struct mosquitto *mosq, void *obj)
 {
   mosq->obj = obj;
+}
+
+int mosquitto_subscribe(struct  mosquitto *mosq, int *mid,
+        const char *sub, int qos)
+{
+  int rc = *((int *) mock_returns("mosquitto_subscribe"));
+
+  mock_called_with("mosquitto_subscribe", (void *) sub);
+
+  return rc;
 }
 
 void test_mqtt_setup()
@@ -165,7 +193,8 @@ START_TEST(test_mqtt_publish_connection_error)
   struct mosquitto mosq;
   int rc;
 
-  mock_will_return("mosquitto_connect_async", &rc_error, MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_connect_async", &rc_error,
+          MOCK_RETURNED_ALWAYS);
 
   rc = mqtt_publish("mqtt://locahost:1843/test", "test");
   ck_assert_int_eq(rc, MQTT_CONNECTION_ERROR);
@@ -177,7 +206,8 @@ START_TEST(test_mqtt_publish_success)
   struct mosquitto mosq;
   int rc;
 
-  mock_will_return("mosquitto_connect_async", &rc_success, MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_connect_async", &rc_success,
+          MOCK_RETURNED_ALWAYS);
   mock_will_return("mosquitto_loop", &rc_success, MOCK_RETURNED_ALWAYS);
 
   rc = mqtt_publish("mqtt://locahost:1843/test", "test");
@@ -193,7 +223,8 @@ START_TEST(test_mqtt_two_publishes_one_connect)
   struct mosquitto mosq;
   int rc;
 
-  mock_will_return("mosquitto_connect_async", &rc_success, MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_connect_async", &rc_success,
+          MOCK_RETURNED_ALWAYS);
   mock_will_return("mosquitto_loop", &rc_success, MOCK_RETURNED_ALWAYS);
 
   rc = mqtt_publish("mqtt://locahost:1843/test1", "test1");
@@ -221,7 +252,8 @@ START_TEST(test_mqtt_two_publishes_two_connect)
   struct mosquitto mosq;
   int rc;
 
-  mock_will_return("mosquitto_connect_async", &rc_success, MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_connect_async", &rc_success,
+          MOCK_RETURNED_ALWAYS);
   mock_will_return("mosquitto_loop", &rc_success, MOCK_RETURNED_ALWAYS);
 
   rc = mqtt_publish("mqtt://locahost1:1843/test1", "test1");
@@ -244,40 +276,25 @@ START_TEST(test_mqtt_two_publishes_two_connect)
 }
 END_TEST
 
-static void *mosquitto_loop_with_disconnect(va_list *pa)
-{
-  struct mosquitto *mosq = (struct mosquitto *) va_arg(*pa, void *);
-  int loop = mock_calls("mosquitto_loop");
-
-  /* only one loop, after that, we initiate a disconnection */
-  if (loop == 0) {
-    return &rc_success;
-  } else if (loop == 1) {
-    mosq->on_disconnect(mosq, mosq->obj, MOSQ_ERR_SUCCESS);
-    mock_called("mosquitto_disconnect");
-  } else if (mock_calls("mosquitto_reconnect") == 1) {
-    mosq->on_connect(mosq, mosq->obj, MOSQ_ERR_SUCCESS);
-  }
-
-  return &rc_success;
-}
-
 START_TEST(test_mqtt_disconnect)
 {
-  struct mosquitto mosq;
-  int rc;
+  struct mosquitto *mosq;
+  int rc, loop;
 
-  mock_will_return("mosquitto_connect_async", &rc_success, MOCK_RETURNED_ALWAYS);
-  mock_will_return("mosquitto_loop", mosquitto_loop_with_disconnect, MOCK_RETURNED_FNC);
+  mock_will_return("mosquitto_connect_async", &rc_success,
+          MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_loop", &rc_success, MOCK_RETURNED_ALWAYS);
 
   rc = mqtt_publish("mqtt://locahost:1843/test", "test1");
   ck_assert_int_eq(rc, MQTT_SUCCESS);
 
+  ck_assert_int_eq(1, mock_calls("mosquitto_new"));
+  mosq = (struct mosquitto *) mock_call("mosquitto_new", 0);
+
   rc = mock_wait_to_be_called("mosquitto_publish", 2);
   ck_assert_int_eq(rc, 1);
 
-  rc = mock_wait_to_be_called("mosquitto_disconnect", 2);
-  ck_assert_int_eq(rc, 1);
+  mosq->on_disconnect(mosq, mosq->obj, MOSQ_ERR_SUCCESS);
 
   mock_reset_calls_for("mosquitto_publish");
 
@@ -285,16 +302,100 @@ START_TEST(test_mqtt_disconnect)
   rc = mqtt_publish("mqtt://locahost:1843/test", "test2");
   ck_assert_int_eq(rc, MQTT_SUCCESS);
 
+  loop = mock_calls("mosquitto_loop");
+  loop = mock_wait_for_call_num_higher_than("mosquitto_loop", loop + 2, 2);
+
   /* check that since we are disconnected there is no publish */
   rc = mock_calls("mosquitto_publish");
   ck_assert_int_eq(rc, 0);
 
-  /* initiate a reconnection */
-  mock_called("mosquitto_reconnect");
+  mosq->on_connect(mosq, mosq->obj, MOSQ_ERR_SUCCESS);
 
   /* after the reconnection the remaining message should be published */
   rc = mock_wait_to_be_called("mosquitto_publish", 2);
   ck_assert_int_eq(rc, 1);
+}
+END_TEST
+
+START_TEST(test_mqtt_subscribe)
+{
+  int rc;
+
+  mock_will_return("mosquitto_subscribe", &rc_success, MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_connect_async", &rc_success,
+          MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_loop", &rc_success, MOCK_RETURNED_ALWAYS);
+
+  rc = mqtt_subscribe("mqtt://locahost:1843/test", NULL, NULL);
+  ck_assert_int_eq(rc, MQTT_SUCCESS);
+  ck_assert_int_eq(1, mock_calls("mosquitto_subscribe"));
+
+  mock_reset_calls_for("mosquitto_subscribe");
+
+  rc = mqtt_subscribe("mqtt://locahost:1843/test", NULL, NULL);
+  ck_assert_int_eq(rc, MQTT_SUCCESS);
+  ck_assert_int_eq(0, mock_calls("mosquitto_subscribe"));
+
+  rc = mqtt_subscribe("mqtt://locahost:1843/test2", NULL, NULL);
+  ck_assert_int_eq(rc, MQTT_SUCCESS);
+  ck_assert_int_eq(1, mock_calls("mosquitto_subscribe"));
+}
+END_TEST
+
+static void mqtt_message_callback(void *obj, const void *payload,
+        int payloadlen)
+{
+  mock_called_with("mqtt_message_callback_obj", obj);
+  mock_called_with("mqtt_message_callback_payload", (void *)payload);
+}
+
+START_TEST(test_mqtt_on_message)
+{
+  struct mosquitto *mosq;
+  struct mosquitto_message message;
+  char *obj1 , *obj2, *obj3, *topic = "/test", *payload = "UP";
+  int rc;
+
+  mock_will_return("mosquitto_subscribe", &rc_success, MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_connect_async", &rc_success,
+          MOCK_RETURNED_ALWAYS);
+  mock_will_return("mosquitto_loop", &rc_success, MOCK_RETURNED_ALWAYS);
+
+  mock_will_return("on_message_topic", topic, MOCK_RETURNED_ONCE);
+  mock_will_return("on_message_payload", payload, MOCK_RETURNED_ONCE);
+
+  rc = mqtt_subscribe("mqtt://locahost:1843/test", obj1,
+          mqtt_message_callback);
+  ck_assert_int_eq(rc, MQTT_SUCCESS);
+  rc = mqtt_subscribe("mqtt://locahost:1843/test", obj2,
+          mqtt_message_callback);
+  ck_assert_int_eq(rc, MQTT_SUCCESS);
+
+  ck_assert_int_eq(1, mock_calls("mosquitto_new"));
+  ck_assert_int_eq(1, mock_calls("mosquitto_subscribe"));
+
+  mosq = (struct mosquitto *) mock_call("mosquitto_new", 0);
+
+  message.topic = (char *) topic;
+  message.payload = (char *) payload;
+  message.payloadlen = strlen(message.payload);
+
+  mosq->on_message(mosq, mosq->obj, &message);
+  ck_assert_int_eq(2, mock_calls("mqtt_message_callback_obj"));
+
+  ck_assert(obj1 == mock_call("mqtt_message_callback_obj", 0));
+  ck_assert(strncmp(payload, mock_call("mqtt_message_callback_payload", 0),
+              message.payloadlen) == 0);
+  ck_assert(obj2 == mock_call("mqtt_message_callback_obj", 1));
+
+  mock_reset_calls();
+
+  rc = mqtt_subscribe("mqtt://locahost:1843/test3", obj3,
+          mqtt_message_callback);
+  ck_assert_int_eq(rc, MQTT_SUCCESS);
+
+  mosq->on_message(mosq, mosq->obj, &message);
+  ck_assert_int_eq(2, mock_calls("mqtt_message_callback_obj"));
 }
 END_TEST
 
@@ -314,6 +415,8 @@ Suite *mqtt_suite(void)
   tcase_add_test(tc_mqtt, test_mqtt_two_publishes_one_connect);
   tcase_add_test(tc_mqtt, test_mqtt_two_publishes_two_connect);
   tcase_add_test(tc_mqtt, test_mqtt_disconnect);
+  tcase_add_test(tc_mqtt, test_mqtt_subscribe);
+  tcase_add_test(tc_mqtt, test_mqtt_on_message);
 
   suite_add_tcase(s, tc_mqtt);
 

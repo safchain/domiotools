@@ -46,16 +46,18 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_homeasy_sender_OBJECTS = homeasy_sender.$(OBJEXT) common.$(OBJEXT)
+am_homeasy_sender_OBJECTS = homeasy_sender.$(OBJEXT) common.$(OBJEXT) \
+	mem.$(OBJEXT)
 homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
 homeasy_sender_DEPENDENCIES =
 am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) common.$(OBJEXT) \
 	srts.$(OBJEXT) hmap.$(OBJEXT) list.$(OBJEXT) \
-	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT)
+	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT) \
+	mem.$(OBJEXT)
 rf_gatewayd_OBJECTS = $(am_rf_gatewayd_OBJECTS)
 rf_gatewayd_DEPENDENCIES =
 am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) \
-	srts_sender.$(OBJEXT)
+	srts_sender.$(OBJEXT) mem.$(OBJEXT)
 srts_sender_OBJECTS = $(am_srts_sender_OBJECTS)
 srts_sender_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -165,11 +167,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_srcdir)/include -Wall
-srts_sender_SOURCES = srts.c common.c srts_sender.c
+srts_sender_SOURCES = srts.c common.c srts_sender.c mem.c
 srts_sender_LDADD = -lwiringPi -lpthread
-homeasy_sender_SOURCES = homeasy_sender.c common.c
+homeasy_sender_SOURCES = homeasy_sender.c common.c mem.c
 homeasy_sender_LDADD = -lwiringPi -lpthread
-rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c mqtt.c rf_gateway.c
+rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c mqtt.c rf_gateway.c mem.c
 rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread
 all: all-am
 
@@ -262,6 +264,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy_sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mqtt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gatewayd.Po@am__quote@

@@ -14,8 +14,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef MQTT_H_
-#define MQTT_H_
+#ifndef __MQTT_H
+#define __MQTT_H
 
 enum {
   MQTT_SUCCESS = 1,
@@ -28,6 +28,7 @@ enum {
 int mqtt_init();
 void mqtt_destroy();
 int mqtt_publish(const char *output, const char *value);
-int mqtt_subscribe(const char *input, int type, int address);
+int mqtt_subscribe(const char *input, void *data,
+        void (*callback)(void *obj, const void *payload, int payloadlen));
 
 #endif

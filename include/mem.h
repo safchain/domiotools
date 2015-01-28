@@ -14,11 +14,15 @@
  * 02110-1301, USA.
  */
 
-#ifndef __RF_GATEWAY_H
-#define __RF_GATEWAY_H
+#ifndef __MEM_H
+#define __MEM_H
 
-void rf_gw_handle_interrupt(int type, long time);
-int rf_gw_read_config(char *in, int file);
-void rf_gw_loop();
+#define alloc_error()   _alloc_error(__FILE__, __LINE__)
+#define xmalloc(X)      _xmalloc(X, __FILE__, __LINE__)
+#define xcalloc(X, Y)   _xcalloc(X, Y, __FILE__, __LINE__)
+
+void _alloc_error(const char *file, int line);
+void *_xmalloc(size_t size, const char *file, int line);
+void *_xcalloc(size_t nmemb, size_t size, const char *file, int line);
 
 #endif

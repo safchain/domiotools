@@ -38,9 +38,10 @@ int mqtt_publish(const char *output, const char *value)
   return MQTT_SUCCESS;
 }
 
-int mqtt_subscribe(const char *input, int type, int address)
+int mqtt_subscribe(const char *input, void *data,
+        void (*callback)(void *data, const void *payload, int payloadlen))
 {
-  mock_called_with("mqtt_subscribe", (char *) input);
+  mock_called_with("mqtt_subscribe", data);
 
   return MQTT_SUCCESS;
 }
@@ -195,8 +196,6 @@ START_TEST(test_config_subscriber_success)
 
   rc = rf_gw_read_config(conf, 0);
   ck_assert_int_eq(rc, 1);
-  ck_assert_str_eq("mqtt://localhost:1883/3333",
-          mock_call("mqtt_subscribe", 0));
 }
 END_TEST
 
@@ -213,7 +212,7 @@ START_TEST(test_srts_publish)
   rc = rf_gw_read_config(conf, 0);
   ck_assert_int_eq(rc, 1);
 
-  key = 1;
+  key = 88768;
   address = 1111;
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
@@ -227,7 +226,7 @@ START_TEST(test_srts_publish)
   rc = mock_calls("mqtt_publish");
   ck_assert_int_eq(rc, 0);
 
-  key = 2;
+  key = 9432;
   address = 3333;
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
@@ -256,10 +255,9 @@ START_TEST(test_srts_publish_same_twice)
   rc = rf_gw_read_config(conf, 0);
   ck_assert_int_eq(rc, 1);
 
-  key = 1;
-  mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ALWAYS);
-
+  key = 3454;
   address = 3333;
+  mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ALWAYS);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   rf_gw_handle_interrupt(0, 50);

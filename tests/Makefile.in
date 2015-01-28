@@ -52,8 +52,9 @@ check_hl_DEPENDENCIES =
 check_hl_LINK = $(CCLD) $(check_hl_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am_check_mqtt_OBJECTS = check_mqtt-check_mqtt.$(OBJEXT) \
-	check_mqtt-urlparser.$(OBJEXT) check_mqtt-list.$(OBJEXT) \
-	check_mqtt-hmap.$(OBJEXT) check_mqtt-mqtt.$(OBJEXT)
+	check_mqtt-urlparser.$(OBJEXT) check_mqtt-mem.$(OBJEXT) \
+	check_mqtt-list.$(OBJEXT) check_mqtt-hmap.$(OBJEXT) \
+	check_mqtt-mqtt.$(OBJEXT)
 check_mqtt_OBJECTS = $(am_check_mqtt_OBJECTS)
 check_mqtt_DEPENDENCIES =
 check_mqtt_LINK = $(CCLD) $(check_mqtt_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -61,7 +62,7 @@ check_mqtt_LINK = $(CCLD) $(check_mqtt_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 am_check_rf_gateway_OBJECTS =  \
 	check_rf_gateway-check_rf_gateway.$(OBJEXT) \
 	check_rf_gateway-urlparser.$(OBJEXT) \
-	check_rf_gateway-list.$(OBJEXT) \
+	check_rf_gateway-mem.$(OBJEXT) check_rf_gateway-list.$(OBJEXT) \
 	check_rf_gateway-hmap.$(OBJEXT) \
 	check_rf_gateway-rf_gateway.$(OBJEXT)
 check_rf_gateway_OBJECTS = $(am_check_rf_gateway_OBJECTS)
@@ -196,6 +197,7 @@ check_urlparser_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include
 check_urlparser_LDADD = @CHECK_LIBS@
 check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/urlparser.c \
+					 $(top_builddir)/src/mem.c \
 					 $(top_builddir)/src/list.c \
 					 $(top_builddir)/src/hmap.c \
 					 $(top_builddir)/src/mqtt.c
@@ -204,6 +206,7 @@ check_mqtt_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include
 check_mqtt_LDADD = @CHECK_LIBS@ -lcmocker -lpthread
 check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/urlparser.c \
+						   $(top_builddir)/src/mem.c \
 						   $(top_builddir)/src/list.c \
 						   $(top_builddir)/src/hmap.c \
 						   $(top_builddir)/src/rf_gateway.c
@@ -272,11 +275,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-check_mqtt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-mqtt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-check_rf_gateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-rf_gateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_urlparser-check_urlparser.Po@am__quote@
@@ -366,6 +371,20 @@ check_mqtt-urlparser.obj: $(top_builddir)/src/urlparser.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -c -o check_mqtt-urlparser.obj `if test -f '$(top_builddir)/src/urlparser.c'; then $(CYGPATH_W) '$(top_builddir)/src/urlparser.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/urlparser.c'; fi`
 
+check_mqtt-mem.o: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -MT check_mqtt-mem.o -MD -MP -MF $(DEPDIR)/check_mqtt-mem.Tpo -c -o check_mqtt-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mqtt-mem.Tpo $(DEPDIR)/check_mqtt-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_mqtt-mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -c -o check_mqtt-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+
+check_mqtt-mem.obj: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -MT check_mqtt-mem.obj -MD -MP -MF $(DEPDIR)/check_mqtt-mem.Tpo -c -o check_mqtt-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mqtt-mem.Tpo $(DEPDIR)/check_mqtt-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_mqtt-mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -c -o check_mqtt-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+
 check_mqtt-list.o: $(top_builddir)/src/list.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -MT check_mqtt-list.o -MD -MP -MF $(DEPDIR)/check_mqtt-list.Tpo -c -o check_mqtt-list.o `test -f '$(top_builddir)/src/list.c' || echo '$(srcdir)/'`$(top_builddir)/src/list.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mqtt-list.Tpo $(DEPDIR)/check_mqtt-list.Po
@@ -435,6 +454,20 @@ check_rf_gateway-urlparser.obj: $(top_builddir)/src/urlparser.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/urlparser.c' object='check_rf_gateway-urlparser.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-urlparser.obj `if test -f '$(top_builddir)/src/urlparser.c'; then $(CYGPATH_W) '$(top_builddir)/src/urlparser.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/urlparser.c'; fi`
+
+check_rf_gateway-mem.o: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-mem.o -MD -MP -MF $(DEPDIR)/check_rf_gateway-mem.Tpo -c -o check_rf_gateway-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_rf_gateway-mem.Tpo $(DEPDIR)/check_rf_gateway-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_rf_gateway-mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+
+check_rf_gateway-mem.obj: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-mem.obj -MD -MP -MF $(DEPDIR)/check_rf_gateway-mem.Tpo -c -o check_rf_gateway-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_rf_gateway-mem.Tpo $(DEPDIR)/check_rf_gateway-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_rf_gateway-mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
 
 check_rf_gateway-list.o: $(top_builddir)/src/list.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-list.o -MD -MP -MF $(DEPDIR)/check_rf_gateway-list.Tpo -c -o check_rf_gateway-list.o `test -f '$(top_builddir)/src/list.c' || echo '$(srcdir)/'`$(top_builddir)/src/list.c

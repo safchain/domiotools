@@ -14,11 +14,32 @@
  * 02110-1301, USA.
  */
 
-#ifndef __RF_GATEWAY_H
-#define __RF_GATEWAY_H
+#include <stdlib.h>
+#include <stdio.h>
 
-void rf_gw_handle_interrupt(int type, long time);
-int rf_gw_read_config(char *in, int file);
-void rf_gw_loop();
+#include "mem.h"
 
-#endif
+void _alloc_error(const char *file, int line)
+{
+  fprintf(stderr, "Out of Memory in %s at line %d\n", file, line);
+  abort();
+}
+
+void *_xmalloc (size_t n, const char *file, int line)
+{
+  void *p = malloc (n);
+  if (p == NULL) {
+    alloc_error();
+  }
+  return p;
+}
+
+void *_xcalloc(size_t nmemb, size_t size, const char *file, int line)
+{
+  void *p = calloc(nmemb, size);
+  if (p == NULL) {
+    alloc_error();
+  }
+  return p;
+}
+

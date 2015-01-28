@@ -14,6 +14,7 @@ check_urlparser_LDADD = @CHECK_LIBS@
 
 check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/urlparser.c \
+					 $(top_builddir)/src/mem.c \
 					 $(top_builddir)/src/list.c \
 					 $(top_builddir)/src/hmap.c \
 					 $(top_builddir)/src/mqtt.c
@@ -22,6 +23,7 @@ check_mqtt_LDADD = @CHECK_LIBS@ -lcmocker -lpthread
 
 check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/urlparser.c \
+						   $(top_builddir)/src/mem.c \
 						   $(top_builddir)/src/list.c \
 						   $(top_builddir)/src/hmap.c \
 						   $(top_builddir)/src/rf_gateway.c

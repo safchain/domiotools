@@ -14,8 +14,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef __URLPARSER_H__
-#define __URLPARSER_H__
+#ifndef __URLPARSER_H
+#define __URLPARSER_H
 
 struct url {
   char *scheme;

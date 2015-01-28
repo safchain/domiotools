@@ -14,8 +14,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef __SRTS_H__
-#define __SRTS_H__
+#ifndef __SRTS_H
+#define __SRTS_H
 
 enum COMMAND {
   UNKNOWN = 0,

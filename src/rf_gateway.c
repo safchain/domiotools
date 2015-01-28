@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include "common.h"
+#include "mem.h"
 #include "srts.h"
 #include "hl.h"
 #include "urlparser.h"
@@ -38,6 +39,11 @@ extern int debug;
 enum {
   SRTS = 1,
   HOMEASY
+};
+
+struct rf_device {
+  int type;
+  int address;
 };
 
 static config_t cfg;
@@ -199,9 +205,17 @@ static int add_publisher_type(const char *type)
   return 1;
 }
 
+void rf_mqtt_callback(void *data, const char *value)
+{
+  struct rf_device *device = (struct rf_device *) data;
+
+
+}
+
 static int subscribe()
 {
   config_setting_t *hs, *h;
+  struct rf_device *sensor;
   char *input, *type;
   int address, t, i = 0;
 
@@ -235,7 +249,9 @@ static int subscribe()
         fprintf(stderr, "Subscriber type unknown: %s\n", type);
         return 0;
       }
-      if (!mqtt_subscribe(input, t, address)) {
+      sensor = xmalloc(sizeof(struct rf_device));
+
+      if (!mqtt_subscribe(input, sensor, rf_mqtt_callback)) {
         return 0;
       }
     }
