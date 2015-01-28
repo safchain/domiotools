@@ -1,6 +1,8 @@
 language: c
 compiler:
   - gcc
+before_install:
+  - sudo pip install cpp-coveralls
 install:
   - ./install-deps
 before_script:
@@ -8,5 +10,5 @@ before_script:
   - export LDFLAGS=-L/usr/local/lib
   - export CFLAGS=-I/usr/local/include
 script:
-  - ./configure
+  - ./configure --enable-gcov
   - make check
