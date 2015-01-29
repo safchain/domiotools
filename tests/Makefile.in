@@ -114,6 +114,8 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+GCOV_CFLAGS = @GCOV_CFLAGS@
+GCOV_LIBS = @GCOV_LIBS@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -188,13 +190,13 @@ check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
 				   $(top_builddir)/src/hmap.c
 
-check_hl_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include
-check_hl_LDADD = @CHECK_LIBS@
+check_hl_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@
+check_hl_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 check_urlparser_SOURCES = check_urlparser.c \
 						  $(top_builddir)/src/urlparser.c
 
-check_urlparser_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include
-check_urlparser_LDADD = @CHECK_LIBS@
+check_urlparser_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@
+check_urlparser_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/urlparser.c \
 					 $(top_builddir)/src/mem.c \
@@ -202,8 +204,8 @@ check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/hmap.c \
 					 $(top_builddir)/src/mqtt.c
 
-check_mqtt_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include
-check_mqtt_LDADD = @CHECK_LIBS@ -lcmocker -lpthread
+check_mqtt_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@
+check_mqtt_LDADD = @CHECK_LIBS@ -lcmocker -lpthread @GCOV_LIBS@
 check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/urlparser.c \
 						   $(top_builddir)/src/mem.c \
@@ -211,8 +213,9 @@ check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/hmap.c \
 						   $(top_builddir)/src/rf_gateway.c
 
-check_rf_gateway_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include
-check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker
+check_rf_gateway_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@
+check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker @GCOV_LIBS@
+CLEANFILES = *~ *.gcno *.gcda *.gcov
 all: all-am
 
 .SUFFIXES:
@@ -742,6 +745,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)

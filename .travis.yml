@@ -12,3 +12,5 @@ before_script:
 script:
   - ./configure --enable-gcov
   - make check
+after_success:
+  - coveralls --gcov-options '\-lp'

@@ -96,6 +96,8 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+GCOV_CFLAGS = @GCOV_CFLAGS@
+GCOV_LIBS = @GCOV_LIBS@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -166,13 +168,14 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -I$(top_srcdir)/include -Wall
+AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
+CLEANFILES = *~ *.gcno *.gcda *.gcov
 srts_sender_SOURCES = srts.c common.c srts_sender.c mem.c
-srts_sender_LDADD = -lwiringPi -lpthread
+srts_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
 homeasy_sender_SOURCES = homeasy_sender.c common.c mem.c
-homeasy_sender_LDADD = -lwiringPi -lpthread
+homeasy_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
 rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c mqtt.c rf_gateway.c mem.c
-rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread
+rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread @GCOV_LIBS@
 all: all-am
 
 .SUFFIXES:
@@ -397,6 +400,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
