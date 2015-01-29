@@ -82,9 +82,8 @@ static struct mqtt_broker *mqtt_broker_alloc(struct mosquitto *mosq,
 }
 
 static void mqtt_broker_free(struct mqtt_broker *broker) {
-  if (broker->queue != NULL) {
-    hl_list_free(broker->queue);
-  }
+  hl_list_free(broker->queue);
+  free(broker->hostname);
   free(broker);
 }
 
@@ -505,6 +504,7 @@ void mqtt_destroy() {
     }
 
     pthread_join(broker->thread, NULL);
+    free(broker->hostname);
   }
   hl_hmap_free(mqtt_brokers);
   mqtt_brokers = NULL;
