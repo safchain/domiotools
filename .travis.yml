@@ -13,4 +13,5 @@ script:
   - ./configure --enable-gcov
   - make check
 after_success:
+  - find -name "check*-check*.gc*" -exec rm {} \;
   - coveralls --exclude include --gcov-options '\-lp'
