@@ -32,8 +32,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = rf_gatewayd$(EXEEXT)
-subdir = src
+bin_PROGRAMS = srts_sender$(EXEEXT) homeasy_sender$(EXEEXT)
+subdir = tools
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -45,12 +45,14 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) common.$(OBJEXT) \
-	srts.$(OBJEXT) hmap.$(OBJEXT) list.$(OBJEXT) \
-	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT) \
-	mem.$(OBJEXT)
-rf_gatewayd_OBJECTS = $(am_rf_gatewayd_OBJECTS)
-rf_gatewayd_DEPENDENCIES =
+am_homeasy_sender_OBJECTS = common.$(OBJEXT) mem.$(OBJEXT) \
+	homeasy_sender.$(OBJEXT)
+homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
+homeasy_sender_DEPENDENCIES =
+am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) mem.$(OBJEXT) \
+	srts_sender.$(OBJEXT)
+srts_sender_OBJECTS = $(am_srts_sender_OBJECTS)
+srts_sender_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -59,8 +61,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(rf_gatewayd_SOURCES)
-DIST_SOURCES = $(rf_gatewayd_SOURCES)
+SOURCES = $(homeasy_sender_SOURCES) $(srts_sender_SOURCES)
+DIST_SOURCES = $(homeasy_sender_SOURCES) $(srts_sender_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -159,8 +161,17 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
-rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c mqtt.c rf_gateway.c mem.c
-rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread @GCOV_LIBS@
+srts_sender_SOURCES = $(top_srcdir)/src/srts.c \
+                      $(top_srcdir)/src/common.c \
+                      $(top_srcdir)/src/mem.c \
+                      srts_sender.c
+
+srts_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
+homeasy_sender_SOURCES = $(top_srcdir)/src/common.c \
+                         $(top_srcdir)/src/mem.c \
+                         homeasy_sender.c
+
+homeasy_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
 all: all-am
 
 .SUFFIXES:
@@ -174,9 +185,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tools/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/Makefile
+	  $(AUTOMAKE) --foreign tools/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -232,9 +243,12 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-rf_gatewayd$(EXEEXT): $(rf_gatewayd_OBJECTS) $(rf_gatewayd_DEPENDENCIES) $(EXTRA_rf_gatewayd_DEPENDENCIES) 
-	@rm -f rf_gatewayd$(EXEEXT)
-	$(LINK) $(rf_gatewayd_OBJECTS) $(rf_gatewayd_LDADD) $(LIBS)
+homeasy_sender$(EXEEXT): $(homeasy_sender_OBJECTS) $(homeasy_sender_DEPENDENCIES) $(EXTRA_homeasy_sender_DEPENDENCIES) 
+	@rm -f homeasy_sender$(EXEEXT)
+	$(LINK) $(homeasy_sender_OBJECTS) $(homeasy_sender_LDADD) $(LIBS)
+srts_sender$(EXEEXT): $(srts_sender_OBJECTS) $(srts_sender_DEPENDENCIES) $(EXTRA_srts_sender_DEPENDENCIES) 
+	@rm -f srts_sender$(EXEEXT)
+	$(LINK) $(srts_sender_OBJECTS) $(srts_sender_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -243,14 +257,10 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmap.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy_sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mqtt.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gateway.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gatewayd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/urlparser.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts_sender.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -265,6 +275,48 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+common.o: $(top_srcdir)/src/common.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.o -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.o `test -f '$(top_srcdir)/src/common.c' || echo '$(srcdir)/'`$(top_srcdir)/src/common.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/common.c' object='common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.o `test -f '$(top_srcdir)/src/common.c' || echo '$(srcdir)/'`$(top_srcdir)/src/common.c
+
+common.obj: $(top_srcdir)/src/common.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.obj -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.obj `if test -f '$(top_srcdir)/src/common.c'; then $(CYGPATH_W) '$(top_srcdir)/src/common.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/common.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/common.c' object='common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.obj `if test -f '$(top_srcdir)/src/common.c'; then $(CYGPATH_W) '$(top_srcdir)/src/common.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/common.c'; fi`
+
+mem.o: $(top_srcdir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mem.o -MD -MP -MF $(DEPDIR)/mem.Tpo -c -o mem.o `test -f '$(top_srcdir)/src/mem.c' || echo '$(srcdir)/'`$(top_srcdir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/mem.Tpo $(DEPDIR)/mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/mem.c' object='mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mem.o `test -f '$(top_srcdir)/src/mem.c' || echo '$(srcdir)/'`$(top_srcdir)/src/mem.c
+
+mem.obj: $(top_srcdir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mem.obj -MD -MP -MF $(DEPDIR)/mem.Tpo -c -o mem.obj `if test -f '$(top_srcdir)/src/mem.c'; then $(CYGPATH_W) '$(top_srcdir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/mem.Tpo $(DEPDIR)/mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/mem.c' object='mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mem.obj `if test -f '$(top_srcdir)/src/mem.c'; then $(CYGPATH_W) '$(top_srcdir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/mem.c'; fi`
+
+srts.o: $(top_srcdir)/src/srts.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT srts.o -MD -MP -MF $(DEPDIR)/srts.Tpo -c -o srts.o `test -f '$(top_srcdir)/src/srts.c' || echo '$(srcdir)/'`$(top_srcdir)/src/srts.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/srts.Tpo $(DEPDIR)/srts.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/srts.c' object='srts.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o srts.o `test -f '$(top_srcdir)/src/srts.c' || echo '$(srcdir)/'`$(top_srcdir)/src/srts.c
+
+srts.obj: $(top_srcdir)/src/srts.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT srts.obj -MD -MP -MF $(DEPDIR)/srts.Tpo -c -o srts.obj `if test -f '$(top_srcdir)/src/srts.c'; then $(CYGPATH_W) '$(top_srcdir)/src/srts.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/srts.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/srts.Tpo $(DEPDIR)/srts.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/srts.c' object='srts.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o srts.obj `if test -f '$(top_srcdir)/src/srts.c'; then $(CYGPATH_W) '$(top_srcdir)/src/srts.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/srts.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

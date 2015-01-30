@@ -85,6 +85,9 @@ void test_rf_teardown()
 START_TEST(test_config_publisher_no_type_error)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "publishers:({"
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";})"
@@ -99,6 +102,9 @@ END_TEST
 START_TEST(test_config_publisher_no_output_error)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "publishers:({"
         "type: \"srts\";"
         "address: 3333;})"
@@ -113,6 +119,9 @@ END_TEST
 START_TEST(test_config_publisher_no_address_error)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "publishers:({"
         "type: \"srts\";"
         "output: \"mqtt://localhost:1883/3333\";})"
@@ -127,6 +136,9 @@ END_TEST
 START_TEST(test_config_publisher_success)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "publishers:({"
         "type: \"srts\";"
         "address: 3333;"
@@ -142,6 +154,9 @@ END_TEST
 START_TEST(test_config_subscriber_no_type_error)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "subscribers:({"
         "address: 3333;"
         "input: \"mqtt://localhost:1883/3333\";})"
@@ -157,6 +172,9 @@ END_TEST
 START_TEST(test_config_subscriber_no_output_error)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "subscribers:({"
         "type: \"srts\";"
         "address: 3333;})"
@@ -172,6 +190,9 @@ END_TEST
 START_TEST(test_config_subscriber_no_address_error)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "subscribers:({"
         "type: \"srts\";"
         "input: \"mqtt://localhost:1883/3333\";})"
@@ -187,6 +208,9 @@ END_TEST
 START_TEST(test_config_subscriber_success)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "subscribers:({"
         "type: \"srts\";"
         "address: 3333;"
@@ -202,6 +226,9 @@ END_TEST
 START_TEST(test_srts_publish)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "publishers:({"
         "type: \"srts\";"
         "address: 3333;"
@@ -245,6 +272,9 @@ END_TEST
 START_TEST(test_srts_publish_same_twice)
 {
   char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
     "publishers:({"
         "type: \"srts\";"
         "address: 3333;"

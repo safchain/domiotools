@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -18,10 +18,82 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <stdlib.h>
 
+#include "common.h"
 #include "srts.h"
+#include "mem.h"
 
 int srts_verbose;
+
+static char *get_code_file_path(const char *persist_path,
+        unsigned short address)
+{
+  char *path, code[10];
+  int size;
+
+  size = snprintf(NULL, 0, "%s/srts/%d", persist_path, address);
+  path = (char *) xmalloc(size + 1);
+
+  sprintf(path, "%s", persist_path);
+  if (mkpath(path, 0755) == -1) {
+    fprintf(stderr, "Unable to create the state path: %s\n", path);
+    return NULL;
+  }
+  sprintf(path, "%s/srts/%d", persist_path, address);
+
+  return path;
+}
+
+static unsigned short get_next_code(const char *persist_path,
+        unsigned short address)
+{
+  char *path, code[10];
+  FILE *fp;
+
+  path = get_code_file_path(persist_path, address);
+  if (path == NULL) {
+    return 1;
+  }
+
+  if ((fp = fopen(path, "r")) == NULL) {
+    return 1;
+  }
+
+  memset(code, sizeof(code), 0);
+  if (fgets(code, sizeof(code), fp) == NULL) {
+    fclose(fp);
+    return 1;
+  }
+  fclose(fp);
+
+  return ((unsigned short) atoi(code)) + 1;
+}
+
+static void store_code(const char *persist_path, unsigned short address,
+        unsigned short new_code)
+{
+  char *path, code[10];
+  FILE *fp;
+
+  path = get_code_file_path(persist_path, address);
+  if (path == NULL) {
+    return;
+  }
+
+  if ((fp = fopen(path, "w+")) == NULL) {
+    fprintf(stderr, "Unable to open the state file: %s", path);
+    exit(-1);
+  }
+
+  sprintf(code, "%d\n", new_code);
+  if (fputs(code, fp) < 0) {
+    fclose(fp);
+    exit(-1);
+  }
+
+  fclose(fp);
+}
 
 static void obfuscate_payload(struct srts_payload *payload)
 {
@@ -119,6 +191,9 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
   digitalWrite(gpio, LOW);
   delayMicroseconds(660);
 
+  if (!key) {
+    key = rand() % 255;
+  }
   payload.key = key;
   payload.ctrl = command;
   payload.checksum = 0;
@@ -132,6 +207,12 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
 
   write_payload(gpio, &payload);
   write_interval_gap(gpio);
+}
+
+void srts_transmit_persist(int gpio, char key, unsigned short address,
+        unsigned char command, int repeated, const char *path)
+{
+
 }
 
 static void unfuscate_payload(char *bytes, struct srts_payload *payload)

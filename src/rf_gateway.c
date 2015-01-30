@@ -47,6 +47,7 @@ struct rf_device {
 };
 
 static config_t cfg;
+static int gpio;
 static int publisher_types;
 
 static const char *translate_value(config_setting_t *config, const char *value)
@@ -205,17 +206,25 @@ static int add_publisher_type(const char *type)
   return 1;
 }
 
-void rf_mqtt_callback(void *data, const char *value)
+void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
 {
-  struct rf_device *device = (struct rf_device *) data;
+  struct rf_device *device = (struct rf_device *) obj;
+  char *value = xmalloc(payloadlen + 1);
 
+  memset(value, 0, payloadlen + 1);
+  memcpy(value, payload, payloadlen);
 
+  /* log debug here */
+  switch(device->type) {
+    case SRTS:
+    ;;
+  }
 }
 
 static int subscribe()
 {
   config_setting_t *hs, *h;
-  struct rf_device *sensor;
+  struct rf_device *device;
   char *input, *type;
   int address, t, i = 0;
 
@@ -249,9 +258,9 @@ static int subscribe()
         fprintf(stderr, "Subscriber type unknown: %s\n", type);
         return 0;
       }
-      sensor = xmalloc(sizeof(struct rf_device));
+      device = xmalloc(sizeof(struct rf_device));
 
-      if (!mqtt_subscribe(input, sensor, rf_mqtt_callback)) {
+      if (!mqtt_subscribe(input, device, rf_mqtt_callback)) {
         return 0;
       }
     }
@@ -261,7 +270,7 @@ static int subscribe()
   return 1;
 }
 
-static int read_publisher_types()
+static int config_read_publisher_types()
 {
   config_setting_t *hs, *h;
   char *type, *output;
@@ -303,6 +312,20 @@ static int read_publisher_types()
   return 1;
 }
 
+static int config_read_globals()
+{
+  int rc;
+
+  rc = config_lookup_int(&cfg, "config.globals.gpio", &gpio);
+  if (rc == CONFIG_FALSE) {
+    /* log as warning or info */
+    fprintf(stderr, "No gpio defined!\n");
+    return 0;
+  }
+
+  return 1;
+}
+
 int rf_gw_read_config(char *in, int file)
 {
   int rc;
@@ -322,7 +345,11 @@ int rf_gw_read_config(char *in, int file)
     return 0;
   }
 
-  if (!read_publisher_types()) {
+  if (!config_read_globals()) {
+    return 0;
+  }
+
+  if (!config_read_publisher_types()) {
     return 0;
   }
 
