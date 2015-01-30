@@ -200,9 +200,24 @@ static void *mqtt_loop(void *ptr)
     fprintf(stderr, "Unable to init a pthread lock\n");
     return NULL;
   }
-  broker->running = 1;
 
-  while(1) {
+  rc = pthread_rwlock_rdlock(&(broker->running_rwlock));
+  if (rc != 0) {
+    fprintf(stderr, "Unable to get a running pthread lock\n");
+    goto clean;
+  }
+  running = broker->running;
+  rc = pthread_rwlock_unlock(&(broker->running_rwlock));
+  if (rc != 0) {
+    fprintf(stderr, "Unable to get a running pthread lock\n");
+  }
+
+  if (running == -1) {
+    goto clean;
+  }
+
+  broker->running = 1;
+  while (1) {
     rc = pthread_rwlock_rdlock(&(broker->running_rwlock));
     if (rc != 0) {
       fprintf(stderr, "Unable to get a running pthread lock\n");
@@ -214,7 +229,7 @@ static void *mqtt_loop(void *ptr)
       fprintf(stderr, "Unable to get a running pthread lock\n");
     }
 
-    if (! running) {
+    if (running != 1) {
       break;
     }
 
@@ -228,6 +243,10 @@ static void *mqtt_loop(void *ptr)
       mqtt_publish_message(broker);
     }
   }
+
+clean:
+
+  pthread_exit(NULL);
 
   return NULL;
 }
@@ -493,14 +512,15 @@ void mqtt_destroy() {
   hl_hmap_init_iterator(mqtt_brokers, &iterator);
   while((hnode = hl_hmap_iterate(&iterator)) != NULL) {
     broker = *((struct mqtt_broker **) hnode->value);
+
     rc = pthread_rwlock_wrlock(&(broker->running_rwlock));
     if (rc == 0) {
-      broker->running = 0;
+      broker->running = -1;
       pthread_rwlock_unlock(&(broker->running_rwlock));
     } else {
       /* fallback do it without a lock */
       fprintf(stderr, "Unable to get a pthread lock\n");
-      broker->running = 0;
+      broker->running = -1;
     }
 
     pthread_join(broker->thread, NULL);
