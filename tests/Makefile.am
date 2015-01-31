@@ -14,6 +14,7 @@ check_urlparser_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 
 check_srts_SOURCES = check_srts.c \
 					 $(top_builddir)/src/mem.c \
+					 $(top_builddir)/src/common.c
 					 $(top_builddir)/src/srts.c
 check_srts_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@
 check_srts_LDADD = @CHECK_LIBS@ -lcmocker @GCOV_LIBS@
