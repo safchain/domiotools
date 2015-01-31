@@ -29,7 +29,7 @@ int srts_verbose;
 static char *get_code_file_path(const char *persist_path,
         unsigned short address)
 {
-  char *path, code[10];
+  char *path;
   int size;
 
   size = snprintf(NULL, 0, "%s/srts/%d", persist_path, address);
@@ -60,7 +60,7 @@ static unsigned short get_next_code(const char *persist_path,
     return 1;
   }
 
-  memset(code, sizeof(code), 0);
+  memset(code, 0, sizeof(code));
   if (fgets(code, sizeof(code), fp) == NULL) {
     fclose(fp);
     return 1;
@@ -210,7 +210,7 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
 }
 
 void srts_transmit_persist(int gpio, char key, unsigned short address,
-        unsigned char command, int repeated, const char *path)
+        unsigned char command, int repeated, const char *persist_path)
 {
 
 }
@@ -398,7 +398,7 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
   if (!sync) {
     sync = detect_sync(type, &duration);
     if (!sync) {
-      return -1;
+      return 0;
     }
     memset(bytes, 0, 7);
 
@@ -431,6 +431,7 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
           if (rc == 0 && srts_verbose) {
             fprintf(stderr, "Checksum error\n");
           }
+          payload->code = htons(payload->code);
 
           return rc;
         }

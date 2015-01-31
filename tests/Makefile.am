@@ -1,5 +1,5 @@
-TESTS = check_hl check_urlparser check_mqtt check_rf_gateway
-check_PROGRAMS = check_hl check_urlparser check_mqtt check_rf_gateway
+TESTS = check_hl check_urlparser check_mqtt check_rf_gateway check_srts
+check_PROGRAMS = check_hl check_urlparser check_mqtt check_rf_gateway check_srts
 
 check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
@@ -11,6 +11,12 @@ check_urlparser_SOURCES = check_urlparser.c \
 						  $(top_builddir)/src/urlparser.c
 check_urlparser_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@
 check_urlparser_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
+
+check_srts_SOURCES = check_srts.c \
+					 $(top_builddir)/src/mem.c \
+					 $(top_builddir)/src/srts.c
+check_srts_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@
+check_srts_LDADD = @CHECK_LIBS@ -lcmocker @GCOV_LIBS@
 
 check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/urlparser.c \

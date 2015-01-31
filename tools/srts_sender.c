@@ -54,7 +54,7 @@ static unsigned short get_next_code(char *progname, unsigned short address)
     return 1;
   }
 
-  memset(code, sizeof(code), 0);
+  memset(code, 0, sizeof(code));
   if (fgets(code, sizeof(code), fp) == NULL) {
     fclose(fp);
     return 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -43,7 +43,9 @@ struct srts_payload {
 };
 
 void srts_transmit(int gpio, unsigned char key, unsigned short address,
-                   unsigned char command, unsigned short code, int repeated);
+        unsigned char command, unsigned short code, int repeated);
+void srts_transmit_persist(int gpio, char key, unsigned short address,
+        unsigned char command, int repeated, const char *persist_path);
 int srts_receive(int type, int duration, struct srts_payload *payload);
 int srts_get_address(struct srts_payload *payload);
 void srts_print_payload(struct srts_payload *payload);
