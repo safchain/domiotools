@@ -53,37 +53,189 @@ void digitalWrite(int pin, int value)
 
 void delayMicroseconds(unsigned int howLong)
 {
-  usleep(howLong);
+  usleep(howLong - 10);
+}
+
+void random_signal()
+{
+  struct srts_payload payload;
+  int i, value;
+
+  for (i = 0; i != 33; i++) {
+    value = 1 - value;
+    srts_receive(value, 300, &payload);
+  }
+}
+
+static int receive_pulses(struct srts_payload *payload)
+{
+  struct pulse *pulse;
+  unsigned long last_time = 0;
+  int i, rc, pulses, value, duration;
+
+  pulses = mock_calls("digitalWrite");
+  if (!pulses) {
+    return 0;
+  }
+
+  for (i = 0; i < pulses; i++) {
+    pulse = (struct pulse *) mock_call("digitalWrite", i);
+    if (last_time) {
+      duration = pulse->time - last_time;
+      rc = srts_receive(value, duration, payload);
+      if (rc == -1) {
+        return -1;
+      }
+    }
+    value = pulse->value;
+    last_time = pulse->time;
+  }
+
+  return rc;
+}
+
+static void free_pulses()
+{
+  struct pulse *pulse;
+  int i, pulses;
+
+  pulses = mock_calls("digitalWrite");
+  for (i = 0; i < pulses; i++) {
+    pulse = (struct pulse*) mock_call("digitalWrite", i);
+    free(pulse);
+  }
 }
 
 START_TEST(test_srts_transmit_receive)
 {
   struct srts_payload payload;
-  struct pulse *pulse;
-  unsigned long last_time = 0;
-  int i, rc, pulses, value, duration;
+  int rc;
 
+  memset(&payload, 0, sizeof(struct srts_payload));
+
+  random_signal();
   srts_transmit(2, 123, 456, UP, 789, 0);
 
-  pulses = mock_calls("digitalWrite");
-  ck_assert(pulses > 0);
-
-  for(i = 0; i < pulses; i++) {
-    pulse = (struct pulse *) mock_call("digitalWrite", i);
-    if (last_time) {
-      duration = pulse->time - last_time;
-      rc = srts_receive(value, duration, &payload);
-      ck_assert_int_ne(-1, rc);
-    }
-    value = pulse->value;
-    last_time = pulse->time;
-  }
+  rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq(UP, payload.ctrl);
+  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
+
+  free_pulses();
+}
+END_TEST
+
+START_TEST(test_srts_transmit_two_receives)
+{
+  struct srts_payload payload;
+  int rc;
+
+  memset(&payload, 0, sizeof(struct srts_payload));
+
+  random_signal();
+  srts_transmit(2, 123, 456, UP, 789, 0);
+
+  rc = receive_pulses(&payload);
+  ck_assert_int_eq(1, rc);
+
+  ck_assert_int_eq(123, payload.key);
+  ck_assert_int_eq(456, srts_get_address(&payload));
+  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_int_eq(789, payload.code);
+
+  free_pulses();
+  mock_reset_calls();
+
+  random_signal();
+  srts_transmit(2, 123, 456, DOWN, 790, 0);
+
+  rc = receive_pulses(&payload);
+  ck_assert_int_eq(1, rc);
+
+  ck_assert_int_eq(123, payload.key);
+  ck_assert_int_eq(456, srts_get_address(&payload));
+  ck_assert_int_eq("DOWN", srts_get_ctrl_str(&payload));
+  ck_assert_int_eq(790, payload.code);
+
+  free_pulses();
+}
+END_TEST
+
+START_TEST(test_srts_transmit_receive_repeated)
+{
+  struct srts_payload payload;
+  int rc;
+
+  memset(&payload, 0, sizeof(struct srts_payload));
+
+  random_signal();
+  srts_transmit(2, 123, 456, UP, 789, 0);
+
+  rc = receive_pulses(&payload);
+  ck_assert_int_eq(1, rc);
+
+  ck_assert_int_eq(123, payload.key);
+  ck_assert_int_eq(456, srts_get_address(&payload));
+  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_int_eq(789, payload.code);
+
+  free_pulses();
+  mock_reset_calls();
+
+  random_signal();
+  srts_transmit(2, 123, 456, UP, 789, 1);
+
+  rc = receive_pulses(&payload);
+  ck_assert_int_eq(1, rc);
+
+  ck_assert_int_eq(123, payload.key);
+  ck_assert_int_eq(456, srts_get_address(&payload));
+  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_int_eq(789, payload.code);
+
+  free_pulses();
+}
+END_TEST
+
+START_TEST(test_srts_transmit_persist)
+{
+  struct srts_payload payload;;
+  char *tmpname;
+  int rc;
+
+  tmpname = tmpnam(NULL);
+
+  memset(&payload, 0, sizeof(struct srts_payload));
+
+  random_signal();
+  srts_transmit_persist(2, 123, 456, UP, 0, tmpname);
+
+  rc = receive_pulses(&payload);
+  ck_assert_int_eq(1, rc);
+
+  ck_assert_int_eq(123, payload.key);
+  ck_assert_int_eq(456, srts_get_address(&payload));
+  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_int_eq(1, payload.code);
+
+  free_pulses();
+  mock_reset_calls();
+
+  random_signal();
+  srts_transmit_persist(2, 123, 456, UP, 0, tmpname);
+
+  rc = receive_pulses(&payload);
+  ck_assert_int_eq(1, rc);
+
+  ck_assert_int_eq(123, payload.key);
+  ck_assert_int_eq(456, srts_get_address(&payload));
+  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_int_eq(2, payload.code);
+
+  free_pulses();
 }
 END_TEST
 
@@ -94,6 +246,7 @@ void test_srts_setup()
 
 void test_srts_teardown()
 {
+  free_pulses();
   mock_destroy();
 }
 
@@ -108,6 +261,9 @@ Suite *srts_suite(void)
 
   tcase_add_checked_fixture(tc_srts, test_srts_setup, test_srts_teardown);
   tcase_add_test(tc_srts, test_srts_transmit_receive);
+  tcase_add_test(tc_srts, test_srts_transmit_two_receives);
+  tcase_add_test(tc_srts, test_srts_transmit_receive_repeated);
+  tcase_add_test(tc_srts, test_srts_transmit_persist);
 
   suite_add_tcase(s, tc_srts);
 

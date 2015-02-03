@@ -19,6 +19,8 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
 
 #include "common.h"
 #include "srts.h"
@@ -35,9 +37,11 @@ static char *get_code_file_path(const char *persist_path,
   size = snprintf(NULL, 0, "%s/srts/%d", persist_path, address);
   path = (char *) xmalloc(size + 1);
 
-  sprintf(path, "%s", persist_path);
+  sprintf(path, "%s/srts", persist_path);
   if (mkpath(path, 0755) == -1) {
-    fprintf(stderr, "Unable to create the state path: %s\n", path);
+    fprintf(stderr, "Unable to create the srts code path: %s\n", path);
+    free(path);
+
     return NULL;
   }
   sprintf(path, "%s/srts/%d", persist_path, address);
@@ -45,32 +49,49 @@ static char *get_code_file_path(const char *persist_path,
   return path;
 }
 
-static unsigned short get_next_code(const char *persist_path,
+static int get_code(const char *persist_path,
         unsigned short address)
 {
-  char *path, code[10];
-  FILE *fp;
+  char *path, code[10], *end;
+  FILE *fp = NULL;
+  int c, rc;
 
   path = get_code_file_path(persist_path, address);
   if (path == NULL) {
-    return 1;
+    return 0;
   }
 
   if ((fp = fopen(path, "r")) == NULL) {
-    return 1;
+    rc = 0;
+    goto clean;
   }
 
   memset(code, 0, sizeof(code));
   if (fgets(code, sizeof(code), fp) == NULL) {
-    fclose(fp);
-    return 1;
+    rc = -1;
+    goto clean;
+  }
+
+  c = strtol(code, &end, 10);
+  if (errno == ERANGE && (c == LONG_MAX || c == LONG_MIN)) {
+    fprintf(stderr, "Unable to parse the srts code for the address %d\n",
+            address);
+    rc = -1;
+    goto clean;
   }
   fclose(fp);
 
-  return ((unsigned short) atoi(code)) + 1;
+  return c;
+
+clean:
+  if (fp != NULL) {
+    fclose(fp);
+  }
+  free(path);
+  return rc;
 }
 
-static void store_code(const char *persist_path, unsigned short address,
+static int store_code(const char *persist_path, unsigned short address,
         unsigned short new_code)
 {
   char *path, code[10];
@@ -78,21 +99,22 @@ static void store_code(const char *persist_path, unsigned short address,
 
   path = get_code_file_path(persist_path, address);
   if (path == NULL) {
-    return;
+    return -1;
   }
 
   if ((fp = fopen(path, "w+")) == NULL) {
-    fprintf(stderr, "Unable to open the state file: %s", path);
-    exit(-1);
+    fprintf(stderr, "Unable to create the srts code file: %s", path);
+    return -1;
   }
 
   sprintf(code, "%d\n", new_code);
   if (fputs(code, fp) < 0) {
-    fclose(fp);
-    exit(-1);
+    fprintf(stderr, "Unable to write the srts code to the file: %s", path);
   }
 
   fclose(fp);
+
+  return 1;
 }
 
 static void obfuscate_payload(struct srts_payload *payload)
@@ -105,17 +127,20 @@ static void obfuscate_payload(struct srts_payload *payload)
   }
 }
 
-static void checksum_payload(struct srts_payload *payload)
-{
+static unsigned char get_checksum(struct srts_payload *payload) {
   unsigned char *p = (unsigned char *) payload;
   unsigned char checksum = 0;
-  int i = 0;
+  int i;
 
   for (i = 0; i < 7; i++) {
     checksum = checksum ^ p[i] ^ (p[i] >> 4);
   }
-  checksum = checksum & 0xf;
-  payload->checksum = checksum;
+  return checksum & 0xf;
+}
+
+static void checksum_payload(struct srts_payload *payload)
+{
+  payload->checksum = get_checksum(payload);
 }
 
 static void write_bit(int gpio, char bit)
@@ -212,7 +237,19 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
 void srts_transmit_persist(int gpio, char key, unsigned short address,
         unsigned char command, int repeated, const char *persist_path)
 {
+  int code = get_code(persist_path, address);
 
+  if (code == -1) {
+    /* reading code error, defaulting to 1 */
+    srts_transmit(gpio, key, address, command, 1, repeated);
+
+    return;
+  }
+
+  code += 1;
+  srts_transmit(gpio, key, address, command, code, repeated);
+
+  store_code(persist_path, address, code);
 }
 
 static void unfuscate_payload(char *bytes, struct srts_payload *payload)
@@ -230,16 +267,11 @@ static void unfuscate_payload(char *bytes, struct srts_payload *payload)
 
 static int validate_checksum(struct srts_payload *payload)
 {
-  unsigned char *p = (unsigned char *) payload;
   unsigned char payload_chk = payload->checksum;
   unsigned char checksum = 0;
-  int i = 0;
 
   payload->checksum = 0;
-  for (i = 0; i < 7; i++) {
-    checksum = checksum ^ p[i] ^ (p[i] >> 4);
-  }
-  checksum = checksum & 0xf;
+  checksum = get_checksum(payload);
 
   payload->checksum = payload_chk;
   if (payload_chk == checksum) {
@@ -428,8 +460,12 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
 
           unfuscate_payload(bytes, payload);
           rc = validate_checksum(payload);
-          if (rc == 0 && srts_verbose) {
-            fprintf(stderr, "Checksum error\n");
+          if (rc == 0) {
+            if (srts_verbose) {
+              fprintf(stderr, "Checksum error\n");
+            }
+
+            return -1;
           }
           payload->code = htons(payload->code);
 
