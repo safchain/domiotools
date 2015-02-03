@@ -303,7 +303,7 @@ static int detect_sync(int type, int *duration)
     hard_sync++;
   } else if (hard_sync == 14 && soft_sync == 0 && is_on_time(*duration, 4800)) {
     soft_sync = 1;
-  } else if (soft_sync == 1 && *duration > 660) {
+  } else if (soft_sync == 1 && *duration >= 660) {
     *duration -= 800;
     soft_sync = 2;
 

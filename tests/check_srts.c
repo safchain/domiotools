@@ -31,29 +31,27 @@
 
 struct pulse {
   int value;
-  int time;
+  int duration;
 };
-
-static unsigned long utime()
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-
-  return 1000000 * tv.tv_sec + tv.tv_usec;
-}
 
 void digitalWrite(int pin, int value)
 {
   struct pulse *pulse = xmalloc(sizeof(struct pulse));
   pulse->value = value;
-  pulse->time = utime();
 
   mock_called_with("digitalWrite", pulse);
 }
 
 void delayMicroseconds(unsigned int howLong)
 {
-  usleep(howLong - 50);
+  struct pulse *pulse;
+  int rc;
+
+  rc = mock_calls("digitalWrite");
+  ck_assert_int_ne(0, rc);
+
+  pulse = mock_call("digitalWrite", rc - 1);
+  pulse->duration = howLong;
 }
 
 void random_signal()
@@ -70,8 +68,7 @@ void random_signal()
 static int receive_pulses(struct srts_payload *payload)
 {
   struct pulse *pulse;
-  unsigned long last_time = 0;
-  int i, rc, pulses, value, duration;
+  int i, pulses, rc = 0;
 
   pulses = mock_calls("digitalWrite");
   if (!pulses) {
@@ -80,15 +77,10 @@ static int receive_pulses(struct srts_payload *payload)
 
   for (i = 0; i < pulses; i++) {
     pulse = (struct pulse *) mock_call("digitalWrite", i);
-    if (last_time) {
-      duration = pulse->time - last_time;
-      rc = srts_receive(value, duration, payload);
-      if (rc == -1) {
-        return -1;
-      }
+    rc = srts_receive(pulse->value, pulse->duration, payload);
+    if (rc != 0) {
+      return rc;
     }
-    value = pulse->value;
-    last_time = pulse->time;
   }
 
   return rc;
