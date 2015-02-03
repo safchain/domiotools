@@ -53,7 +53,7 @@ void digitalWrite(int pin, int value)
 
 void delayMicroseconds(unsigned int howLong)
 {
-  usleep(howLong - 10);
+  usleep(howLong - 50);
 }
 
 void random_signal()
@@ -100,6 +100,9 @@ static void free_pulses()
   int i, pulses;
 
   pulses = mock_calls("digitalWrite");
+  if (!pulses) {
+    return;
+  }
   for (i = 0; i < pulses; i++) {
     pulse = (struct pulse*) mock_call("digitalWrite", i);
     free(pulse);
@@ -246,7 +249,6 @@ void test_srts_setup()
 
 void test_srts_teardown()
 {
-  free_pulses();
   mock_destroy();
 }
 
@@ -277,6 +279,7 @@ int main(void)
   int number_failed;
 
   sr = srunner_create(srts_suite ());
+  srunner_set_fork_status(sr, CK_NOFORK);
   srunner_run_all(sr, CK_VERBOSE);
 
   number_failed = srunner_ntests_failed(sr);
