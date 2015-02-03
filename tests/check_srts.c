@@ -121,7 +121,7 @@ START_TEST(test_srts_transmit_receive)
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
   free_pulses();
@@ -143,7 +143,7 @@ START_TEST(test_srts_transmit_two_receives)
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
   free_pulses();
@@ -157,7 +157,7 @@ START_TEST(test_srts_transmit_two_receives)
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq("DOWN", srts_get_ctrl_str(&payload));
+  ck_assert_str_eq("DOWN", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(790, payload.code);
 
   free_pulses();
@@ -179,7 +179,7 @@ START_TEST(test_srts_transmit_receive_repeated)
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
   free_pulses();
@@ -193,7 +193,7 @@ START_TEST(test_srts_transmit_receive_repeated)
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
   free_pulses();
@@ -218,7 +218,7 @@ START_TEST(test_srts_transmit_persist)
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(1, payload.code);
 
   free_pulses();
@@ -232,7 +232,7 @@ START_TEST(test_srts_transmit_persist)
 
   ck_assert_int_eq(123, payload.key);
   ck_assert_int_eq(456, srts_get_address(&payload));
-  ck_assert_int_eq("UP", srts_get_ctrl_str(&payload));
+  ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(2, payload.code);
 
   free_pulses();
