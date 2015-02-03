@@ -313,6 +313,56 @@ START_TEST(test_srts_publish_same_twice)
 }
 END_TEST
 
+START_TEST(test_srts_publish_translations)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
+    "publishers:({"
+        "type: \"srts\";"
+        "address: 3333;"
+        "output: \"mqtt://localhost:1883/3333\";"
+        "translations: {"
+                "UP: \"ON\";"
+                "DOWN: \"OFF\";"
+        "}})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 1);
+
+  key = 88768;
+  address = 1111;
+  mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
+  mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
+
+  rf_gw_handle_interrupt(0, 50);
+  rf_gw_handle_interrupt(1, 1500);
+
+  rc = mock_calls("srts_receive");
+  ck_assert_int_eq(rc, 1);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 0);
+
+  key = 9432;
+  address = 3333;
+  mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
+  mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
+
+  rf_gw_handle_interrupt(1, 2000);
+
+  rc = mock_calls("srts_receive");
+  ck_assert_int_eq(rc, 2);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 1);
+  ck_assert_str_eq("ON", mock_call("mqtt_publish", 0));
+}
+END_TEST
+
 Suite *rf_suite(void)
 {
   Suite *s;
@@ -333,6 +383,7 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_config_subscriber_success);
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
+  tcase_add_test(tc_rf, test_srts_publish_translations);
   suite_add_tcase(s, tc_rf);
 
   return s;
