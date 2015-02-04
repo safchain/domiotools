@@ -248,7 +248,6 @@ Suite *srts_suite(void)
 {
   Suite *s;
   TCase *tc_srts;
-  int rc;
 
   s = suite_create("srts");
   tc_srts = tcase_create("srts");
@@ -266,7 +265,6 @@ Suite *srts_suite(void)
 
 int main(void)
 {
-  Suite *s;
   SRunner *sr;
   int number_failed;
 

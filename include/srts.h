@@ -43,12 +43,13 @@ struct srts_payload {
 };
 
 void srts_transmit(int gpio, unsigned char key, unsigned short address,
-        unsigned char command, unsigned short code, int repeated);
+        unsigned char ctrl, unsigned short code, int repeated);
 void srts_transmit_persist(int gpio, char key, unsigned short address,
-        unsigned char command, int repeated, const char *persist_path);
+        unsigned char ctrl, int repeat, const char *persistence_path);
 int srts_receive(int type, int duration, struct srts_payload *payload);
 int srts_get_address(struct srts_payload *payload);
 void srts_print_payload(struct srts_payload *payload);
 const char *srts_get_ctrl_str(struct srts_payload *payload);
+int srts_get_ctrl_int(const char *ctrl);
 
 #endif

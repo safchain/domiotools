@@ -33,6 +33,8 @@
 #include "urlparser.h"
 #include "mqtt.h"
 
+#define SRTS_REPEAT 7
+
 extern int verbose;
 extern int debug;
 
@@ -49,6 +51,7 @@ struct rf_device {
 static config_t cfg;
 static int gpio;
 static int publisher_types;
+static char *persistence_path = "/tmp";
 
 static const char *translate_value(config_setting_t *config, const char *value)
 {
@@ -206,19 +209,30 @@ static int add_publisher_type(const char *type)
   return 1;
 }
 
-void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
+static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
 {
+  int ctrl;
   struct rf_device *device = (struct rf_device *) obj;
   char *value = xmalloc(payloadlen + 1);
 
   memset(value, 0, payloadlen + 1);
   memcpy(value, payload, payloadlen);
 
+  ctrl = srts_get_ctrl_int(value);
+  if (ctrl == UNKNOWN) {
+    goto clean;
+  }
+
   /* log debug here */
   switch(device->type) {
     case SRTS:
-    ;;
+      srts_transmit_persist(gpio, 0, device->address, ctrl,
+              SRTS_REPEAT, persistence_path);
+      break;
   }
+
+clean:
+  free(value);
 }
 
 static int subscribe()
@@ -259,6 +273,8 @@ static int subscribe()
         return 0;
       }
       device = xmalloc(sizeof(struct rf_device));
+      device->address = address;
+      device->type = t;
 
       if (!mqtt_subscribe(input, device, rf_mqtt_callback)) {
         return 0;
@@ -321,6 +337,13 @@ static int config_read_globals()
     /* log as warning or info */
     fprintf(stderr, "No gpio defined!\n");
     return 0;
+  }
+
+  rc = config_lookup_string(&cfg, "config.globals.persistence_path",
+                            (const char **) &persistence_path);
+  if (rc == CONFIG_FALSE) {
+    /* log as warning or info */
+    fprintf(stderr, "No persistence path defined!\n");
   }
 
   return 1;

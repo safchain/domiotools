@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <cmocker.h>
 
+#include "mem.h"
 #include "rf_gateway.h"
 #include "srts.h"
 #include "mqtt.h"
@@ -38,10 +39,12 @@ int mqtt_publish(const char *output, const char *value)
   return MQTT_SUCCESS;
 }
 
-int mqtt_subscribe(const char *input, void *data,
+int mqtt_subscribe(const char *input, void *obj,
         void (*callback)(void *data, const void *payload, int payloadlen))
 {
-  mock_called_with("mqtt_subscribe", data);
+  mock_called("mqtt_subscribe");
+  mock_called_with("mqtt_subscribe:obj", obj);
+  mock_called_with("mqtt_subscribe:callback", callback);
 
   return MQTT_SUCCESS;
 }
@@ -72,6 +75,30 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
   return 1;
 }
 
+void srts_transmit_persist(int gpio, char key, unsigned short address,
+        unsigned char ctrl, int repeat, const char *persistence_path)
+{
+  int *a = xmalloc(sizeof(int));
+  int *c = xmalloc(sizeof(int));
+
+  *a = address;
+  *c = ctrl;
+
+  mock_called("srts_transmit_persist");
+  mock_called_with("srts_transmit_persist:address", a);
+  mock_called_with("srts_transmit_persist:ctrl", c);
+  mock_called_with("srts_transmit_persist:path", (void *) persistence_path);
+}
+
+int srts_get_ctrl_int(const char *ctrl)
+{
+  if (strcasecmp(ctrl, "UP") == 0) {
+    return UP;
+  }
+
+  return UNKNOWN;
+}
+
 void test_rf_setup()
 {
   mock_init();
@@ -82,7 +109,7 @@ void test_rf_teardown()
   mock_destroy();
 }
 
-START_TEST(test_config_publisher_no_type_error)
+START_TEST(test_config_publishers_no_type_error)
 {
   char *conf = "config:{"
     "globals:{"
@@ -92,14 +119,14 @@ START_TEST(test_config_publisher_no_type_error)
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 0);
+  ck_assert_int_eq(0, rc);
 }
 END_TEST
 
-START_TEST(test_config_publisher_no_output_error)
+START_TEST(test_config_publishers_no_output_error)
 {
   char *conf = "config:{"
     "globals:{"
@@ -109,14 +136,14 @@ START_TEST(test_config_publisher_no_output_error)
         "type: \"srts\";"
         "address: 3333;})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 0);
+  ck_assert_int_eq(0, rc);
 }
 END_TEST
 
-START_TEST(test_config_publisher_no_address_error)
+START_TEST(test_config_publishers_no_address_error)
 {
   char *conf = "config:{"
     "globals:{"
@@ -126,14 +153,14 @@ START_TEST(test_config_publisher_no_address_error)
         "type: \"srts\";"
         "output: \"mqtt://localhost:1883/3333\";})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 0);
+  ck_assert_int_eq(0, rc);
 }
 END_TEST
 
-START_TEST(test_config_publisher_success)
+START_TEST(test_config_publishers_success)
 {
   char *conf = "config:{"
     "globals:{"
@@ -144,14 +171,14 @@ START_TEST(test_config_publisher_success)
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 1);
+  ck_assert_int_eq(1, rc);
 }
 END_TEST
 
-START_TEST(test_config_subscriber_no_type_error)
+START_TEST(test_config_subscribers_no_type_error)
 {
   char *conf = "config:{"
     "globals:{"
@@ -161,15 +188,15 @@ START_TEST(test_config_subscriber_no_type_error)
         "address: 3333;"
         "input: \"mqtt://localhost:1883/3333\";})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 0);
-  ck_assert_int_eq(0, mock_calls("mqtt_subscriber"));
+  ck_assert_int_eq(0, rc);
+  ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
 END_TEST
 
-START_TEST(test_config_subscriber_no_output_error)
+START_TEST(test_config_subscribers_no_output_error)
 {
   char *conf = "config:{"
     "globals:{"
@@ -179,15 +206,15 @@ START_TEST(test_config_subscriber_no_output_error)
         "type: \"srts\";"
         "address: 3333;})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 0);
-  ck_assert_int_eq(0, mock_calls("mqtt_subscriber"));
+  ck_assert_int_eq(0, rc);
+  ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
 END_TEST
 
-START_TEST(test_config_subscriber_no_address_error)
+START_TEST(test_config_subscribers_no_address_error)
 {
   char *conf = "config:{"
     "globals:{"
@@ -197,15 +224,15 @@ START_TEST(test_config_subscriber_no_address_error)
         "type: \"srts\";"
         "input: \"mqtt://localhost:1883/3333\";})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 0);
-  ck_assert_int_eq(0, mock_calls("mqtt_subscriber"));
+  ck_assert_int_eq(0, rc);
+  ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
 END_TEST
 
-START_TEST(test_config_subscriber_success)
+START_TEST(test_config_subscribers_success)
 {
   char *conf = "config:{"
     "globals:{"
@@ -216,10 +243,50 @@ START_TEST(test_config_subscriber_success)
         "address: 3333;"
         "input: \"mqtt://localhost:1883/3333\";})"
     "}";
-  int rc, key, address;
+  int rc;
 
   rc = rf_gw_read_config(conf, 0);
-  ck_assert_int_eq(rc, 1);
+  ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+}
+END_TEST
+
+START_TEST(test_config_subscribers_callback)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+        "persistence_path: \"/tmp/persist\";"
+    "};"
+    "subscribers:({"
+        "type: \"srts\";"
+        "address: 3333;"
+        "input: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  void *obj;
+  void (*callback)(void *data, const void *payload, int payloadlen);
+  char *payload = "UP", *path;
+  int rc, *value;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+
+  obj = mock_call("mqtt_subscribe:obj", 0);
+  callback = mock_call("mqtt_subscribe:callback", 0);
+  callback(obj, payload, strlen(payload));
+
+  ck_assert_int_eq(1, mock_calls("srts_transmit_persist"));
+  value = (int *) mock_call("srts_transmit_persist:address", 0);
+  ck_assert_int_eq(3333, *value);
+  free(value);
+
+  value = (int *) mock_call("srts_transmit_persist:ctrl", 0);
+  ck_assert_int_eq(UP, *value);
+  free(value);
+
+  path = (char *) mock_call("srts_transmit_persist:path", 0);
+  ck_assert_str_eq("/tmp/persist", path);
 }
 END_TEST
 
@@ -367,20 +434,20 @@ Suite *rf_suite(void)
 {
   Suite *s;
   TCase *tc_rf;
-  int rc;
 
   s = suite_create("rf_gateway");
   tc_rf = tcase_create("rf_gateway");
 
   tcase_add_checked_fixture(tc_rf, test_rf_setup, test_rf_teardown);
-  tcase_add_test(tc_rf, test_config_publisher_no_type_error);
-  tcase_add_test(tc_rf, test_config_publisher_no_output_error);
-  tcase_add_test(tc_rf, test_config_publisher_no_address_error);
-  tcase_add_test(tc_rf, test_config_publisher_success);
-  tcase_add_test(tc_rf, test_config_subscriber_no_type_error);
-  tcase_add_test(tc_rf, test_config_subscriber_no_output_error);
-  tcase_add_test(tc_rf, test_config_subscriber_no_address_error);
-  tcase_add_test(tc_rf, test_config_subscriber_success);
+  tcase_add_test(tc_rf, test_config_publishers_no_type_error);
+  tcase_add_test(tc_rf, test_config_publishers_no_output_error);
+  tcase_add_test(tc_rf, test_config_publishers_no_address_error);
+  tcase_add_test(tc_rf, test_config_publishers_success);
+  tcase_add_test(tc_rf, test_config_subscribers_no_type_error);
+  tcase_add_test(tc_rf, test_config_subscribers_no_output_error);
+  tcase_add_test(tc_rf, test_config_subscribers_no_address_error);
+  tcase_add_test(tc_rf, test_config_subscribers_success);
+  tcase_add_test(tc_rf, test_config_subscribers_callback);
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
   tcase_add_test(tc_rf, test_srts_publish_translations);
@@ -391,7 +458,6 @@ Suite *rf_suite(void)
 
 int main(void)
 {
-  Suite *s;
   SRunner *sr;
   int number_failed;
 

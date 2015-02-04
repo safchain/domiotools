@@ -62,7 +62,6 @@ START_TEST(test_list_push_unshift)
   LIST *list;
   char *string1 = "string1";
   char *string2 = "string2";
-  char *ptr;
 
   list = hl_list_alloc();
   ck_assert(list != NULL);
@@ -86,7 +85,6 @@ START_TEST(test_list_unshift)
   LIST *list;
   char *string1 = "string1";
   char *string2 = "string2";
-  char *ptr;
 
   list = hl_list_alloc();
   ck_assert(list != NULL);
@@ -112,7 +110,6 @@ START_TEST(test_hmap_put_get)
   char *string1 = "string1";
   char *string2 = "string2";
   char *value;
-  int rc;
 
   hmap = hl_hmap_alloc(30);
   ck_assert(hmap != NULL);
@@ -145,7 +142,6 @@ START_TEST(test_hmap_override)
   char *string1 = "string1";
   char *string2 = "string2";
   char *value;
-  int rc;
 
   hmap = hl_hmap_alloc(30);
   ck_assert(hmap != NULL);
@@ -192,7 +188,6 @@ START_TEST(test_hmap_collision)
   char *string1 = "string1";
   char *string2 = "string2";
   char *value;
-  int rc;
 
   hmap = hl_hmap_alloc(1);
   ck_assert(hmap != NULL);
@@ -235,7 +230,6 @@ Suite *hl_suite(void)
 
 int main(void)
 {
-  Suite *s;
   SRunner *sr;
   int number_failed;
 

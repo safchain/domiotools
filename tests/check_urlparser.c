@@ -208,7 +208,6 @@ Suite *urlparser_suite(void)
 
 int main(void)
 {
-  Suite *s;
   SRunner *sr;
   int number_failed;
 

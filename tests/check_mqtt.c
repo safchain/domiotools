@@ -42,10 +42,12 @@ int verbose = 0;
 
 int mosquitto_lib_init(void)
 {
+  return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_lib_cleanup(void)
 {
+  return MOSQ_ERR_SUCCESS;
 }
 
 const char *mosquitto_strerror(int mosq_errno)
@@ -190,7 +192,6 @@ END_TEST
 
 START_TEST(test_mqtt_publish_connection_error)
 {
-  struct mosquitto mosq;
   int rc;
 
   mock_will_return("mosquitto_connect_async", &rc_error,
@@ -203,7 +204,6 @@ END_TEST
 
 START_TEST(test_mqtt_publish_success)
 {
-  struct mosquitto mosq;
   int rc;
 
   mock_will_return("mosquitto_connect_async", &rc_success,
@@ -220,7 +220,6 @@ END_TEST
 
 START_TEST(test_mqtt_two_publishes_one_connect)
 {
-  struct mosquitto mosq;
   int rc;
 
   mock_will_return("mosquitto_connect_async", &rc_success,
@@ -249,7 +248,6 @@ END_TEST
 
 START_TEST(test_mqtt_two_publishes_two_connect)
 {
-  struct mosquitto mosq;
   int rc;
 
   mock_will_return("mosquitto_connect_async", &rc_success,
@@ -353,7 +351,8 @@ START_TEST(test_mqtt_on_message)
 {
   struct mosquitto *mosq;
   struct mosquitto_message message;
-  char *obj1 , *obj2, *obj3, *topic = "/test", *payload = "UP";
+  char *obj1 = "1", *obj2 = "2", *obj3 = "3";
+  char *topic = "/test", *payload = "UP";
   int rc;
 
   mock_will_return("mosquitto_subscribe", &rc_success, MOCK_RETURNED_ALWAYS);
@@ -403,7 +402,6 @@ Suite *mqtt_suite(void)
 {
   Suite *s;
   TCase *tc_mqtt;
-  int rc;
 
   s = suite_create("mqtt");
   tc_mqtt = tcase_create("mqtt");
@@ -425,7 +423,6 @@ Suite *mqtt_suite(void)
 
 int main(void)
 {
-  Suite *s;
   SRunner *sr;
   int number_failed;
 

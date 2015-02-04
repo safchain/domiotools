@@ -28,35 +28,35 @@
 
 int srts_verbose;
 
-static char *get_code_file_path(const char *persist_path,
+static char *get_code_file_path(const char *persistence_path,
         unsigned short address)
 {
   char *path;
   int size;
 
-  size = snprintf(NULL, 0, "%s/srts/%d", persist_path, address);
+  size = snprintf(NULL, 0, "%s/srts/%d", persistence_path, address);
   path = (char *) xmalloc(size + 1);
 
-  sprintf(path, "%s/srts", persist_path);
+  sprintf(path, "%s/srts", persistence_path);
   if (mkpath(path, 0755) == -1) {
     fprintf(stderr, "Unable to create the srts code path: %s\n", path);
     free(path);
 
     return NULL;
   }
-  sprintf(path, "%s/srts/%d", persist_path, address);
+  sprintf(path, "%s/srts/%d", persistence_path, address);
 
   return path;
 }
 
-static int get_code(const char *persist_path,
+static int get_code(const char *persistence_path,
         unsigned short address)
 {
   char *path, code[10], *end;
   FILE *fp = NULL;
   int c, rc;
 
-  path = get_code_file_path(persist_path, address);
+  path = get_code_file_path(persistence_path, address);
   if (path == NULL) {
     return 0;
   }
@@ -91,13 +91,13 @@ clean:
   return rc;
 }
 
-static int store_code(const char *persist_path, unsigned short address,
+static int store_code(const char *persistence_path, unsigned short address,
         unsigned short new_code)
 {
   char *path, code[10];
   FILE *fp;
 
-  path = get_code_file_path(persist_path, address);
+  path = get_code_file_path(persistence_path, address);
   if (path == NULL) {
     return -1;
   }
@@ -205,7 +205,7 @@ static void sync_transmit(int gpio, int repeated)
 }
 
 void srts_transmit(int gpio, unsigned char key, unsigned short address,
-                   unsigned char command, unsigned short code, int repeated)
+        unsigned char ctrl, unsigned short code, int repeated)
 {
   struct srts_payload payload;
 
@@ -220,7 +220,7 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
     key = rand() % 255;
   }
   payload.key = key;
-  payload.ctrl = command;
+  payload.ctrl = ctrl;
   payload.checksum = 0;
   payload.code = htons(code);
   payload.address.byte1 = ((char *) &address)[0];
@@ -235,21 +235,28 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
 }
 
 void srts_transmit_persist(int gpio, char key, unsigned short address,
-        unsigned char command, int repeated, const char *persist_path)
+        unsigned char ctrl, int repeat, const char *persistence_path)
 {
-  int code = get_code(persist_path, address);
+  int i, code = get_code(persistence_path, address);
 
   if (code == -1) {
     /* reading code error, defaulting to 1 */
-    srts_transmit(gpio, key, address, command, 1, repeated);
+    srts_transmit(gpio, key, address, ctrl, 1, 0);
+    for (i = 0; i < repeat; i++) {
+      srts_transmit(gpio, key, address, ctrl, 1, 1);
+    }
 
     return;
   }
 
   code += 1;
-  srts_transmit(gpio, key, address, command, code, repeated);
 
-  store_code(persist_path, address, code);
+  srts_transmit(gpio, key, address, ctrl, code, 0);
+  for (i = 0; i < repeat; i++) {
+    srts_transmit(gpio, key, address, ctrl, code, 1);
+  }
+
+  store_code(persistence_path, address, code);
 }
 
 static void unfuscate_payload(char *bytes, struct srts_payload *payload)
@@ -393,6 +400,32 @@ const char *srts_get_ctrl_str(struct srts_payload *payload)
 
   return NULL;
 }
+
+int srts_get_ctrl_int(const char *ctrl)
+{
+  if (strcasecmp(ctrl, "my") == 0) {
+    return MY;
+  } else if (strcasecmp(ctrl, "up") == 0) {
+    return UP;
+  } else if (strcasecmp(ctrl, "my_up") == 0) {
+    return MY_UP;
+  } else if (strcasecmp(ctrl, "down") == 0) {
+    return DOWN;
+  } else if (strcasecmp(ctrl, "my_down") == 0) {
+    return MY_DOWN;
+  } else if (strcasecmp(ctrl, "up_down") == 0) {
+    return UP_DOWN;
+  } else if (strcasecmp(ctrl, "prog") == 0) {
+    return PROG;
+  } else if (strcasecmp(ctrl, "sun_flag") == 0) {
+    return SUN_FLAG;
+  } else if (strcasecmp(ctrl, "flag") == 0) {
+    return FLAG;
+  }
+
+  return UNKNOWN;
+}
+
 
 int srts_get_address(struct srts_payload *payload)
 {
