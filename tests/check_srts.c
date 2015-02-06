@@ -269,7 +269,6 @@ int main(void)
   int number_failed;
 
   sr = srunner_create(srts_suite ());
-  srunner_set_fork_status(sr, CK_NOFORK);
   srunner_run_all(sr, CK_VERBOSE);
 
   number_failed = srunner_ntests_failed(sr);

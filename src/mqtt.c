@@ -168,7 +168,6 @@ static void mqtt_message_callback(struct mosquitto *mosq, void *obj,
   LIST_ITERATOR iterator;
   struct mqtt_subscriber *subscriber;
   struct mqtt_broker *broker = (struct mqtt_broker *) obj;
-  char *value;
 
   char *subscribers_key = mqtt_get_subscribers_key(broker->hostname,
           message->topic);
