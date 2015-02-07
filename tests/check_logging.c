@@ -59,6 +59,49 @@ START_TEST(test_log_fp)
 }
 END_TEST
 
+START_TEST(test_log_all_priorities)
+{
+  struct dlog *log;
+  char buff[BUFSIZ], *str;
+  FILE *fp;
+  int i;
+
+  fp = tmpfile();
+  ck_assert(fp != NULL);
+
+  log = dlog_init(DLOG_FP, DLOG_DEBUG, fp);
+  ck_assert(log != NULL);
+
+
+  for (i = DLOG_EMERG; i <= DLOG_DEBUG; i++) {
+    dlog(log, i, "%s", "test123");
+
+    fseek(fp, 0, SEEK_SET);
+    fgets(buff, BUFSIZ, fp);
+
+    str = strstr(buff, "test123");
+    ck_assert(str != NULL);
+  }
+
+  dlog_destroy(log);
+  fclose(fp);
+}
+END_TEST
+
+START_TEST(test_log_syslog)
+{
+  struct dlog *log;
+  char buff[BUFSIZ], *str;
+
+  log = dlog_init(DLOG_SYSLOG, DLOG_DEBUG, "test");
+  ck_assert(log != NULL);
+
+  dlog(log, DLOG_DEBUG, "%s", "test123");
+
+  dlog_destroy(log);
+}
+END_TEST
+
 START_TEST(test_log_fp_priority)
 {
   struct dlog *log;
@@ -103,6 +146,8 @@ Suite *logging_suite(void)
   tcase_add_test(tc_logging, test_log_null);
   tcase_add_test(tc_logging, test_log_fp);
   tcase_add_test(tc_logging, test_log_fp_priority);
+  tcase_add_test(tc_logging, test_log_syslog);
+  tcase_add_test(tc_logging, test_log_all_priorities);
   suite_add_tcase(s, tc_logging);
 
   return s;

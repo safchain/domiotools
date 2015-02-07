@@ -138,14 +138,21 @@ void dlog_vprintf(FILE *fp, int priority, const char *fmt, ...)
 
 void dlog_vsyslog(int priority, const char *fmt, va_list ap)
 {
+  va_list aq;
   char *str;
   int len;
 
+
+  va_copy(aq, ap);
+
   len = vsnprintf(NULL, 0, fmt, ap);
   str = xmalloc(len + 1);
-  vsprintf(str, fmt, ap);
+  vsprintf(str, fmt, aq);
 
   syslog(syslog_priority(priority), "%s", str);
+
+  va_end(aq);
+  free(str);
 }
 
 void dlog(struct dlog *log, int priority, const char *fmt, ...)
