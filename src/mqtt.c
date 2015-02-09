@@ -29,9 +29,11 @@
 #include "hl.h"
 #include "urlparser.h"
 #include "mqtt.h"
+#include "logging.h"
 
 extern int verbose;
 extern int debug;
+extern struct dlog *DLOG;
 
 #define MAX_QUEUE_MESSAGES  10
 
@@ -105,7 +107,7 @@ static int mqtt_publish_message(struct mqtt_broker *broker)
 
   rc = pthread_mutex_lock(&(broker->queue_mutex));
   if (rc != 0) {
-    fprintf(stderr, "Unable to acquire queue lock when publishing\n");
+    dlog(DLOG, DLOG_ERR, "Unable to acquire queue lock when publishing");
     return 0;
   }
 
@@ -116,7 +118,7 @@ static int mqtt_publish_message(struct mqtt_broker *broker)
   rc = mosquitto_publish(broker->mosq, NULL, message->topic,
           message->payload_len, message->payload, 2, 0);
   if (rc != MOSQ_ERR_SUCCESS) {
-    fprintf(stderr, "Unable to publish to mqtt topic: %s, %s\n",
+    dlog(DLOG, DLOG_ERR, "Unable to publish to mqtt topic: %s, %s",
             message->topic, mosquitto_strerror(rc));
     goto clean;
   }
@@ -140,7 +142,7 @@ static void mqtt_connect_callback(struct mosquitto *mosq, void *obj, int rc)
   struct mqtt_broker *broker = (struct mqtt_broker *) obj;
 
   if (rc != MOSQ_ERR_SUCCESS) {
-    fprintf(stderr, "mqtt connection failed, %s\n", mosquitto_strerror(rc));
+    dlog(DLOG, DLOG_ERR, "mqtt connection failed, %s", mosquitto_strerror(rc));
     return;
   }
   broker->connected = 1;
@@ -151,7 +153,7 @@ static void mqtt_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
   struct mqtt_broker *broker = (struct mqtt_broker *) obj;
 
   if (rc != MOSQ_ERR_SUCCESS) {
-    fprintf(stderr, "mqtt connection failed, %s\n", mosquitto_strerror(rc));
+    dlog(DLOG, DLOG_ERR, "mqtt connection failed, %s", mosquitto_strerror(rc));
     return;
   }
   broker->connected = 0;
@@ -196,19 +198,19 @@ static void *mqtt_loop(void *ptr)
 
   rc = pthread_rwlock_init(&(broker->running_rwlock), NULL);
   if (rc != 0) {
-    fprintf(stderr, "Unable to init a pthread lock\n");
+    dlog(DLOG, DLOG_ERR, "Unable to init a pthread lock");
     return NULL;
   }
 
   rc = pthread_rwlock_rdlock(&(broker->running_rwlock));
   if (rc != 0) {
-    fprintf(stderr, "Unable to get a running pthread lock\n");
+    dlog(DLOG, DLOG_ERR, "Unable to get a running pthread lock");
     goto clean;
   }
   running = broker->running;
   rc = pthread_rwlock_unlock(&(broker->running_rwlock));
   if (rc != 0) {
-    fprintf(stderr, "Unable to get a running pthread lock\n");
+    dlog(DLOG, DLOG_ERR, "Unable to get a running pthread lock");
   }
 
   if (running == -1) {
@@ -219,13 +221,13 @@ static void *mqtt_loop(void *ptr)
   while (1) {
     rc = pthread_rwlock_rdlock(&(broker->running_rwlock));
     if (rc != 0) {
-      fprintf(stderr, "Unable to get a running pthread lock\n");
+      dlog(DLOG, DLOG_ERR, "Unable to get a running pthread lock");
       continue;
     }
     running = broker->running;
     rc = pthread_rwlock_unlock(&(broker->running_rwlock));
     if (rc != 0) {
-      fprintf(stderr, "Unable to get a running pthread lock\n");
+      dlog(DLOG, DLOG_ERR, "Unable to get a running pthread lock");
     }
 
     if (running != 1) {
@@ -234,7 +236,7 @@ static void *mqtt_loop(void *ptr)
 
     rc = mosquitto_loop(broker->mosq, 200, 1);
     if (rc != MOSQ_ERR_SUCCESS) {
-      fprintf(stderr, "Error during the mqtt loop processing, %s\n",
+      dlog(DLOG, DLOG_ERR, "Error during the mqtt loop processing, %s",
               mosquitto_strerror(rc));
       continue;
     }
@@ -258,14 +260,14 @@ static struct mqtt_broker *mqtt_connect(struct url *url)
 
   mosq = mosquitto_new(NULL, 1, NULL);
   if (mosq == NULL) {
-    fprintf(stderr, "Failed during mosquitto initialization\n");
+    dlog(DLOG, DLOG_EMERG, "Failed during mosquitto initialization");
     return NULL;
   }
 
   if (url->username != NULL) {
     rc = mosquitto_username_pw_set(mosq, url->username, url->password);
     if (rc != MOSQ_ERR_SUCCESS) {
-      fprintf(stderr, "Unable to specify username/password, %s\n",
+      dlog(DLOG, DLOG_ERR, "Unable to specify username/password, %s",
               mosquitto_strerror(rc));
       goto clean;
     }
@@ -285,14 +287,14 @@ static struct mqtt_broker *mqtt_connect(struct url *url)
 
   rc = mosquitto_connect_async(mosq, url->hostname, url->port, keepalive);
   if (rc != MOSQ_ERR_SUCCESS) {
-    fprintf(stderr, "Unable to initiate a new mqtt connection to %s:%d, %s\n",
-            url->hostname, url->port, mosquitto_strerror(rc));
+    dlog(DLOG, DLOG_ERR, "Unable to initiate a new mqtt connection to "
+            "%s:%d, %s", url->hostname, url->port, mosquitto_strerror(rc));
     goto clean;
   }
 
   rc = pthread_create(&(broker->thread), NULL, mqtt_loop, broker);
   if (rc < 0) {
-    fprintf(stderr, "Error during the mqtt thread creation\n");
+    dlog(DLOG, DLOG_ERR, "Error during the mqtt thread creation");
     goto clean;
   }
 
@@ -312,7 +314,7 @@ static struct mqtt_broker *mqtt_broker_connect(struct url *url, int *rc)
   struct mqtt_broker *broker, **broker_ptr;
 
   if (mqtt_brokers == NULL) {
-    fprintf(stderr, "mqtt not initialized\n");
+    dlog(DLOG, DLOG_ERR, "mqtt not initialized");
     *rc = MQTT_CONNECTION_ERROR;
     return NULL;
   }
@@ -342,7 +344,7 @@ static int check_mqtt_url(const char *str, struct url *url)
   if (strcmp(url->scheme, "mqtt") != 0 ||
       url->hostname == NULL ||
       url->path == NULL) {
-    fprintf(stderr, "Bad mqtt url: %s\n", str);
+    dlog(DLOG, DLOG_ERR, "Bad mqtt url: %s", str);
     return 0;
   }
 
@@ -357,13 +359,13 @@ int mqtt_publish(const char *output, const char *value)
   int rc = MQTT_SUCCESS;
 
   if (verbose) {
-    printf("Sending mqtt notification to %s with %s as value\n",
+    dlog(DLOG, DLOG_INFO, "Sending mqtt notification to %s with %s as value",
             output, value);
   }
 
   url = parse_url(output);
   if (url == NULL) {
-    fprintf(stderr, "Unable to parse the output mqtt url\n");
+    dlog(DLOG, DLOG_ERR, "Unable to parse the output mqtt url");
     return MQTT_BAD_URL;
   }
   memset(&message, 0, sizeof(struct mqtt_message));
@@ -387,7 +389,7 @@ int mqtt_publish(const char *output, const char *value)
 
   rc = pthread_mutex_lock(&(broker->queue_mutex));
   if (rc != 0) {
-    fprintf(stderr, "Unable to acquire queue lock when publishing\n");
+    dlog(DLOG, DLOG_ERR, "Unable to acquire queue lock when publishing");
     rc = MQTT_MESSAGE_ERROR;
     goto clean;
   }
@@ -425,7 +427,7 @@ int mqtt_subscribe(const char *input, void *obj,
 
   url = parse_url(input);
   if (url == NULL) {
-    fprintf(stderr, "Unable to parse the output mqtt url\n");
+    dlog(DLOG, DLOG_ERR, "Unable to parse the output mqtt url");
     return MQTT_BAD_URL;
   }
 
@@ -518,7 +520,7 @@ void mqtt_destroy() {
       pthread_rwlock_unlock(&(broker->running_rwlock));
     } else {
       /* fallback do it without a lock */
-      fprintf(stderr, "Unable to get a pthread lock\n");
+      dlog(DLOG, DLOG_ERR, "Unable to get a pthread lock");
       broker->running = -1;
     }
 

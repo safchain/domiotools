@@ -32,11 +32,13 @@
 #include "hl.h"
 #include "urlparser.h"
 #include "mqtt.h"
+#include "logging.h"
 
 #define SRTS_REPEAT 7
 
 extern int verbose;
 extern int debug;
+extern struct dlog *DLOG;
 
 enum {
   SRTS = 1,
@@ -78,7 +80,7 @@ static int publish(config_setting_t *config, const char *value)
 
   if (config_setting_lookup_string(config, "output",
               (const char **) &output) != CONFIG_TRUE) {
-    fprintf(stderr, "No output defined for the publisher line: %d\n",
+    dlog(DLOG, DLOG_ERR, "No output defined for the publisher line: %d",
             config_setting_source_line(config));
     return -1;
   }
@@ -86,7 +88,7 @@ static int publish(config_setting_t *config, const char *value)
   if (strstr(output, "mqtt://") == output) {
     rc = mqtt_publish(output, translate_value(config, value));
   } else {
-    fprintf(stderr, "Output unknown for the publisher line: %d\n",
+    dlog(DLOG, DLOG_ERR, "Output unknown for the publisher line: %d",
             config_setting_source_line(config));
     return -1;
   }
@@ -102,7 +104,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
 
   hs = config_lookup(&cfg, "config.publishers");
   if (hs == NULL) {
-    fprintf(stderr, "No publisher defined!\n");
+    dlog(DLOG, DLOG_ERR, "No publisher defined");
     return 0;
   }
 
@@ -110,7 +112,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
     h = config_setting_get_elem(hs, i);
     if (h != NULL) {
       if (config_setting_lookup_string(h, "type", &type) != CONFIG_TRUE) {
-        fprintf(stderr, "No address defined for the publisher line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
                 config_setting_source_line(h));
         continue;
       }
@@ -119,7 +121,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
       }
 
       if (config_setting_lookup_int(h, "address", &value) != CONFIG_TRUE) {
-        fprintf(stderr, "No address defined for the publisher line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
                 config_setting_source_line(h));
         continue;
       }
@@ -127,7 +129,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
       if (address == value) {
         ctrl = srts_get_ctrl_str(payload);
         if (ctrl == NULL) {
-          fprintf(stderr, "Srts ctrl unknown: %d\n", payload->ctrl);
+          dlog(DLOG, DLOG_ERR, "Srts ctrl unknown: %d", payload->ctrl);
           return 0;
         }
 
@@ -153,7 +155,7 @@ static int srts_handler(int type, int duration)
     }
     last_key = payload.key;
     if (verbose) {
-      printf("Message correctly received\n");
+      dlog(DLOG, DLOG_INFO, "Message correctly received");
       if (debug) {
         srts_print_payload(&payload);
       }
@@ -201,7 +203,7 @@ static int add_publisher_type(const char *type)
 {
   int t = str_type_to_int(type);
   if (!t) {
-    fprintf(stderr, "Publisher type unknown: %s\n", type);
+    dlog(DLOG, DLOG_ERR, "Publisher type unknown: %s", type);
     return 0;
   }
   publisher_types |= t;
@@ -245,7 +247,7 @@ static int subscribe()
   hs = config_lookup(&cfg, "config.subscribers");
   if (hs == NULL) {
     /* log as warning or info */
-    fprintf(stderr, "No subscriber defined!\n");
+    dlog(DLOG, DLOG_ERR, "No subscriber defined");
     return 1;
   }
 
@@ -253,23 +255,23 @@ static int subscribe()
     h = config_setting_get_elem(hs, i);
     if (h != NULL) {
       if (!config_setting_lookup_string(h, "input", (const char **) &input)) {
-        fprintf(stderr, "No type defined for the subscriber line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No type defined for the subscriber line: %d",
                 config_setting_source_line(h));
         return 0;
       }
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
-        fprintf(stderr, "No type defined for the subscriber line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No type defined for the subscriber line: %d",
                 config_setting_source_line(h));
         return 0;
       }
       if (!config_setting_lookup_int(h, "address", (int *) &address)) {
-        fprintf(stderr, "No address defined for the subscriber line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No address defined for the subscriber line: %d",
                 config_setting_source_line(h));
         return 0;
       }
       t = str_type_to_int(type);
       if (!t) {
-        fprintf(stderr, "Subscriber type unknown: %s\n", type);
+        dlog(DLOG, DLOG_ERR, "Subscriber type unknown: %s", type);
         return 0;
       }
       device = xmalloc(sizeof(struct rf_device));
@@ -295,7 +297,7 @@ static int config_read_publisher_types()
   hs = config_lookup(&cfg, "config.publishers");
   if (hs == NULL) {
     /* log as warning or info */
-    fprintf(stderr, "No publisher defined!\n");
+    dlog(DLOG, DLOG_ERR, "No publisher defined");
     return 1;
   }
 
@@ -303,17 +305,17 @@ static int config_read_publisher_types()
     h = config_setting_get_elem(hs, i);
     if (h != NULL) {
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
-        fprintf(stderr, "No type defined for the publisher line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No type defined for the publisher line: %d",
                 config_setting_source_line(h));
         return 0;
       }
       if (!config_setting_lookup_string(h, "output", (const char **) &output)) {
-        fprintf(stderr, "No output defined for the publisher line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No output defined for the publisher line: %d",
                 config_setting_source_line(h));
         return 0;
       }
       if (!config_setting_lookup_int(h, "address", (int *) &address)) {
-        fprintf(stderr, "No address defined for the publisher line: %d\n",
+        dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
                 config_setting_source_line(h));
         return 0;
       }
@@ -335,7 +337,7 @@ static int config_read_globals()
   rc = config_lookup_int(&cfg, "config.globals.gpio", &gpio);
   if (rc == CONFIG_FALSE) {
     /* log as warning or info */
-    fprintf(stderr, "No gpio defined!\n");
+    dlog(DLOG, DLOG_ERR, "No gpio defined");
     return 0;
   }
 
@@ -343,7 +345,7 @@ static int config_read_globals()
                             (const char **) &persistence_path);
   if (rc == CONFIG_FALSE) {
     /* log as warning or info */
-    fprintf(stderr, "No persistence path defined!\n");
+    dlog(DLOG, DLOG_ERR, "No persistence path defined");
   }
 
   return 1;

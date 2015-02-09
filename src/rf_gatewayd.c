@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <time.h>
+#include <assert.h>
 
 #include "common.h"
 #include "srts.h"
@@ -31,9 +32,12 @@
 #include "urlparser.h"
 #include "mqtt.h"
 #include "rf_gateway.h"
+#include "logging.h"
 
 extern int verbose;
 extern int debug;
+
+struct dlog *DLOG;
 
 void handle_interrupt()
 {
@@ -68,6 +72,9 @@ int main(int argc, char **argv)
     fprintf(stderr, "Wiring Pi not installed");
     return -1;
   }
+
+  DLOG = dlog_init(DLOG_SYSLOG, DLOG_DEBUG, "rf_gateway");
+  assert(DLOG != NULL);
 
   srand(time(NULL));
 

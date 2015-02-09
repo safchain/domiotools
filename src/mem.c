@@ -21,7 +21,7 @@
 
 void _alloc_error(const char *file, int line)
 {
-  fprintf(stderr, "Out of Memory in %s at line %d\n", file, line);
+  fprintf(stderr, "Fatal, Out of Memory in %s at line %d\n", file, line);
   abort();
 }
 

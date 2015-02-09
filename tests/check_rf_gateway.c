@@ -28,9 +28,11 @@
 #include "rf_gateway.h"
 #include "srts.h"
 #include "mqtt.h"
+#include "logging.h"
 
 int debug;
 int verbose;
+struct dlog *DLOG;
 
 int mqtt_publish(const char *output, const char *value)
 {
@@ -460,6 +462,9 @@ int main(void)
 {
   SRunner *sr;
   int number_failed;
+
+  DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
+  assert(DLOG != NULL);
 
   sr = srunner_create(rf_suite ());
   srunner_run_all(sr, CK_VERBOSE);

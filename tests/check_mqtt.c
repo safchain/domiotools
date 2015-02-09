@@ -26,6 +26,7 @@
 #include <cmocker.h>
 
 #include "mqtt.h"
+#include "logging.h"
 
 struct mosquitto {
   int id;
@@ -38,6 +39,8 @@ struct mosquitto {
 
 static int rc_success = MOSQ_ERR_SUCCESS;
 static int rc_error = MOSQ_ERR_UNKNOWN;
+
+struct dlog *DLOG;
 int verbose = 0;
 
 int mosquitto_lib_init(void)
@@ -425,6 +428,9 @@ int main(void)
 {
   SRunner *sr;
   int number_failed;
+
+  DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
+  assert(DLOG != NULL);
 
   sr = srunner_create(mqtt_suite ());
   srunner_run_all(sr, CK_VERBOSE);
