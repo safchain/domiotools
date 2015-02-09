@@ -1,11 +1,18 @@
-TESTS = check_hl check_urlparser check_mqtt check_rf_gateway check_srts check_logging
-check_PROGRAMS = check_hl check_urlparser check_mqtt check_rf_gateway check_srts check_logging
+TESTS = check_hl check_urlparser check_mqtt check_rf_gateway check_srts \
+		check_logging check_mem
+check_PROGRAMS = check_hl check_urlparser check_mqtt check_rf_gateway \
+				 check_srts check_logging check_mem
 
 check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
 				   $(top_builddir)/src/hmap.c
 check_hl_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_hl_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
+
+check_mem_SOURCES = check_mem.c \
+				   $(top_builddir)/src/mem.c
+check_mem_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
+check_mem_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 
 check_logging_SOURCES = check_logging.c \
 				        $(top_builddir)/src/mem.c \

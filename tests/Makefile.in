@@ -33,10 +33,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 TESTS = check_hl$(EXEEXT) check_urlparser$(EXEEXT) check_mqtt$(EXEEXT) \
 	check_rf_gateway$(EXEEXT) check_srts$(EXEEXT) \
-	check_logging$(EXEEXT)
+	check_logging$(EXEEXT) check_mem$(EXEEXT)
 check_PROGRAMS = check_hl$(EXEEXT) check_urlparser$(EXEEXT) \
 	check_mqtt$(EXEEXT) check_rf_gateway$(EXEEXT) \
-	check_srts$(EXEEXT) check_logging$(EXEEXT)
+	check_srts$(EXEEXT) check_logging$(EXEEXT) check_mem$(EXEEXT)
 subdir = tests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -59,6 +59,12 @@ check_logging_OBJECTS = $(am_check_logging_OBJECTS)
 check_logging_DEPENDENCIES =
 check_logging_LINK = $(CCLD) $(check_logging_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_check_mem_OBJECTS = check_mem-check_mem.$(OBJEXT) \
+	check_mem-mem.$(OBJEXT)
+check_mem_OBJECTS = $(am_check_mem_OBJECTS)
+check_mem_DEPENDENCIES =
+check_mem_LINK = $(CCLD) $(check_mem_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_check_mqtt_OBJECTS = check_mqtt-check_mqtt.$(OBJEXT) \
 	check_mqtt-urlparser.$(OBJEXT) check_mqtt-mem.$(OBJEXT) \
 	check_mqtt-list.$(OBJEXT) check_mqtt-hmap.$(OBJEXT) \
@@ -101,11 +107,13 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(check_hl_SOURCES) $(check_logging_SOURCES) \
-	$(check_mqtt_SOURCES) $(check_rf_gateway_SOURCES) \
-	$(check_srts_SOURCES) $(check_urlparser_SOURCES)
+	$(check_mem_SOURCES) $(check_mqtt_SOURCES) \
+	$(check_rf_gateway_SOURCES) $(check_srts_SOURCES) \
+	$(check_urlparser_SOURCES)
 DIST_SOURCES = $(check_hl_SOURCES) $(check_logging_SOURCES) \
-	$(check_mqtt_SOURCES) $(check_rf_gateway_SOURCES) \
-	$(check_srts_SOURCES) $(check_urlparser_SOURCES)
+	$(check_mem_SOURCES) $(check_mqtt_SOURCES) \
+	$(check_rf_gateway_SOURCES) $(check_srts_SOURCES) \
+	$(check_urlparser_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -210,6 +218,11 @@ check_hl_SOURCES = check_hl.c \
 
 check_hl_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_hl_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
+check_mem_SOURCES = check_mem.c \
+				   $(top_builddir)/src/mem.c
+
+check_mem_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
+check_mem_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 check_logging_SOURCES = check_logging.c \
 				        $(top_builddir)/src/mem.c \
 				        $(top_builddir)/src/logging.c
@@ -292,6 +305,9 @@ check_hl$(EXEEXT): $(check_hl_OBJECTS) $(check_hl_DEPENDENCIES) $(EXTRA_check_hl
 check_logging$(EXEEXT): $(check_logging_OBJECTS) $(check_logging_DEPENDENCIES) $(EXTRA_check_logging_DEPENDENCIES) 
 	@rm -f check_logging$(EXEEXT)
 	$(check_logging_LINK) $(check_logging_OBJECTS) $(check_logging_LDADD) $(LIBS)
+check_mem$(EXEEXT): $(check_mem_OBJECTS) $(check_mem_DEPENDENCIES) $(EXTRA_check_mem_DEPENDENCIES) 
+	@rm -f check_mem$(EXEEXT)
+	$(check_mem_LINK) $(check_mem_OBJECTS) $(check_mem_LDADD) $(LIBS)
 check_mqtt$(EXEEXT): $(check_mqtt_OBJECTS) $(check_mqtt_DEPENDENCIES) $(EXTRA_check_mqtt_DEPENDENCIES) 
 	@rm -f check_mqtt$(EXEEXT)
 	$(check_mqtt_LINK) $(check_mqtt_OBJECTS) $(check_mqtt_LDADD) $(LIBS)
@@ -317,6 +333,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_logging-check_logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_logging-logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_logging-mem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mem-check_mem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mem-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-check_mqtt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-list.Po@am__quote@
@@ -435,6 +453,34 @@ check_logging-logging.obj: $(top_builddir)/src/logging.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/logging.c' object='check_logging-logging.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_logging_CFLAGS) $(CFLAGS) -c -o check_logging-logging.obj `if test -f '$(top_builddir)/src/logging.c'; then $(CYGPATH_W) '$(top_builddir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/logging.c'; fi`
+
+check_mem-check_mem.o: check_mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -MT check_mem-check_mem.o -MD -MP -MF $(DEPDIR)/check_mem-check_mem.Tpo -c -o check_mem-check_mem.o `test -f 'check_mem.c' || echo '$(srcdir)/'`check_mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mem-check_mem.Tpo $(DEPDIR)/check_mem-check_mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_mem.c' object='check_mem-check_mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -c -o check_mem-check_mem.o `test -f 'check_mem.c' || echo '$(srcdir)/'`check_mem.c
+
+check_mem-check_mem.obj: check_mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -MT check_mem-check_mem.obj -MD -MP -MF $(DEPDIR)/check_mem-check_mem.Tpo -c -o check_mem-check_mem.obj `if test -f 'check_mem.c'; then $(CYGPATH_W) 'check_mem.c'; else $(CYGPATH_W) '$(srcdir)/check_mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mem-check_mem.Tpo $(DEPDIR)/check_mem-check_mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_mem.c' object='check_mem-check_mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -c -o check_mem-check_mem.obj `if test -f 'check_mem.c'; then $(CYGPATH_W) 'check_mem.c'; else $(CYGPATH_W) '$(srcdir)/check_mem.c'; fi`
+
+check_mem-mem.o: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -MT check_mem-mem.o -MD -MP -MF $(DEPDIR)/check_mem-mem.Tpo -c -o check_mem-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mem-mem.Tpo $(DEPDIR)/check_mem-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_mem-mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -c -o check_mem-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+
+check_mem-mem.obj: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -MT check_mem-mem.obj -MD -MP -MF $(DEPDIR)/check_mem-mem.Tpo -c -o check_mem-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mem-mem.Tpo $(DEPDIR)/check_mem-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_mem-mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mem_CFLAGS) $(CFLAGS) -c -o check_mem-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
 
 check_mqtt-check_mqtt.o: check_mqtt.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -MT check_mqtt-check_mqtt.o -MD -MP -MF $(DEPDIR)/check_mqtt-check_mqtt.Tpo -c -o check_mqtt-check_mqtt.o `test -f 'check_mqtt.c' || echo '$(srcdir)/'`check_mqtt.c
