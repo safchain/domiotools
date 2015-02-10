@@ -185,7 +185,7 @@ void dlog(struct dlog *log, int priority, const char *fmt, ...)
     default:
       fp = stderr;
   }
-  dlog_vfprintf(log->fp, priority, fmt, ap);
+  dlog_vfprintf(fp, priority, fmt, ap);
 
   va_end(ap);
 
