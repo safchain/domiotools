@@ -29,6 +29,7 @@
 #include "srts.h"
 #include "mqtt.h"
 #include "logging.h"
+#include "homeasy.h"
 
 int debug;
 int verbose;
@@ -95,10 +96,50 @@ void srts_transmit_persist(int gpio, char key, unsigned short address,
 unsigned char srts_get_ctrl_int(const char *ctrl)
 {
   if (strcasecmp(ctrl, "UP") == 0) {
-    return UP;
+    return SRTS_UP;
   }
 
-  return UNKNOWN;
+  return SRTS_UNKNOWN;
+}
+
+void homeasy_transmit(int gpio, unsigned int address, unsigned char receiver,
+        unsigned char ctrl, unsigned char group, int repeat)
+{
+  int *a = xmalloc(sizeof(int));
+  int *c = xmalloc(sizeof(int));
+
+  *a = address;
+  *c = ctrl;
+
+  mock_called("homeasy_transmit");
+  mock_called_with("homeasy_transmit:address", a);
+  mock_called_with("homeasy_transmit:ctrl", c);
+}
+
+unsigned char homeasy_get_ctrl_int(const char *ctrl)
+{
+  if (strcasecmp(ctrl, "ON") == 0) {
+    return HOMEASY_ON;
+  }
+
+  return HOMEASY_UNKNOWN;
+}
+
+const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
+{
+  return "ON";
+}
+
+int homeasy_receive(int type, int duration, struct homeasy_payload *payload)
+{
+  int *address = (int *) mock_returns("homeasy_receive_address");
+  if (address != NULL) {
+    payload->address = *address;
+  }
+
+  mock_called("homeasy_receive");
+
+  return 1;
 }
 
 void test_rf_setup()
@@ -253,7 +294,7 @@ START_TEST(test_config_subscribers_success)
 }
 END_TEST
 
-START_TEST(test_config_subscribers_callback)
+START_TEST(test_config_subscribers_srts_callback)
 {
   char *conf = "config:{"
     "globals:{"
@@ -284,11 +325,105 @@ START_TEST(test_config_subscribers_callback)
   free(value);
 
   value = (int *) mock_call("srts_transmit_persist:ctrl", 0);
-  ck_assert_int_eq(UP, *value);
+  ck_assert_int_eq(SRTS_UP, *value);
   free(value);
 
   path = (char *) mock_call("srts_transmit_persist:path", 0);
   ck_assert_str_eq("/tmp/persist", path);
+}
+END_TEST
+
+START_TEST(test_config_subscribers_srts_callback_unknow_ctrl)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+        "persistence_path: \"/tmp/persist\";"
+    "};"
+    "subscribers:({"
+        "type: \"srts\";"
+        "address: 3333;"
+        "input: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  void *obj;
+  void (*callback)(void *data, const void *payload, int payloadlen);
+  char *payload = "AAA";
+  int rc;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+
+  obj = mock_call("mqtt_subscribe:obj", 0);
+  callback = mock_call("mqtt_subscribe:callback", 0);
+  callback(obj, payload, strlen(payload));
+
+  ck_assert_int_eq(0, mock_calls("srts_transmit_persist"));
+}
+END_TEST
+
+START_TEST(test_config_subscribers_homeasy_callback)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+        "persistence_path: \"/tmp/persist\";"
+    "};"
+    "subscribers:({"
+        "type: \"homeasy\";"
+        "address: 4444;"
+        "input: \"mqtt://localhost:1883/4444\";})"
+    "}";
+  void *obj;
+  void (*callback)(void *data, const void *payload, int payloadlen);
+  char *payload = "ON";
+  int rc, *value;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+
+  obj = mock_call("mqtt_subscribe:obj", 0);
+  callback = mock_call("mqtt_subscribe:callback", 0);
+  callback(obj, payload, strlen(payload));
+
+  ck_assert_int_eq(1, mock_calls("homeasy_transmit"));
+  value = (int *) mock_call("homeasy_transmit:address", 0);
+  ck_assert_int_eq(4444, *value);
+  free(value);
+
+  value = (int *) mock_call("homeasy_transmit:ctrl", 0);
+  ck_assert_int_eq(HOMEASY_ON, *value);
+  free(value);
+}
+END_TEST
+
+START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+        "persistence_path: \"/tmp/persist\";"
+    "};"
+    "subscribers:({"
+        "type: \"homeasy\";"
+        "address: 4444;"
+        "input: \"mqtt://localhost:1883/4444\";})"
+    "}";
+  void *obj;
+  void (*callback)(void *data, const void *payload, int payloadlen);
+  char *payload = "BBB";
+  int rc;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+
+  obj = mock_call("mqtt_subscribe:obj", 0);
+  callback = mock_call("mqtt_subscribe:callback", 0);
+  callback(obj, payload, strlen(payload));
+
+  ck_assert_int_eq(0, mock_calls("homeasy_transmit"));
 }
 END_TEST
 
@@ -432,6 +567,48 @@ START_TEST(test_srts_publish_translations)
 }
 END_TEST
 
+START_TEST(test_homeasy_publish)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "gpio: 2;"
+    "};"
+    "publishers:({"
+        "type: \"homeasy\";"
+        "address: 5555;"
+        "output: \"mqtt://localhost:1883/5555\";})"
+    "}";
+  int rc, address;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(rc, 1);
+
+  address = 1111;
+  mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
+
+  rf_gw_handle_interrupt(0, 50);
+  rf_gw_handle_interrupt(1, 1500);
+
+  rc = mock_calls("homeasy_receive");
+  ck_assert_int_eq(rc, 1);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 0);
+
+  address = 5555;
+  mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
+
+  rf_gw_handle_interrupt(1, 2000);
+
+  rc = mock_calls("homeasy_receive");
+  ck_assert_int_eq(rc, 2);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 1);
+  ck_assert_str_eq("ON", mock_call("mqtt_publish", 0));
+}
+END_TEST
+
 Suite *rf_suite(void)
 {
   Suite *s;
@@ -449,10 +626,14 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_config_subscribers_no_output_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_address_error);
   tcase_add_test(tc_rf, test_config_subscribers_success);
-  tcase_add_test(tc_rf, test_config_subscribers_callback);
+  tcase_add_test(tc_rf, test_config_subscribers_srts_callback);
+  tcase_add_test(tc_rf, test_config_subscribers_srts_callback_unknow_ctrl);
+  tcase_add_test(tc_rf, test_config_subscribers_homeasy_callback);
+  tcase_add_test(tc_rf, test_config_subscribers_homeasy_callback_unknow_ctrl);
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
   tcase_add_test(tc_rf, test_srts_publish_translations);
+  tcase_add_test(tc_rf, test_homeasy_publish);
   suite_add_tcase(s, tc_rf);
 
   return s;

@@ -33,11 +33,8 @@
 #include "urlparser.h"
 #include "mqtt.h"
 #include "logging.h"
+#include "homeasy.h"
 
-#define SRTS_REPEAT 7
-
-extern int verbose;
-extern int debug;
 extern struct dlog *DLOG;
 
 enum {
@@ -48,6 +45,7 @@ enum {
 struct rf_device {
   int type;
   int address;
+  int repeat;
 };
 
 static config_t cfg;
@@ -96,11 +94,26 @@ static int publish(config_setting_t *config, const char *value)
   return rc;
 }
 
+static int config_lookup_type(config_setting_t *h, const char *type)
+{
+  const char *t;
+
+  if (config_setting_lookup_string(h, "type", &t) != CONFIG_TRUE) {
+    dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
+         config_setting_source_line(h));
+    return 0;
+  }
+  if (strcmp(t, type) != 0) {
+    return 0;
+  }
+  return 1;
+}
+
 static int srts_lookup_for_publisher(struct srts_payload *payload)
 {
   config_setting_t *hs, *h;
   int address, value, i = 0;
-  const char *type, *ctrl;
+  const char *ctrl;
 
   hs = config_lookup(&cfg, "config.publishers");
   if (hs == NULL) {
@@ -111,12 +124,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
   do {
     h = config_setting_get_elem(hs, i);
     if (h != NULL) {
-      if (config_setting_lookup_string(h, "type", &type) != CONFIG_TRUE) {
-        dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
-                config_setting_source_line(h));
-        continue;
-      }
-      if (strcmp(type, "srts") != 0) {
+      if (!config_lookup_type(h, "srts")) {
         continue;
       }
 
@@ -129,7 +137,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
       if (address == value) {
         ctrl = srts_get_ctrl_str(payload);
         if (ctrl == NULL) {
-          dlog(DLOG, DLOG_ERR, "Srts ctrl unknown: %d", payload->ctrl);
+          dlog(DLOG, DLOG_ERR, "Somfy RTS, ctrl unknown: %d", payload->ctrl);
           return 0;
         }
 
@@ -140,6 +148,61 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
   } while (h != NULL);
 
   return 1;
+}
+
+static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
+{
+  config_setting_t *hs, *h;
+  int value, i = 0;
+  const char *ctrl;
+
+  hs = config_lookup(&cfg, "config.publishers");
+  if (hs == NULL) {
+    dlog(DLOG, DLOG_ERR, "No publisher defined");
+    return 0;
+  }
+
+  do {
+    h = config_setting_get_elem(hs, i);
+    if (h != NULL) {
+      if (!config_lookup_type(h, "homeasy")) {
+        continue;
+      }
+
+      if (config_setting_lookup_int(h, "address", &value) != CONFIG_TRUE) {
+        dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
+                config_setting_source_line(h));
+        continue;
+      }
+
+      if (payload->address == value) {
+        ctrl = homeasy_get_ctrl_str(payload);
+        if (ctrl == NULL) {
+          dlog(DLOG, DLOG_ERR, "Homeasy, ctrl unknown: %d", payload->ctrl);
+          return 0;
+        }
+
+        return publish(h, ctrl);
+      }
+    }
+    i++;
+  } while (h != NULL);
+
+  return 1;
+}
+
+static int homeasy_handler(int type, int duration)
+{
+  struct homeasy_payload payload;
+  int rc;
+
+  rc = homeasy_receive(type, duration, &payload);
+  if (rc == 1) {
+    dlog(DLOG, DLOG_INFO, "Homeasy, Message received correctly");
+
+    rc = homeasy_lookup_for_publisher(&payload);
+  }
+  return rc;
 }
 
 static int srts_handler(int type, int duration)
@@ -154,12 +217,9 @@ static int srts_handler(int type, int duration)
       return 0;
     }
     last_key = payload.key;
-    if (verbose) {
-      dlog(DLOG, DLOG_INFO, "Message correctly received");
-      if (debug) {
-        srts_print_payload(&payload);
-      }
-    }
+
+    dlog(DLOG, DLOG_INFO, "Somfy RTS, Message received correctly");
+
     rc = srts_lookup_for_publisher(&payload);
   }
   return rc;
@@ -170,6 +230,7 @@ void rf_gw_handle_interrupt(int type, long time)
   static unsigned int last_change = 0;
   static unsigned int total_duration = 0;
   unsigned int duration = 0;
+  int rc = 0;
 
   if (last_change) {
     duration = time - last_change;
@@ -182,7 +243,10 @@ void rf_gw_handle_interrupt(int type, long time)
 
     /* ask for all defined publisher */
     if (publisher_types & SRTS) {
-      srts_handler(type, total_duration);
+      rc = srts_handler(type, total_duration);
+    }
+    if (rc != 1 && (publisher_types & HOMEASY)) {
+      homeasy_handler(type, total_duration);
     }
     total_duration = 0;
   }
@@ -220,16 +284,23 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
   memset(value, 0, payloadlen + 1);
   memcpy(value, payload, payloadlen);
 
-  ctrl = srts_get_ctrl_int(value);
-  if (ctrl == UNKNOWN) {
-    goto clean;
-  }
-
-  /* log debug here */
   switch(device->type) {
     case SRTS:
+      ctrl = srts_get_ctrl_int(value);
+      if (ctrl == SRTS_UNKNOWN) {
+        goto clean;
+      }
+
       srts_transmit_persist(gpio, 0, device->address, ctrl,
-              SRTS_REPEAT, persistence_path);
+              device->repeat, persistence_path);
+      break;
+    case HOMEASY:
+      ctrl = homeasy_get_ctrl_int(value);
+      if (ctrl == HOMEASY_UNKNOWN) {
+        goto clean;
+      }
+
+      homeasy_transmit(gpio, device->address, 0, ctrl, 0, device->repeat);
       break;
   }
 
@@ -242,12 +313,11 @@ static int subscribe()
   config_setting_t *hs, *h;
   struct rf_device *device;
   char *input, *type;
-  int address, t, i = 0;
+  int address, repeat = 0, t, i = 0;
 
   hs = config_lookup(&cfg, "config.subscribers");
   if (hs == NULL) {
-    /* log as warning or info */
-    dlog(DLOG, DLOG_ERR, "No subscriber defined");
+    dlog(DLOG, DLOG_INFO, "No subscriber defined");
     return 1;
   }
 
@@ -269,6 +339,8 @@ static int subscribe()
                 config_setting_source_line(h));
         return 0;
       }
+      config_setting_lookup_int(h, "repeat", (int *) &repeat);
+
       t = str_type_to_int(type);
       if (!t) {
         dlog(DLOG, DLOG_ERR, "Subscriber type unknown: %s", type);
@@ -277,6 +349,7 @@ static int subscribe()
       device = xmalloc(sizeof(struct rf_device));
       device->address = address;
       device->type = t;
+      device->repeat = repeat;
 
       if (!mqtt_subscribe(input, device, rf_mqtt_callback)) {
         return 0;
@@ -296,8 +369,7 @@ static int config_read_publisher_types()
 
   hs = config_lookup(&cfg, "config.publishers");
   if (hs == NULL) {
-    /* log as warning or info */
-    dlog(DLOG, DLOG_ERR, "No publisher defined");
+    dlog(DLOG, DLOG_INFO, "No publisher defined");
     return 1;
   }
 
@@ -336,7 +408,6 @@ static int config_read_globals()
 
   rc = config_lookup_int(&cfg, "config.globals.gpio", &gpio);
   if (rc == CONFIG_FALSE) {
-    /* log as warning or info */
     dlog(DLOG, DLOG_ERR, "No gpio defined");
     return 0;
   }
@@ -344,8 +415,8 @@ static int config_read_globals()
   rc = config_lookup_string(&cfg, "config.globals.persistence_path",
                             (const char **) &persistence_path);
   if (rc == CONFIG_FALSE) {
-    /* log as warning or info */
-    dlog(DLOG, DLOG_ERR, "No persistence path defined");
+    dlog(DLOG, DLOG_WARNING, "No persistence path defined, using the "
+         "default value: %s", persistence_path);
   }
 
   return 1;
@@ -364,8 +435,8 @@ int rf_gw_read_config(char *in, int file)
   }
 
   if (!rc) {
-    printf("\n%s:%d - %s", config_error_file(&cfg),
-           config_error_line(&cfg), config_error_text(&cfg));
+    dlog(DLOG, DLOG_CRIT, "Configuration file malformed, %s:%d - %s",
+         config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
     config_destroy(&cfg);
     return 0;
   }

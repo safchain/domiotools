@@ -378,23 +378,21 @@ static int read_byte(char bit, char *byte)
 const char *srts_get_ctrl_str(struct srts_payload *payload)
 {
   switch (payload->ctrl) {
-    case UNKNOWN:
-      return "UNKNOWN";
-    case MY:
+    case SRTS_MY:
       return "MY";
-    case UP:
+    case SRTS_UP:
       return "UP";
-    case DOWN:
+    case SRTS_DOWN:
       return "DOWN";
-    case MY_DOWN:
+    case SRTS_MY_DOWN:
       return "MY_DOWN";
-    case UP_DOWN:
+    case SRTS_UP_DOWN:
       return "UP_DOWN";
-    case PROG:
+    case SRTS_PROG:
       return "PROG";
-    case SUN_FLAG:
+    case SRTS_SUN_FLAG:
       return "SUN_FLAG";
-    case FLAG:
+    case SRTS_FLAG:
       return "FLAG";
   }
 
@@ -404,26 +402,26 @@ const char *srts_get_ctrl_str(struct srts_payload *payload)
 unsigned char srts_get_ctrl_int(const char *ctrl)
 {
   if (strcasecmp(ctrl, "my") == 0) {
-    return MY;
+    return SRTS_MY;
   } else if (strcasecmp(ctrl, "up") == 0) {
-    return UP;
+    return SRTS_UP;
   } else if (strcasecmp(ctrl, "my_up") == 0) {
-    return MY_UP;
+    return SRTS_MY_UP;
   } else if (strcasecmp(ctrl, "down") == 0) {
-    return DOWN;
+    return SRTS_DOWN;
   } else if (strcasecmp(ctrl, "my_down") == 0) {
-    return MY_DOWN;
+    return SRTS_MY_DOWN;
   } else if (strcasecmp(ctrl, "up_down") == 0) {
-    return UP_DOWN;
+    return SRTS_UP_DOWN;
   } else if (strcasecmp(ctrl, "prog") == 0) {
-    return PROG;
+    return SRTS_PROG;
   } else if (strcasecmp(ctrl, "sun_flag") == 0) {
-    return SUN_FLAG;
+    return SRTS_SUN_FLAG;
   } else if (strcasecmp(ctrl, "flag") == 0) {
-    return FLAG;
+    return SRTS_FLAG;
   }
 
-  return UNKNOWN;
+  return SRTS_UNKNOWN;
 }
 
 

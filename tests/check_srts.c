@@ -112,7 +112,7 @@ START_TEST(test_srts_transmit_receive)
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, UP, 789, 0);
+  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -134,7 +134,7 @@ START_TEST(test_srts_transmit_two_receives)
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, UP, 789, 0);
+  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -148,7 +148,7 @@ START_TEST(test_srts_transmit_two_receives)
   mock_reset_calls();
 
   random_signal();
-  srts_transmit(2, 123, 456, DOWN, 790, 0);
+  srts_transmit(2, 123, 456, SRTS_DOWN, 790, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -170,7 +170,7 @@ START_TEST(test_srts_transmit_receive_repeated)
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, UP, 789, 0);
+  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -184,7 +184,7 @@ START_TEST(test_srts_transmit_receive_repeated)
   mock_reset_calls();
 
   random_signal();
-  srts_transmit(2, 123, 456, UP, 789, 1);
+  srts_transmit(2, 123, 456, SRTS_UP, 789, 1);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -209,7 +209,7 @@ START_TEST(test_srts_transmit_persist)
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit_persist(2, 123, 456, UP, 0, tmpname);
+  srts_transmit_persist(2, 123, 456, SRTS_UP, 0, tmpname);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -223,7 +223,7 @@ START_TEST(test_srts_transmit_persist)
   mock_reset_calls();
 
   random_signal();
-  srts_transmit_persist(2, 123, 456, UP, 0, tmpname);
+  srts_transmit_persist(2, 123, 456, SRTS_UP, 0, tmpname);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);

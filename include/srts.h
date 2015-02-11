@@ -18,16 +18,16 @@
 #define __SRTS_H
 
 enum CTRL {
-  UNKNOWN = 0,
-  MY = 1,
-  UP,
-  MY_UP,
-  DOWN,
-  MY_DOWN,
-  UP_DOWN,
-  PROG = 8,
-  SUN_FLAG,
-  FLAG,
+  SRTS_UNKNOWN = 0,
+  SRTS_MY = 1,
+  SRTS_UP,
+  SRTS_MY_UP,
+  SRTS_DOWN,
+  SRTS_MY_DOWN,
+  SRTS_UP_DOWN,
+  SRTS_PROG = 8,
+  SRTS_SUN_FLAG,
+  SRTS_FLAG,
 };
 
 struct srts_payload {

@@ -18,9 +18,9 @@
 #define __HOMEASY_H
 
 enum COMMAND {
-  OFF,
-  ON,
-  UNKNOWN
+  HOMEASY_OFF,
+  HOMEASY_ON,
+  HOMEASY_UNKNOWN
 };
 
 struct homeasy_payload {

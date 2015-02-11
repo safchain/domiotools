@@ -117,7 +117,7 @@ START_TEST(test_homeasy_transmit_receive)
   memset(&payload, 0, sizeof(struct homeasy_payload));
 
   random_signal();
-  homeasy_transmit(2, 123, 6, ON, 1, 0);
+  homeasy_transmit(2, 123, 6, HOMEASY_ON, 1, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -139,7 +139,7 @@ START_TEST(test_homeasy_transmit_two_receives)
   memset(&payload, 0, sizeof(struct homeasy_payload));
 
   random_signal();
-  homeasy_transmit(2, 123, 6, ON, 1, 0);
+  homeasy_transmit(2, 123, 6, HOMEASY_ON, 1, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -153,7 +153,7 @@ START_TEST(test_homeasy_transmit_two_receives)
   mock_reset_calls();
 
   random_signal();
-  homeasy_transmit(2, 125, 7, ON, 0, 0);
+  homeasy_transmit(2, 125, 7, HOMEASY_OFF, 0, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -161,7 +161,7 @@ START_TEST(test_homeasy_transmit_two_receives)
   ck_assert_int_eq(125, payload.address);
   ck_assert_int_eq(7, payload.receiver);
   ck_assert_int_eq(0, payload.group);
-  ck_assert_str_eq("ON", homeasy_get_ctrl_str(&payload));
+  ck_assert_str_eq("OFF", homeasy_get_ctrl_str(&payload));
 
   free_pulses();
 }

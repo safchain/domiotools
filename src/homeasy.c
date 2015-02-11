@@ -214,8 +214,8 @@ int homeasy_receive(int type, int duration, struct homeasy_payload *payload)
   static unsigned int sync = 0;
   static unsigned int index = 3;
   static char bytes[4];
+  int rc, *i;
   char bit;
-  int rc, i;
 
   if (!sync) {
     sync = detect_sync(type, &duration);
@@ -240,11 +240,11 @@ int homeasy_receive(int type, int duration, struct homeasy_payload *payload)
         sync = 0;
         index = 3;
 
-        i = *((int *) bytes);
-        payload->address = i >> 6;
-        payload->group = (i >> 5) & 1;
-        payload->ctrl = (i >> 4) & 1;
-        payload->receiver = i & 0xF;
+        i = (int *) bytes;
+        payload->address = *i >> 6;
+        payload->group = (*i >> 5) & 1;
+        payload->ctrl = (*i >> 4) & 1;
+        payload->receiver = *i & 0xF;
 
         return 1;
       }
@@ -257,11 +257,9 @@ int homeasy_receive(int type, int duration, struct homeasy_payload *payload)
 const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
 {
   switch (payload->ctrl) {
-    case UNKNOWN:
-      return "UNKNOWN";
-    case ON:
+    case HOMEASY_ON:
       return "ON";
-    case OFF:
+    case HOMEASY_OFF:
       return "OFF";
   }
 
@@ -271,10 +269,10 @@ const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
 unsigned char homeasy_get_ctrl_int(const char *ctrl)
 {
   if (strcasecmp(ctrl, "on") == 0) {
-    return ON;
+    return HOMEASY_ON;
   } else if (strcasecmp(ctrl, "off") == 0) {
-    return OFF;
+    return HOMEASY_OFF;
   }
 
-  return UNKNOWN;
+  return HOMEASY_UNKNOWN;
 }

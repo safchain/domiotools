@@ -106,7 +106,6 @@ END_TEST
 START_TEST(test_log_syslog)
 {
   struct dlog *log;
-  char buff[BUFSIZ], *str;
 
   log = dlog_init(DLOG_SYSLOG, DLOG_DEBUG, "test");
   ck_assert(log != NULL);

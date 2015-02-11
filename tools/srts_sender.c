@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -101,31 +101,6 @@ static void store_code(char *progname, unsigned short address,
   fclose(fp);
 }
 
-static char get_command_char(char *command)
-{
-  if (strcasecmp(command, "my") == 0) {
-    return MY;
-  } else if (strcasecmp(command, "up") == 0) {
-    return UP;
-  } else if (strcasecmp(command, "my_up") == 0) {
-    return MY_UP;
-  } else if (strcasecmp(command, "down") == 0) {
-    return DOWN;
-  } else if (strcasecmp(command, "my_down") == 0) {
-    return MY_DOWN;
-  } else if (strcasecmp(command, "up_down") == 0) {
-    return UP_DOWN;
-  } else if (strcasecmp(command, "prog") == 0) {
-    return PROG;
-  } else if (strcasecmp(command, "sun_flag") == 0) {
-    return SUN_FLAG;
-  } else if (strcasecmp(command, "flag") == 0) {
-    return FLAG;
-  }
-
-  return UNKNOWN;
-}
-
 static void usage(char *name)
 {
   printf
@@ -144,7 +119,7 @@ int main(int argc, char **argv)
   unsigned short code = 0;
   long int a2i;
   int gpio = -1, i, c;
-  char command = UNKNOWN;
+  char command = SRTS_UNKNOWN;
   char *progname, *end;
 
   if (setuid(0)) {
@@ -173,7 +148,7 @@ int main(int argc, char **argv)
           }
           address = a2i;
         } else if (strcmp(long_options[i].name, "command") == 0) {
-          command = get_command_char(optarg);
+          command = srts_get_ctrl_int(optarg);
         }
         break;
       default:
@@ -181,7 +156,7 @@ int main(int argc, char **argv)
     }
   }
 
-  if (command == UNKNOWN || address == 0 || gpio == -1) {
+  if (command == SRTS_UNKNOWN || address == 0 || gpio == -1) {
     usage(argv[0]);
   }
   // store pid and lock it
@@ -212,7 +187,7 @@ int main(int argc, char **argv)
   srts_transmit(gpio, key, address, command, code, 0);
 
   c = 7;
-  if (command == PROG) {
+  if (command == SRTS_PROG) {
     c = 20;
   }
 
