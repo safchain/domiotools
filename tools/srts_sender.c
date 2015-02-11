@@ -28,9 +28,13 @@
 #include <string.h>
 #include <time.h>
 #include <libgen.h>
+#include <assert.h>
 
 #include "common.h"
 #include "srts.h"
+#include "logging.h"
+
+struct dlog *DLOG;
 
 static unsigned short get_next_code(char *progname, unsigned short address)
 {
@@ -190,6 +194,9 @@ int main(int argc, char **argv)
     fprintf(stderr, "Wiring Pi not installed");
     return -1;
   }
+
+  DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
+  assert(DLOG != NULL);
 
   openlog("srts", LOG_PID | LOG_CONS, LOG_USER);
 

@@ -17,7 +17,7 @@
 #ifndef __SRTS_H
 #define __SRTS_H
 
-enum COMMAND {
+enum CTRL {
   UNKNOWN = 0,
   MY = 1,
   UP,
@@ -50,6 +50,6 @@ int srts_receive(int type, int duration, struct srts_payload *payload);
 int srts_get_address(struct srts_payload *payload);
 void srts_print_payload(struct srts_payload *payload);
 const char *srts_get_ctrl_str(struct srts_payload *payload);
-int srts_get_ctrl_int(const char *ctrl);
+unsigned char srts_get_ctrl_int(const char *ctrl);
 
 #endif

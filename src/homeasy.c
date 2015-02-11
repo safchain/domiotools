@@ -76,34 +76,35 @@ static void write_interval_gap(int gpio)
 }
 
 void homeasy_transmit(int gpio, unsigned int address, unsigned char receiver,
-        unsigned char ctrl)
+        unsigned char ctrl, unsigned char group, int repeat)
 {
   unsigned int mask;
+  int i;
 
-  sync_transmit(gpio);
+  for (i = 0; i != repeat + 1; i++) {
+    sync_transmit(gpio);
 
-  for (mask = 0x2000000; mask != 0x0; mask >>= 1) {
-    if (address & mask) {
-      write_bit(gpio, 1);
-    } else {
-      write_bit(gpio, 0);
+    for (mask = 0x2000000; mask != 0x0; mask >>= 1) {
+      if (address & mask) {
+        write_bit(gpio, 1);
+      } else {
+        write_bit(gpio, 0);
+      }
     }
-  }
 
-  // never grouped
-  write_bit(gpio, 0);
+    write_bit(gpio, group);
+    write_bit(gpio, ctrl);
 
-  write_bit(gpio, ctrl);
-
-  for (mask = 0b1000; mask != 0x0; mask >>= 1) {
-    if (receiver & mask) {
-      write_bit(gpio, 1);
-    } else {
-      write_bit(gpio, 0);
+    for (mask = 0b1000; mask != 0x0; mask >>= 1) {
+      if (receiver & mask) {
+        write_bit(gpio, 1);
+      } else {
+        write_bit(gpio, 0);
+      }
     }
-  }
 
-  write_interval_gap(gpio);
+    write_interval_gap(gpio);
+  }
 }
 
 static int is_on_time(int duration, int expected)

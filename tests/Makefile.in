@@ -33,10 +33,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 TESTS = check_hl$(EXEEXT) check_urlparser$(EXEEXT) check_mqtt$(EXEEXT) \
 	check_rf_gateway$(EXEEXT) check_srts$(EXEEXT) \
-	check_logging$(EXEEXT) check_mem$(EXEEXT)
+	check_logging$(EXEEXT) check_mem$(EXEEXT) \
+	check_homeasy$(EXEEXT)
 check_PROGRAMS = check_hl$(EXEEXT) check_urlparser$(EXEEXT) \
 	check_mqtt$(EXEEXT) check_rf_gateway$(EXEEXT) \
-	check_srts$(EXEEXT) check_logging$(EXEEXT) check_mem$(EXEEXT)
+	check_srts$(EXEEXT) check_logging$(EXEEXT) check_mem$(EXEEXT) \
+	check_homeasy$(EXEEXT)
 subdir = tests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -53,6 +55,13 @@ check_hl_OBJECTS = $(am_check_hl_OBJECTS)
 check_hl_DEPENDENCIES =
 check_hl_LINK = $(CCLD) $(check_hl_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am_check_homeasy_OBJECTS = check_homeasy-check_homeasy.$(OBJEXT) \
+	check_homeasy-mem.$(OBJEXT) check_homeasy-logging.$(OBJEXT) \
+	check_homeasy-homeasy.$(OBJEXT)
+check_homeasy_OBJECTS = $(am_check_homeasy_OBJECTS)
+check_homeasy_DEPENDENCIES =
+check_homeasy_LINK = $(CCLD) $(check_homeasy_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_check_logging_OBJECTS = check_logging-check_logging.$(OBJEXT) \
 	check_logging-mem.$(OBJEXT) check_logging-logging.$(OBJEXT)
 check_logging_OBJECTS = $(am_check_logging_OBJECTS)
@@ -86,7 +95,7 @@ check_rf_gateway_LINK = $(CCLD) $(check_rf_gateway_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_check_srts_OBJECTS = check_srts-check_srts.$(OBJEXT) \
 	check_srts-mem.$(OBJEXT) check_srts-common.$(OBJEXT) \
-	check_srts-srts.$(OBJEXT)
+	check_srts-logging.$(OBJEXT) check_srts-srts.$(OBJEXT)
 check_srts_OBJECTS = $(am_check_srts_OBJECTS)
 check_srts_DEPENDENCIES =
 check_srts_LINK = $(CCLD) $(check_srts_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -106,14 +115,14 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(check_hl_SOURCES) $(check_logging_SOURCES) \
-	$(check_mem_SOURCES) $(check_mqtt_SOURCES) \
-	$(check_rf_gateway_SOURCES) $(check_srts_SOURCES) \
-	$(check_urlparser_SOURCES)
-DIST_SOURCES = $(check_hl_SOURCES) $(check_logging_SOURCES) \
-	$(check_mem_SOURCES) $(check_mqtt_SOURCES) \
-	$(check_rf_gateway_SOURCES) $(check_srts_SOURCES) \
-	$(check_urlparser_SOURCES)
+SOURCES = $(check_hl_SOURCES) $(check_homeasy_SOURCES) \
+	$(check_logging_SOURCES) $(check_mem_SOURCES) \
+	$(check_mqtt_SOURCES) $(check_rf_gateway_SOURCES) \
+	$(check_srts_SOURCES) $(check_urlparser_SOURCES)
+DIST_SOURCES = $(check_hl_SOURCES) $(check_homeasy_SOURCES) \
+	$(check_logging_SOURCES) $(check_mem_SOURCES) \
+	$(check_mqtt_SOURCES) $(check_rf_gateway_SOURCES) \
+	$(check_srts_SOURCES) $(check_urlparser_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -237,10 +246,18 @@ check_urlparser_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 check_srts_SOURCES = check_srts.c \
 					 $(top_builddir)/src/mem.c \
 					 $(top_builddir)/src/common.c \
+					 $(top_builddir)/src/logging.c \
 					 $(top_builddir)/src/srts.c
 
 check_srts_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_srts_LDADD = @CHECK_LIBS@ -lcmocker @GCOV_LIBS@
+check_homeasy_SOURCES = check_homeasy.c \
+						$(top_builddir)/src/mem.c \
+						$(top_builddir)/src/logging.c \
+						$(top_builddir)/src/homeasy.c
+
+check_homeasy_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
+check_homeasy_LDADD = @CHECK_LIBS@ -lcmocker @GCOV_LIBS@
 check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/urlparser.c \
 					 $(top_builddir)/src/mem.c \
@@ -302,6 +319,9 @@ clean-checkPROGRAMS:
 check_hl$(EXEEXT): $(check_hl_OBJECTS) $(check_hl_DEPENDENCIES) $(EXTRA_check_hl_DEPENDENCIES) 
 	@rm -f check_hl$(EXEEXT)
 	$(check_hl_LINK) $(check_hl_OBJECTS) $(check_hl_LDADD) $(LIBS)
+check_homeasy$(EXEEXT): $(check_homeasy_OBJECTS) $(check_homeasy_DEPENDENCIES) $(EXTRA_check_homeasy_DEPENDENCIES) 
+	@rm -f check_homeasy$(EXEEXT)
+	$(check_homeasy_LINK) $(check_homeasy_OBJECTS) $(check_homeasy_LDADD) $(LIBS)
 check_logging$(EXEEXT): $(check_logging_OBJECTS) $(check_logging_DEPENDENCIES) $(EXTRA_check_logging_DEPENDENCIES) 
 	@rm -f check_logging$(EXEEXT)
 	$(check_logging_LINK) $(check_logging_OBJECTS) $(check_logging_LDADD) $(LIBS)
@@ -330,6 +350,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-check_hl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-check_homeasy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-homeasy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-logging.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_logging-check_logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_logging-logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_logging-mem.Po@am__quote@
@@ -351,6 +375,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-check_srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_urlparser-check_urlparser.Po@am__quote@
@@ -411,6 +436,62 @@ check_hl-hmap.obj: $(top_builddir)/src/hmap.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/hmap.c' object='check_hl-hmap.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -c -o check_hl-hmap.obj `if test -f '$(top_builddir)/src/hmap.c'; then $(CYGPATH_W) '$(top_builddir)/src/hmap.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/hmap.c'; fi`
+
+check_homeasy-check_homeasy.o: check_homeasy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-check_homeasy.o -MD -MP -MF $(DEPDIR)/check_homeasy-check_homeasy.Tpo -c -o check_homeasy-check_homeasy.o `test -f 'check_homeasy.c' || echo '$(srcdir)/'`check_homeasy.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-check_homeasy.Tpo $(DEPDIR)/check_homeasy-check_homeasy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_homeasy.c' object='check_homeasy-check_homeasy.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-check_homeasy.o `test -f 'check_homeasy.c' || echo '$(srcdir)/'`check_homeasy.c
+
+check_homeasy-check_homeasy.obj: check_homeasy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-check_homeasy.obj -MD -MP -MF $(DEPDIR)/check_homeasy-check_homeasy.Tpo -c -o check_homeasy-check_homeasy.obj `if test -f 'check_homeasy.c'; then $(CYGPATH_W) 'check_homeasy.c'; else $(CYGPATH_W) '$(srcdir)/check_homeasy.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-check_homeasy.Tpo $(DEPDIR)/check_homeasy-check_homeasy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_homeasy.c' object='check_homeasy-check_homeasy.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-check_homeasy.obj `if test -f 'check_homeasy.c'; then $(CYGPATH_W) 'check_homeasy.c'; else $(CYGPATH_W) '$(srcdir)/check_homeasy.c'; fi`
+
+check_homeasy-mem.o: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-mem.o -MD -MP -MF $(DEPDIR)/check_homeasy-mem.Tpo -c -o check_homeasy-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-mem.Tpo $(DEPDIR)/check_homeasy-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_homeasy-mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+
+check_homeasy-mem.obj: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-mem.obj -MD -MP -MF $(DEPDIR)/check_homeasy-mem.Tpo -c -o check_homeasy-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-mem.Tpo $(DEPDIR)/check_homeasy-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_homeasy-mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+
+check_homeasy-logging.o: $(top_builddir)/src/logging.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-logging.o -MD -MP -MF $(DEPDIR)/check_homeasy-logging.Tpo -c -o check_homeasy-logging.o `test -f '$(top_builddir)/src/logging.c' || echo '$(srcdir)/'`$(top_builddir)/src/logging.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-logging.Tpo $(DEPDIR)/check_homeasy-logging.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/logging.c' object='check_homeasy-logging.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-logging.o `test -f '$(top_builddir)/src/logging.c' || echo '$(srcdir)/'`$(top_builddir)/src/logging.c
+
+check_homeasy-logging.obj: $(top_builddir)/src/logging.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-logging.obj -MD -MP -MF $(DEPDIR)/check_homeasy-logging.Tpo -c -o check_homeasy-logging.obj `if test -f '$(top_builddir)/src/logging.c'; then $(CYGPATH_W) '$(top_builddir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/logging.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-logging.Tpo $(DEPDIR)/check_homeasy-logging.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/logging.c' object='check_homeasy-logging.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-logging.obj `if test -f '$(top_builddir)/src/logging.c'; then $(CYGPATH_W) '$(top_builddir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/logging.c'; fi`
+
+check_homeasy-homeasy.o: $(top_builddir)/src/homeasy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-homeasy.o -MD -MP -MF $(DEPDIR)/check_homeasy-homeasy.Tpo -c -o check_homeasy-homeasy.o `test -f '$(top_builddir)/src/homeasy.c' || echo '$(srcdir)/'`$(top_builddir)/src/homeasy.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-homeasy.Tpo $(DEPDIR)/check_homeasy-homeasy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/homeasy.c' object='check_homeasy-homeasy.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-homeasy.o `test -f '$(top_builddir)/src/homeasy.c' || echo '$(srcdir)/'`$(top_builddir)/src/homeasy.c
+
+check_homeasy-homeasy.obj: $(top_builddir)/src/homeasy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -MT check_homeasy-homeasy.obj -MD -MP -MF $(DEPDIR)/check_homeasy-homeasy.Tpo -c -o check_homeasy-homeasy.obj `if test -f '$(top_builddir)/src/homeasy.c'; then $(CYGPATH_W) '$(top_builddir)/src/homeasy.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/homeasy.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_homeasy-homeasy.Tpo $(DEPDIR)/check_homeasy-homeasy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/homeasy.c' object='check_homeasy-homeasy.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_homeasy_CFLAGS) $(CFLAGS) -c -o check_homeasy-homeasy.obj `if test -f '$(top_builddir)/src/homeasy.c'; then $(CYGPATH_W) '$(top_builddir)/src/homeasy.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/homeasy.c'; fi`
 
 check_logging-check_logging.o: check_logging.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_logging_CFLAGS) $(CFLAGS) -MT check_logging-check_logging.o -MD -MP -MF $(DEPDIR)/check_logging-check_logging.Tpo -c -o check_logging-check_logging.o `test -f 'check_logging.c' || echo '$(srcdir)/'`check_logging.c
@@ -719,6 +800,20 @@ check_srts-common.obj: $(top_builddir)/src/common.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/common.c' object='check_srts-common.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_srts_CFLAGS) $(CFLAGS) -c -o check_srts-common.obj `if test -f '$(top_builddir)/src/common.c'; then $(CYGPATH_W) '$(top_builddir)/src/common.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/common.c'; fi`
+
+check_srts-logging.o: $(top_builddir)/src/logging.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_srts_CFLAGS) $(CFLAGS) -MT check_srts-logging.o -MD -MP -MF $(DEPDIR)/check_srts-logging.Tpo -c -o check_srts-logging.o `test -f '$(top_builddir)/src/logging.c' || echo '$(srcdir)/'`$(top_builddir)/src/logging.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_srts-logging.Tpo $(DEPDIR)/check_srts-logging.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/logging.c' object='check_srts-logging.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_srts_CFLAGS) $(CFLAGS) -c -o check_srts-logging.o `test -f '$(top_builddir)/src/logging.c' || echo '$(srcdir)/'`$(top_builddir)/src/logging.c
+
+check_srts-logging.obj: $(top_builddir)/src/logging.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_srts_CFLAGS) $(CFLAGS) -MT check_srts-logging.obj -MD -MP -MF $(DEPDIR)/check_srts-logging.Tpo -c -o check_srts-logging.obj `if test -f '$(top_builddir)/src/logging.c'; then $(CYGPATH_W) '$(top_builddir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/logging.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_srts-logging.Tpo $(DEPDIR)/check_srts-logging.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/logging.c' object='check_srts-logging.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_srts_CFLAGS) $(CFLAGS) -c -o check_srts-logging.obj `if test -f '$(top_builddir)/src/logging.c'; then $(CYGPATH_W) '$(top_builddir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/logging.c'; fi`
 
 check_srts-srts.o: $(top_builddir)/src/srts.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_srts_CFLAGS) $(CFLAGS) -MT check_srts-srts.o -MD -MP -MF $(DEPDIR)/check_srts-srts.Tpo -c -o check_srts-srts.o `test -f '$(top_builddir)/src/srts.c' || echo '$(srcdir)/'`$(top_builddir)/src/srts.c

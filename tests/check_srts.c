@@ -28,11 +28,14 @@
 
 #include "mem.h"
 #include "srts.h"
+#include "logging.h"
 
 struct pulse {
   int value;
   int duration;
 };
+
+struct dlog *DLOG;
 
 void digitalWrite(int pin, int value)
 {
@@ -267,6 +270,9 @@ int main(void)
 {
   SRunner *sr;
   int number_failed;
+
+  DLOG = dlog_init(DLOG_NULL, DLOG_DEBUG, NULL);
+  assert(DLOG != NULL);
 
   sr = srunner_create(srts_suite ());
   srunner_run_all(sr, CK_VERBOSE);

@@ -92,7 +92,7 @@ void srts_transmit_persist(int gpio, char key, unsigned short address,
   mock_called_with("srts_transmit_persist:path", (void *) persistence_path);
 }
 
-int srts_get_ctrl_int(const char *ctrl)
+unsigned char srts_get_ctrl_int(const char *ctrl)
 {
   if (strcasecmp(ctrl, "UP") == 0) {
     return UP;

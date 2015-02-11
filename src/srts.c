@@ -25,8 +25,9 @@
 #include "common.h"
 #include "srts.h"
 #include "mem.h"
+#include "logging.h"
 
-int srts_verbose;
+extern struct dlog *DLOG;
 
 static char *get_code_file_path(const char *persistence_path,
         unsigned short address)
@@ -39,7 +40,7 @@ static char *get_code_file_path(const char *persistence_path,
 
   sprintf(path, "%s/srts", persistence_path);
   if (mkpath(path, 0755) == -1) {
-    fprintf(stderr, "Unable to create the srts code path: %s\n", path);
+    dlog(DLOG, DLOG_ERR, "Unable to create the srts code path: %s", path);
     free(path);
 
     return NULL;
@@ -74,7 +75,7 @@ static int get_code(const char *persistence_path,
 
   c = strtol(code, &end, 10);
   if (errno == ERANGE && (c == LONG_MAX || c == LONG_MIN)) {
-    fprintf(stderr, "Unable to parse the srts code for the address %d\n",
+    dlog(DLOG, DLOG_ERR, "Unable to parse the srts code for the address %d",
             address);
     rc = -1;
     goto clean;
@@ -103,13 +104,14 @@ static int store_code(const char *persistence_path, unsigned short address,
   }
 
   if ((fp = fopen(path, "w+")) == NULL) {
-    fprintf(stderr, "Unable to create the srts code file: %s", path);
+    dlog(DLOG, DLOG_ERR, "Unable to create the srts code file: %s", path);
     return -1;
   }
 
   sprintf(code, "%d\n", new_code);
   if (fputs(code, fp) < 0) {
-    fprintf(stderr, "Unable to write the srts code to the file: %s", path);
+    dlog(DLOG, DLOG_ERR, "Unable to write the srts code to the file: %s",
+            path);
   }
 
   fclose(fp);
@@ -314,10 +316,8 @@ static int detect_sync(int type, int *duration)
     *duration -= 800;
     soft_sync = 2;
 
-    /* full sync, hard and soft */
-    if (srts_verbose) {
-      fprintf(stderr, "Found the sync part of a message\n");
-    }
+    dlog(DLOG, DLOG_DEBUG, "Somfy RTS, Found the sync part of a message");
+
     return 1;
   } else {
     hard_sync = 0;
@@ -401,7 +401,7 @@ const char *srts_get_ctrl_str(struct srts_payload *payload)
   return NULL;
 }
 
-int srts_get_ctrl_int(const char *ctrl)
+unsigned char srts_get_ctrl_int(const char *ctrl)
 {
   if (strcasecmp(ctrl, "my") == 0) {
     return MY;
@@ -476,15 +476,11 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
   while (duration > 0) {
     rc = read_bit(type, &duration, &bit, index == 6);
     if (rc == -1) {
-      if (srts_verbose) {
-        fprintf(stderr, "Error while reading a bit\n");
-      }
       sync = 0;
       index = 0;
 
       return -1;
-    }
-    if (rc == 1) {
+    } else if (rc == 1) {
       rc = read_byte(bit, bytes + index);
       if (rc) {
         if (++index == 7) {
@@ -494,9 +490,7 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
           unfuscate_payload(bytes, payload);
           rc = validate_checksum(payload);
           if (rc == 0) {
-            if (srts_verbose) {
-              fprintf(stderr, "Checksum error\n");
-            }
+            dlog(DLOG, DLOG_DEBUG, "Somfy RST, Checksum error");
 
             return -1;
           }

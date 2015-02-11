@@ -49,8 +49,8 @@ am_homeasy_sender_OBJECTS = common.$(OBJEXT) mem.$(OBJEXT) \
 	homeasy_sender.$(OBJEXT)
 homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
 homeasy_sender_DEPENDENCIES =
-am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) mem.$(OBJEXT) \
-	srts_sender.$(OBJEXT)
+am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) \
+	logging.$(OBJEXT) mem.$(OBJEXT) srts_sender.$(OBJEXT)
 srts_sender_OBJECTS = $(am_srts_sender_OBJECTS)
 srts_sender_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -163,6 +163,7 @@ AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
 srts_sender_SOURCES = $(top_srcdir)/src/srts.c \
                       $(top_srcdir)/src/common.c \
+                      $(top_srcdir)/src/logging.c \
                       $(top_srcdir)/src/mem.c \
                       srts_sender.c
 
@@ -258,6 +259,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy_sender.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts_sender.Po@am__quote@
@@ -317,6 +319,20 @@ srts.obj: $(top_srcdir)/src/srts.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/srts.c' object='srts.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o srts.obj `if test -f '$(top_srcdir)/src/srts.c'; then $(CYGPATH_W) '$(top_srcdir)/src/srts.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/srts.c'; fi`
+
+logging.o: $(top_srcdir)/src/logging.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT logging.o -MD -MP -MF $(DEPDIR)/logging.Tpo -c -o logging.o `test -f '$(top_srcdir)/src/logging.c' || echo '$(srcdir)/'`$(top_srcdir)/src/logging.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/logging.Tpo $(DEPDIR)/logging.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/logging.c' object='logging.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o logging.o `test -f '$(top_srcdir)/src/logging.c' || echo '$(srcdir)/'`$(top_srcdir)/src/logging.c
+
+logging.obj: $(top_srcdir)/src/logging.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT logging.obj -MD -MP -MF $(DEPDIR)/logging.Tpo -c -o logging.obj `if test -f '$(top_srcdir)/src/logging.c'; then $(CYGPATH_W) '$(top_srcdir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/logging.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/logging.Tpo $(DEPDIR)/logging.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/logging.c' object='logging.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o logging.obj `if test -f '$(top_srcdir)/src/logging.c'; then $(CYGPATH_W) '$(top_srcdir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/logging.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
