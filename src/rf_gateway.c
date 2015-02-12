@@ -51,7 +51,7 @@ struct rf_device {
 static config_t cfg;
 static int gpio;
 static int publisher_types;
-static char *persistence_path = "/tmp";
+static char *persistence_path = "/var/lib/";
 
 static const char *translate_value(config_setting_t *config, const char *value)
 {

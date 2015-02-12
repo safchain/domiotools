@@ -50,8 +50,7 @@ static char *get_code_file_path(const char *persistence_path,
   return path;
 }
 
-static int get_code(const char *persistence_path,
-        unsigned short address)
+int srts_get_code(const char *persistence_path, unsigned short address)
 {
   char *path, code[10], *end;
   FILE *fp = NULL;
@@ -239,7 +238,7 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
 void srts_transmit_persist(int gpio, char key, unsigned short address,
         unsigned char ctrl, int repeat, const char *persistence_path)
 {
-  int i, code = get_code(persistence_path, address);
+  int i, code = srts_get_code(persistence_path, address);
 
   if (code == -1) {
     /* reading code error, defaulting to 1 */

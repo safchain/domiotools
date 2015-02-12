@@ -46,7 +46,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_homeasy_sender_OBJECTS = common.$(OBJEXT) mem.$(OBJEXT) \
-	homeasy_sender.$(OBJEXT)
+	homeasy.$(OBJEXT) logging.$(OBJEXT) homeasy_sender.$(OBJEXT)
 homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
 homeasy_sender_DEPENDENCIES =
 am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) \
@@ -170,6 +170,8 @@ srts_sender_SOURCES = $(top_srcdir)/src/srts.c \
 srts_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
 homeasy_sender_SOURCES = $(top_srcdir)/src/common.c \
                          $(top_srcdir)/src/mem.c \
+                         $(top_srcdir)/src/homeasy.c \
+                         $(top_srcdir)/src/logging.c \
                          homeasy_sender.c
 
 homeasy_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
@@ -258,6 +260,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy_sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
@@ -306,19 +309,19 @@ mem.obj: $(top_srcdir)/src/mem.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mem.obj `if test -f '$(top_srcdir)/src/mem.c'; then $(CYGPATH_W) '$(top_srcdir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/mem.c'; fi`
 
-srts.o: $(top_srcdir)/src/srts.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT srts.o -MD -MP -MF $(DEPDIR)/srts.Tpo -c -o srts.o `test -f '$(top_srcdir)/src/srts.c' || echo '$(srcdir)/'`$(top_srcdir)/src/srts.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/srts.Tpo $(DEPDIR)/srts.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/srts.c' object='srts.o' libtool=no @AMDEPBACKSLASH@
+homeasy.o: $(top_srcdir)/src/homeasy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT homeasy.o -MD -MP -MF $(DEPDIR)/homeasy.Tpo -c -o homeasy.o `test -f '$(top_srcdir)/src/homeasy.c' || echo '$(srcdir)/'`$(top_srcdir)/src/homeasy.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/homeasy.Tpo $(DEPDIR)/homeasy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/homeasy.c' object='homeasy.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o srts.o `test -f '$(top_srcdir)/src/srts.c' || echo '$(srcdir)/'`$(top_srcdir)/src/srts.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o homeasy.o `test -f '$(top_srcdir)/src/homeasy.c' || echo '$(srcdir)/'`$(top_srcdir)/src/homeasy.c
 
-srts.obj: $(top_srcdir)/src/srts.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT srts.obj -MD -MP -MF $(DEPDIR)/srts.Tpo -c -o srts.obj `if test -f '$(top_srcdir)/src/srts.c'; then $(CYGPATH_W) '$(top_srcdir)/src/srts.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/srts.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/srts.Tpo $(DEPDIR)/srts.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/srts.c' object='srts.obj' libtool=no @AMDEPBACKSLASH@
+homeasy.obj: $(top_srcdir)/src/homeasy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT homeasy.obj -MD -MP -MF $(DEPDIR)/homeasy.Tpo -c -o homeasy.obj `if test -f '$(top_srcdir)/src/homeasy.c'; then $(CYGPATH_W) '$(top_srcdir)/src/homeasy.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/homeasy.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/homeasy.Tpo $(DEPDIR)/homeasy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/homeasy.c' object='homeasy.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o srts.obj `if test -f '$(top_srcdir)/src/srts.c'; then $(CYGPATH_W) '$(top_srcdir)/src/srts.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/srts.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o homeasy.obj `if test -f '$(top_srcdir)/src/homeasy.c'; then $(CYGPATH_W) '$(top_srcdir)/src/homeasy.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/homeasy.c'; fi`
 
 logging.o: $(top_srcdir)/src/logging.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT logging.o -MD -MP -MF $(DEPDIR)/logging.Tpo -c -o logging.o `test -f '$(top_srcdir)/src/logging.c' || echo '$(srcdir)/'`$(top_srcdir)/src/logging.c
@@ -333,6 +336,20 @@ logging.obj: $(top_srcdir)/src/logging.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/logging.c' object='logging.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o logging.obj `if test -f '$(top_srcdir)/src/logging.c'; then $(CYGPATH_W) '$(top_srcdir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/logging.c'; fi`
+
+srts.o: $(top_srcdir)/src/srts.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT srts.o -MD -MP -MF $(DEPDIR)/srts.Tpo -c -o srts.o `test -f '$(top_srcdir)/src/srts.c' || echo '$(srcdir)/'`$(top_srcdir)/src/srts.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/srts.Tpo $(DEPDIR)/srts.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/srts.c' object='srts.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o srts.o `test -f '$(top_srcdir)/src/srts.c' || echo '$(srcdir)/'`$(top_srcdir)/src/srts.c
+
+srts.obj: $(top_srcdir)/src/srts.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT srts.obj -MD -MP -MF $(DEPDIR)/srts.Tpo -c -o srts.obj `if test -f '$(top_srcdir)/src/srts.c'; then $(CYGPATH_W) '$(top_srcdir)/src/srts.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/srts.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/srts.Tpo $(DEPDIR)/srts.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/srts.c' object='srts.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o srts.obj `if test -f '$(top_srcdir)/src/srts.c'; then $(CYGPATH_W) '$(top_srcdir)/src/srts.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/srts.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

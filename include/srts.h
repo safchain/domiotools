@@ -42,6 +42,7 @@ struct srts_payload {
   } address;
 };
 
+int srts_get_code(const char *persistence_path, unsigned short address);
 void srts_transmit(int gpio, unsigned char key, unsigned short address,
         unsigned char ctrl, unsigned short code, int repeated);
 void srts_transmit_persist(int gpio, char key, unsigned short address,

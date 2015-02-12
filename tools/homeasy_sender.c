@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sylvain Afchain
+ * Copyright (C) 2015 Sylvain Afchain
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -25,105 +25,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "common.h"
+#include "homeasy.h"
+#include "logging.h"
 
-enum COMMAND {
-  OFF = 0,
-  ON = 1,
-  UNKNOWN
-};
-
-static void _write_bit(int gpio, char bit)
-{
-  if (bit) {
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(300);
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(1300);
-  } else {
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(300);
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(300);
-  }
-}
-
-static void write_bit(int gpio, char bit)
-{
-  if (bit) {
-    _write_bit(gpio, 1);
-    _write_bit(gpio, 0);
-  } else {
-    _write_bit(gpio, 0);
-    _write_bit(gpio, 1);
-  }
-}
-
-static void sync_transmit(int gpio)
-{
-  digitalWrite(gpio, HIGH);
-  delayMicroseconds(275);
-  digitalWrite(gpio, LOW);
-  delayMicroseconds(9900);
-  digitalWrite(gpio, HIGH);
-  delayMicroseconds(275);
-  digitalWrite(gpio, LOW);
-  delayMicroseconds(2600);
-  digitalWrite(gpio, HIGH);
-}
-
-static void write_interval_gap(int gpio)
-{
-  digitalWrite(gpio, HIGH);
-  delayMicroseconds(275);
-  digitalWrite(gpio, LOW);
-  delay(10);
-}
-
-void transmit(int gpio, unsigned int address, unsigned char receiver,
-              unsigned char command)
-{
-  unsigned int mask;
-
-  sync_transmit(gpio);
-
-  for (mask = 0x2000000; mask != 0x0; mask >>= 1) {
-    if (address & mask) {
-      write_bit(gpio, 1);
-    } else {
-      write_bit(gpio, 0);
-    }
-  }
-
-  // never grouped
-  write_bit(gpio, 0);
-
-  write_bit(gpio, command);
-
-  for (mask = 0b1000; mask != 0x0; mask >>= 1) {
-    write_bit(gpio, receiver & mask);
-  }
-
-  write_interval_gap(gpio);
-}
-
-static char get_command_char(char *command)
-{
-  if (strcasecmp(command, "on") == 0) {
-    return ON;
-  } else if (strcasecmp(command, "off") == 0) {
-    return OFF;
-  }
-
-  return UNKNOWN;
-}
+struct dlog *DLOG;
 
 static void usage(char *name)
 {
-  printf
-    ("Usage: %s --gpio <gpio pin> --address <remote address> --comand <command>\n",
-     name);
+  fprintf(stderr, "Usage: %s --gpio <gpio pin> --address <remote address> "
+          "--comand <command> --repeat <number>\n", name);
   exit(-1);
 }
 
@@ -131,15 +44,15 @@ int main(int argc, char **argv)
 {
   struct option long_options[] = { {"gpio", 1, 0, 0},
   {"address", 1, 0, 0}, {"command", 1, 0, 0}, {"receiver", 1, 0, 0},
-  {"retry", 1, 0, 0}, {NULL, 0, 0, 0}
+  {"repeat", 1, 0, 0}, {NULL, 0, 0, 0}
   };
   unsigned int address = 0;
   unsigned char receiver = 1;
   long int a2i;
   int gpio = -1;
-  char command = UNKNOWN;
+  char command = HOMEASY_UNKNOWN;
   char *end;
-  int retry = 5, i, c;
+  int repeat = 5, i, c;
 
   if (setuid(0)) {
     perror("setuid");
@@ -174,13 +87,13 @@ int main(int argc, char **argv)
           }
           receiver = a2i;
         } else if (strcmp(long_options[i].name, "command") == 0) {
-          command = get_command_char(optarg);
-        } else if (strcmp(long_options[i].name, "command") == 0) {
+          command = homeasy_get_ctrl_int(optarg);
+        } else if (strcmp(long_options[i].name, "repeat") == 0) {
           a2i = strtol(optarg, &end, 10);
           if (errno == ERANGE && (a2i == LONG_MAX || a2i == LONG_MIN)) {
             break;
           }
-          retry = a2i;
+          repeat = a2i;
         }
         break;
       default:
@@ -188,7 +101,7 @@ int main(int argc, char **argv)
     }
   }
 
-  if (command == UNKNOWN || address == 0 || gpio == -1 || receiver == 0) {
+  if (command == HOMEASY_UNKNOWN || address == 0 || gpio == -1 || receiver == 0) {
     usage(argv[0]);
   }
   // store pid and lock it
@@ -199,21 +112,18 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
+  assert(DLOG != NULL);
+
   openlog("homeasy", LOG_PID | LOG_CONS, LOG_USER);
-  syslog(LOG_INFO, "remote: %d, receiver, %d, command: %d\n", address,
+  syslog(LOG_INFO, "Homeasy, remote: %d, receiver, %d, command: %d\n", address,
          receiver, command);
   closelog();
 
   pinMode(gpio, OUTPUT);
   piHiPri(99);
 
-  for (c = 0; c != retry; c++) {
-    for (i = 0; i < 5; i++) {
-      transmit(gpio, address, receiver, command);
-    }
-
-    sleep(1);
-  }
+  homeasy_transmit(gpio, address, receiver, command, 0, repeat);
 
   return 0;
 }
