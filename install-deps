@@ -35,6 +35,3 @@ cd wiringPi
 git checkout d42e831089c9d15d229fc475d84dee9456527b42
 ./build
 sudo ldconfig
-
-# to debug
-ls /usr/local/lib
