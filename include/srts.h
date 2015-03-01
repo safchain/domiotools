@@ -30,6 +30,11 @@ enum CTRL {
   SRTS_FLAG,
 };
 
+enum ERRORS {
+  SRTS_BAD_GPIO = -1,
+  SRTS_BAD_CHECKSUM = -2
+};
+
 struct srts_payload {
   unsigned char key;
   unsigned char checksum:4;
@@ -42,14 +47,17 @@ struct srts_payload {
   } address;
 };
 
-int srts_get_code(const char *persistence_path, unsigned short address);
-void srts_transmit(int gpio, unsigned char key, unsigned short address,
-        unsigned char ctrl, unsigned short code, int repeated);
-void srts_transmit_persist(int gpio, char key, unsigned short address,
-        unsigned char ctrl, int repeat, const char *persistence_path);
-int srts_receive(int type, int duration, struct srts_payload *payload);
+int srts_get_code(const char *persistence_path, unsigned int address);
+void srts_transmit(unsigned int gpio, unsigned char key,
+        unsigned int address, unsigned char ctrl, unsigned short code,
+        unsigned int repeated);
+void srts_transmit_persist(unsigned int gpio, unsigned char key,
+        unsigned int address, unsigned char ctrl, unsigned int repeat,
+        const char *persistence_path);
+int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
+        struct srts_payload *payload);
 int srts_get_address(struct srts_payload *payload);
-void srts_print_payload(struct srts_payload *payload);
+void srts_print_payload(FILE *fp, struct srts_payload *payload);
 const char *srts_get_ctrl_str(struct srts_payload *payload);
 unsigned char srts_get_ctrl_int(const char *ctrl);
 

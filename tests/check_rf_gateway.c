@@ -52,7 +52,7 @@ int mqtt_subscribe(const char *input, void *obj,
   return MQTT_SUCCESS;
 }
 
-void srts_print_payload(struct srts_payload *payload)
+void srts_print_payload(FILE *fp, struct srts_payload *payload)
 {
 }
 
@@ -66,7 +66,8 @@ const char *srts_get_ctrl_str(struct srts_payload *payload)
   return "UP";
 }
 
-int srts_receive(int type, int duration, struct srts_payload *payload)
+int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
+        struct srts_payload *payload)
 {
   int *key = (int *) mock_returns("srts_receive_key");
   if (key != NULL) {
@@ -78,16 +79,20 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
   return 1;
 }
 
-void srts_transmit_persist(int gpio, char key, unsigned short address,
-        unsigned char ctrl, int repeat, const char *persistence_path)
+void srts_transmit_persist(unsigned int gpio, unsigned char key,
+        unsigned int address, unsigned char ctrl, unsigned int repeat,
+        const char *persistence_path)
 {
+  int *g = xmalloc(sizeof(int));
   int *a = xmalloc(sizeof(int));
   int *c = xmalloc(sizeof(int));
 
+  *g = gpio;
   *a = address;
   *c = ctrl;
 
   mock_called("srts_transmit_persist");
+  mock_called_with("srts_transmit_persist:gpio", g);
   mock_called_with("srts_transmit_persist:address", a);
   mock_called_with("srts_transmit_persist:ctrl", c);
   mock_called_with("srts_transmit_persist:path", (void *) persistence_path);
@@ -102,16 +107,20 @@ unsigned char srts_get_ctrl_int(const char *ctrl)
   return SRTS_UNKNOWN;
 }
 
-void homeasy_transmit(int gpio, unsigned int address, unsigned char receiver,
-        unsigned char ctrl, unsigned char group, int repeat)
+void homeasy_transmit(unsigned int gpio, unsigned int address,
+        unsigned char receiver, unsigned char ctrl, unsigned char group,
+        unsigned int repeat)
 {
+  int *g = xmalloc(sizeof(int));
   int *a = xmalloc(sizeof(int));
   int *c = xmalloc(sizeof(int));
 
+  *g = gpio;
   *a = address;
   *c = ctrl;
 
   mock_called("homeasy_transmit");
+  mock_called_with("homeasy_transmit:gpio", g);
   mock_called_with("homeasy_transmit:address", a);
   mock_called_with("homeasy_transmit:ctrl", c);
 }
@@ -130,7 +139,8 @@ const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
   return "ON";
 }
 
-int homeasy_receive(int type, int duration, struct homeasy_payload *payload)
+int homeasy_receive(unsigned int gpio, unsigned int type,
+        unsigned int duration, struct homeasy_payload *payload)
 {
   int *address = (int *) mock_returns("homeasy_receive_address");
   if (address != NULL) {
@@ -155,10 +165,8 @@ void test_rf_teardown()
 START_TEST(test_config_publishers_no_type_error)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";})"
     "}";
@@ -172,10 +180,8 @@ END_TEST
 START_TEST(test_config_publishers_no_output_error)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;})"
     "}";
@@ -189,10 +195,8 @@ END_TEST
 START_TEST(test_config_publishers_no_address_error)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "output: \"mqtt://localhost:1883/3333\";})"
     "}";
@@ -206,10 +210,8 @@ END_TEST
 START_TEST(test_config_publishers_success)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";})"
@@ -224,10 +226,8 @@ END_TEST
 START_TEST(test_config_subscribers_no_type_error)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "subscribers:({"
+        "gpio: 2;"
         "address: 3333;"
         "input: \"mqtt://localhost:1883/3333\";})"
     "}";
@@ -242,10 +242,8 @@ END_TEST
 START_TEST(test_config_subscribers_no_output_error)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "subscribers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;})"
     "}";
@@ -260,10 +258,8 @@ END_TEST
 START_TEST(test_config_subscribers_no_address_error)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "subscribers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "input: \"mqtt://localhost:1883/3333\";})"
     "}";
@@ -278,10 +274,8 @@ END_TEST
 START_TEST(test_config_subscribers_success)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "subscribers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;"
         "input: \"mqtt://localhost:1883/3333\";})"
@@ -298,10 +292,10 @@ START_TEST(test_config_subscribers_srts_callback)
 {
   char *conf = "config:{"
     "globals:{"
-        "gpio: 2;"
         "persistence_path: \"/tmp/persist\";"
     "};"
     "subscribers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;"
         "input: \"mqtt://localhost:1883/3333\";})"
@@ -320,6 +314,10 @@ START_TEST(test_config_subscribers_srts_callback)
   callback(obj, payload, strlen(payload));
 
   ck_assert_int_eq(1, mock_calls("srts_transmit_persist"));
+  value = (int *) mock_call("srts_transmit_persist:gpio", 0);
+  ck_assert_int_eq(2, *value);
+  free(value);
+
   value = (int *) mock_call("srts_transmit_persist:address", 0);
   ck_assert_int_eq(3333, *value);
   free(value);
@@ -337,10 +335,10 @@ START_TEST(test_config_subscribers_srts_callback_unknow_ctrl)
 {
   char *conf = "config:{"
     "globals:{"
-        "gpio: 2;"
         "persistence_path: \"/tmp/persist\";"
     "};"
     "subscribers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;"
         "input: \"mqtt://localhost:1883/3333\";})"
@@ -366,10 +364,10 @@ START_TEST(test_config_subscribers_homeasy_callback)
 {
   char *conf = "config:{"
     "globals:{"
-        "gpio: 2;"
         "persistence_path: \"/tmp/persist\";"
     "};"
     "subscribers:({"
+        "gpio: 2;"
         "type: \"homeasy\";"
         "address: 4444;"
         "input: \"mqtt://localhost:1883/4444\";})"
@@ -388,6 +386,10 @@ START_TEST(test_config_subscribers_homeasy_callback)
   callback(obj, payload, strlen(payload));
 
   ck_assert_int_eq(1, mock_calls("homeasy_transmit"));
+  value = (int *) mock_call("homeasy_transmit:gpio", 0);
+  ck_assert_int_eq(2, *value);
+  free(value);
+
   value = (int *) mock_call("homeasy_transmit:address", 0);
   ck_assert_int_eq(4444, *value);
   free(value);
@@ -402,10 +404,10 @@ START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
 {
   char *conf = "config:{"
     "globals:{"
-        "gpio: 2;"
         "persistence_path: \"/tmp/persist\";"
     "};"
     "subscribers:({"
+        "gpio: 2;"
         "type: \"homeasy\";"
         "address: 4444;"
         "input: \"mqtt://localhost:1883/4444\";})"
@@ -430,10 +432,8 @@ END_TEST
 START_TEST(test_srts_publish)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";})"
@@ -448,8 +448,8 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(0, 50);
-  rf_gw_handle_interrupt(1, 1500);
+  rf_gw_handle_interrupt(2, 0, 50);
+  rf_gw_handle_interrupt(2, 1, 1500);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -462,7 +462,7 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(1, 2000);
+  rf_gw_handle_interrupt(2, 1, 2000);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -476,10 +476,8 @@ END_TEST
 START_TEST(test_srts_publish_same_twice)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";})"
@@ -494,8 +492,8 @@ START_TEST(test_srts_publish_same_twice)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ALWAYS);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(0, 50);
-  rf_gw_handle_interrupt(1, 1500);
+  rf_gw_handle_interrupt(2, 0, 50);
+  rf_gw_handle_interrupt(2, 1, 1500);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -507,7 +505,7 @@ START_TEST(test_srts_publish_same_twice)
   address = 3333;
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(1, 2000);
+  rf_gw_handle_interrupt(2, 1, 2000);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -520,10 +518,8 @@ END_TEST
 START_TEST(test_srts_publish_translations)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "type: \"srts\";"
         "address: 3333;"
         "output: \"mqtt://localhost:1883/3333\";"
@@ -542,8 +538,8 @@ START_TEST(test_srts_publish_translations)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(0, 50);
-  rf_gw_handle_interrupt(1, 1500);
+  rf_gw_handle_interrupt(2, 0, 50);
+  rf_gw_handle_interrupt(2, 1, 1500);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -556,7 +552,7 @@ START_TEST(test_srts_publish_translations)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(1, 2000);
+  rf_gw_handle_interrupt(2, 1, 2000);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -570,10 +566,8 @@ END_TEST
 START_TEST(test_homeasy_publish)
 {
   char *conf = "config:{"
-    "globals:{"
-        "gpio: 2;"
-    "};"
     "publishers:({"
+        "gpio: 2;"
         "type: \"homeasy\";"
         "address: 5555;"
         "output: \"mqtt://localhost:1883/5555\";})"
@@ -586,8 +580,8 @@ START_TEST(test_homeasy_publish)
   address = 1111;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(0, 50);
-  rf_gw_handle_interrupt(1, 1500);
+  rf_gw_handle_interrupt(2, 0, 50);
+  rf_gw_handle_interrupt(2, 1, 1500);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 1);
@@ -598,7 +592,7 @@ START_TEST(test_homeasy_publish)
   address = 5555;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(1, 2000);
+  rf_gw_handle_interrupt(2, 1, 2000);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 2);

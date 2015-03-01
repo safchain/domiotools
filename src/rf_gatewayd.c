@@ -52,7 +52,7 @@ void handle_interrupt()
   }
 
   time = micros();
-  rf_gw_handle_interrupt(type, time);
+  rf_gw_handle_interrupt(2, type, time);
 }
 
 int main(int argc, char **argv)

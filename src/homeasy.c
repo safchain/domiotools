@@ -27,9 +27,11 @@
 #include "homeasy.h"
 #include "logging.h"
 
+#define MAX_GPIO    32
+
 extern struct dlog *DLOG;
 
-static void _write_bit(int gpio, char bit)
+static void _write_bit(unsigned int gpio, unsigned char bit)
 {
   if (bit) {
     digitalWrite(gpio, HIGH);
@@ -44,7 +46,7 @@ static void _write_bit(int gpio, char bit)
   }
 }
 
-static void write_bit(int gpio, char bit)
+static void write_bit(unsigned int gpio, unsigned char bit)
 {
   if (bit) {
     _write_bit(gpio, 1);
@@ -55,7 +57,7 @@ static void write_bit(int gpio, char bit)
   }
 }
 
-static void sync_transmit(int gpio)
+static void sync_transmit(unsigned int gpio)
 {
   digitalWrite(gpio, HIGH);
   delayMicroseconds(275);
@@ -67,7 +69,7 @@ static void sync_transmit(int gpio)
   delayMicroseconds(2600);
 }
 
-static void write_interval_gap(int gpio)
+static void write_interval_gap(unsigned int gpio)
 {
   digitalWrite(gpio, HIGH);
   delayMicroseconds(275);
@@ -75,8 +77,9 @@ static void write_interval_gap(int gpio)
   delay(10);
 }
 
-void homeasy_transmit(int gpio, unsigned int address, unsigned char receiver,
-        unsigned char ctrl, unsigned char group, int repeat)
+void homeasy_transmit(unsigned int gpio, unsigned int address,
+        unsigned char receiver, unsigned char ctrl, unsigned char group,
+        unsigned int repeat)
 {
   unsigned int mask;
   int i;
@@ -107,37 +110,45 @@ void homeasy_transmit(int gpio, unsigned int address, unsigned char receiver,
   }
 }
 
-static int is_on_time(int duration, int expected)
+static int is_on_time(unsigned int duration, unsigned int expected)
 {
-  int v = expected * 10 / 100;
+  unsigned int v = expected * 10 / 100;
 
   return duration > (expected - v) && duration < (expected + v);
 }
 
-static int detect_sync(int type, int *duration)
+static int detect_sync(unsigned int gpio, unsigned int type,
+        unsigned int *duration)
 {
-  static unsigned int sync = 0;
+  static unsigned char sync[MAX_GPIO];
+  static char init = 0;
 
-  if (!type && sync == 1 && is_on_time(*duration, 9900)) {
-    sync = 2;
-  } else if (type && sync == 2 && is_on_time(*duration, 275)) {
-    sync = 3;
-  } else if (!type && sync == 3 && is_on_time(*duration, 2600)) {
-    sync = 0;
+  if (!init) {
+    memset(sync, 0, sizeof(sync));
+    init = 1;
+  }
+
+  if (!type && sync[gpio] == 1 && is_on_time(*duration, 9900)) {
+    sync[gpio] = 2;
+  } else if (type && sync[gpio] == 2 && is_on_time(*duration, 275)) {
+    sync[gpio] = 3;
+  } else if (!type && sync[gpio] == 3 && is_on_time(*duration, 2600)) {
+    sync[gpio] = 0;
 
     dlog(DLOG, DLOG_DEBUG, "Homeasy, found the sync part of a message");
 
     return 1;
   } else if (type && is_on_time(*duration, 275)) {
-    sync = 1;
+    sync[gpio] = 1;
   } else {
-    sync = 0;
+    sync[gpio] = 0;
   }
 
   return 0;
 }
 
-static int _read_bit(int type, int duration, char *bit)
+static int _read_bit(unsigned int type, unsigned int duration,
+        unsigned char *bit)
 {
   static unsigned int pass = 0;
 
@@ -162,85 +173,102 @@ static int _read_bit(int type, int duration, char *bit)
   return -1;
 }
 
-static int read_bit(int type, int duration, char *bit)
+static int read_bit(unsigned int gpio, unsigned int type,
+        unsigned int duration, unsigned char *bit)
 {
-  static unsigned int pass = 0;
-  char b;
+  static unsigned int pass[MAX_GPIO];
+  static char init = 0;
+  unsigned char b;
   int rc;
+
+  if (!init) {
+    memset(pass, 0, sizeof(pass));
+    init = 1;
+  }
 
   rc = _read_bit(type, duration, &b);
   if (rc == -1) {
-    pass = 0;
+    pass[gpio] = 0;
 
     return -1;
   } else if (rc == 1) {
-    if (pass) {
+    if (pass[gpio]) {
       if (b == 0) {
         *bit = 1;
       } else {
         *bit = 0;
       }
 
-      pass = 0;
+      pass[gpio] = 0;
 
       return 1;
     }
-    pass++;
+    pass[gpio]++;
   }
 
   return 0;
 }
 
-static int read_byte(char bit, char *byte)
+static int read_byte(unsigned int gpio, unsigned char bit, unsigned char *byte)
 {
-  static char b = 0;
-  static char d = 7;
+  static unsigned char b[MAX_GPIO];
+  static unsigned char d[MAX_GPIO];
+  static char init = 0;
 
-  if (d != 0) {
-    b |= bit << d--;
+  if (!init) {
+    memset(b, 0, sizeof(b));
+    memset(d, 7, sizeof(d));
+    init = 1;
+  }
+
+  if (d[gpio] != 0) {
+    b[gpio] |= bit << d[gpio]--;
 
     return 0;
   }
-  *byte = b | bit;
+  *byte = b[gpio] | bit;
 
-  b = 0;
-  d = 7;
+  b[gpio] = 0;
+  d[gpio] = 7;
 
   return 1;
 }
 
-int homeasy_receive(int type, int duration, struct homeasy_payload *payload)
+int homeasy_receive(unsigned int gpio, unsigned int type,
+        unsigned int duration, struct homeasy_payload *payload)
 {
-  static unsigned int sync = 0;
-  static unsigned int index = 3;
-  static char bytes[4];
+  static unsigned char sync[MAX_GPIO];
+  static unsigned char index[MAX_GPIO];
+  static unsigned char bytes[MAX_GPIO][4];
+  static char init = 0;
+  unsigned char bit;
   int rc, *i;
-  char bit;
 
-  if (!sync) {
-    sync = detect_sync(type, &duration);
-    if (!sync) {
-      return 0;
-    }
-    memset(bytes, 0, 4);
+  if (!init) {
+    memset(sync, 0, sizeof(sync));
+    memset(sync, 3, sizeof(sync));
+    init = 1;
+  }
 
+  if (!sync[gpio]) {
+    sync[gpio] = detect_sync(gpio, type, &duration);
     return 0;
   }
 
-  rc = read_bit(type, duration, &bit);
+  rc = read_bit(gpio, type, duration, &bit);
   if (rc == -1) {
-    sync = 0;
-    index = 3;
+    sync[gpio] = 0;
+    index[gpio] = 3;
 
     return -1;
   } else if (rc == 1) {
-    rc = read_byte(bit, bytes + index);
+    rc = read_byte(gpio, bit, bytes[gpio] + index[gpio]);
     if (rc) {
-      if (index-- == 0) {
-        sync = 0;
-        index = 3;
+      if (index[gpio]-- == 0) {
+        sync[gpio] = 0;
+        index[gpio] = 3;
 
-        i = (int *) bytes;
+        i = (int *) bytes[gpio];
         payload->address = *i >> 6;
         payload->group = (*i >> 5) & 1;
         payload->ctrl = (*i >> 4) & 1;

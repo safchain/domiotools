@@ -17,7 +17,7 @@
 #ifndef __RF_GATEWAY_H
 #define __RF_GATEWAY_H
 
-void rf_gw_handle_interrupt(int type, long time);
+void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time);
 int rf_gw_read_config(char *in, int file);
 void rf_gw_loop();
 

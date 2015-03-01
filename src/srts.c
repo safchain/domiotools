@@ -27,10 +27,12 @@
 #include "mem.h"
 #include "logging.h"
 
+#define MAX_GPIO    32
+
 extern struct dlog *DLOG;
 
 static char *get_code_file_path(const char *persistence_path,
-        unsigned short address)
+        unsigned int address)
 {
   char *path;
   int size;
@@ -50,7 +52,7 @@ static char *get_code_file_path(const char *persistence_path,
   return path;
 }
 
-int srts_get_code(const char *persistence_path, unsigned short address)
+int srts_get_code(const char *persistence_path, unsigned int address)
 {
   char *path, code[10], *end;
   FILE *fp = NULL;
@@ -91,7 +93,7 @@ clean:
   return rc;
 }
 
-static int store_code(const char *persistence_path, unsigned short address,
+static int store_code(const char *persistence_path, unsigned int address,
         unsigned short new_code)
 {
   char *path, code[10];
@@ -128,7 +130,8 @@ static void obfuscate_payload(struct srts_payload *payload)
   }
 }
 
-static unsigned char get_checksum(struct srts_payload *payload) {
+static unsigned char get_checksum(struct srts_payload *payload)
+{
   unsigned char *p = (unsigned char *) payload;
   unsigned char checksum = 0;
   int i;
@@ -144,7 +147,7 @@ static void checksum_payload(struct srts_payload *payload)
   payload->checksum = get_checksum(payload);
 }
 
-static void write_bit(int gpio, char bit)
+static void write_bit(unsigned int gpio, unsigned char bit)
 {
   if (bit) {
     digitalWrite(gpio, LOW);
@@ -159,7 +162,7 @@ static void write_bit(int gpio, char bit)
   }
 }
 
-static void write_byte(int gpio, unsigned char byte)
+static void write_byte(unsigned int gpio, unsigned char byte)
 {
   unsigned int mask;
 
@@ -168,7 +171,7 @@ static void write_byte(int gpio, unsigned char byte)
   }
 }
 
-static void write_payload(int gpio, struct srts_payload *payload)
+static void write_payload(unsigned int gpio, struct srts_payload *payload)
 {
   unsigned char *p = (unsigned char *) payload;
   int i;
@@ -184,7 +187,7 @@ static void write_interval_gap(int gpio)
   delayMicroseconds(30400);
 }
 
-static void sync_transmit(int gpio, int repeated)
+static void sync_transmit(unsigned int gpio, unsigned int repeated)
 {
   int count, i;
 
@@ -205,8 +208,9 @@ static void sync_transmit(int gpio, int repeated)
   }
 }
 
-void srts_transmit(int gpio, unsigned char key, unsigned short address,
-        unsigned char ctrl, unsigned short code, int repeated)
+void srts_transmit(unsigned int gpio, unsigned char key,
+        unsigned int address, unsigned char ctrl, unsigned short code,
+        unsigned int repeated)
 {
   struct srts_payload payload;
 
@@ -224,9 +228,9 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
   payload.ctrl = ctrl;
   payload.checksum = 0;
   payload.code = htons(code);
-  payload.address.byte1 = ((char *) &address)[0];
-  payload.address.byte2 = ((char *) &address)[1];
-  payload.address.byte3 = 0;
+  payload.address.byte1 = address & 0xff;
+  payload.address.byte2 = (address >> 8) & 0xff;
+  payload.address.byte3 = (address >> 16) & 0xff;
 
   checksum_payload(&payload);
   obfuscate_payload(&payload);
@@ -235,8 +239,9 @@ void srts_transmit(int gpio, unsigned char key, unsigned short address,
   write_interval_gap(gpio);
 }
 
-void srts_transmit_persist(int gpio, char key, unsigned short address,
-        unsigned char ctrl, int repeat, const char *persistence_path)
+void srts_transmit_persist(unsigned int gpio, unsigned char key,
+        unsigned int address, unsigned char ctrl, unsigned int repeat,
+        const char *persistence_path)
 {
   int i, code = srts_get_code(persistence_path, address);
 
@@ -260,7 +265,8 @@ void srts_transmit_persist(int gpio, char key, unsigned short address,
   store_code(persistence_path, address, code);
 }
 
-static void unfuscate_payload(char *bytes, struct srts_payload *payload)
+static void unfuscate_payload(unsigned char *bytes,
+        struct srts_payload *payload)
 {
   unsigned char *p;
   int i = 0;
@@ -289,55 +295,77 @@ static int validate_checksum(struct srts_payload *payload)
   return 0;
 }
 
-static int is_on_time(int duration, int expected)
+static int is_on_time(unsigned int duration, unsigned int expected)
 {
-  int v = expected * 10 / 100;
+  unsigned int v = expected * 10 / 100;
 
   return duration > (expected - v) && duration < (expected + v);
 }
 
-static int detect_sync(int type, int *duration)
+static int detect_sync(unsigned int gpio, unsigned int type,
+        unsigned int *duration)
 {
-  static unsigned int init_sync = 0;
-  static unsigned int hard_sync = 0;
-  static unsigned int soft_sync = 0;
+  static unsigned char init_sync[MAX_GPIO];
+  static unsigned char hard_sync[MAX_GPIO];
+  static unsigned char soft_sync[MAX_GPIO];
+  static char init = 0;
+
+  if (!init) {
+    memset(init_sync, 0, sizeof(init_sync));
+    memset(hard_sync, 0, sizeof(hard_sync));
+    memset(soft_sync, 0, sizeof(soft_sync));
+    init = 1;
+  }
 
   if (type && is_on_time(*duration, 12400)) {
-    init_sync = 1;
-  } else if (!type && init_sync == 1 && is_on_time(*duration, 80600)) {
-    init_sync = 2;
-    hard_sync = 10;
-  } else if (init_sync == 2 && hard_sync != 14 && is_on_time(*duration, 2560)) {
-    hard_sync++;
-  } else if (hard_sync == 14 && soft_sync == 0 && is_on_time(*duration, 4800)) {
-    soft_sync = 1;
-  } else if (soft_sync == 1 && *duration >= 660) {
-    *duration -= 800;
-    soft_sync = 2;
+    init_sync[gpio] = 1;
+  } else if (!type && init_sync[gpio] == 1 && is_on_time(*duration, 80600)) {
+    init_sync[gpio] = 2;
+    hard_sync[gpio] = 10;
+  } else if (init_sync[gpio] == 2 && hard_sync[gpio] != 14 &&
+          is_on_time(*duration, 2560)) {
+    hard_sync[gpio]++;
+  } else if (hard_sync[gpio] == 14 && soft_sync[gpio] == 0 &&
+          is_on_time(*duration, 4800)) {
+    soft_sync[gpio] = 1;
+  } else if (soft_sync[gpio] == 1 && *duration >= 660) {
+    if (*duration >= 800) {
+      *duration -= 800;
+    } else {
+      *duration = 0;
+    }
+    soft_sync[gpio] = 2;
 
     dlog(DLOG, DLOG_DEBUG, "Somfy RTS, Found the sync part of a message");
 
     return 1;
   } else {
-    hard_sync = 0;
-    soft_sync = 0;
+    hard_sync[gpio] = 0;
+    soft_sync[gpio] = 0;
   }
 
   return 0;
 }
 
-static int read_bit(int type, int *duration, char *bit, int last)
+static int read_bit(unsigned int gpio, unsigned int type,
+        unsigned int *duration, unsigned char *bit, unsigned int last)
 {
-  static unsigned int pass = 0;
+  static unsigned char pass[MAX_GPIO];
+  static char init = 0;
+
+  if (!init) {
+    memset(pass, 0, sizeof(pass));
+    init = 1;
+  }
 
   /* maximum transmit length for a bit is around 1600 */
   if (!last && *duration > 2000) {
-    pass = 0;
+    pass[gpio] = 0;
 
     return -1;
   }
 
-  /* duration to low to be a part of only one bit, so split into two parts */
+  /* duration too long to be a part of only one bit, so split into two parts */
   if (*duration > 1100) {
     *duration /= 2;
   } else {
@@ -345,31 +373,38 @@ static int read_bit(int type, int *duration, char *bit, int last)
   }
 
   /* got the two part of a bit */
-  if (pass) {
+  if (pass[gpio]) {
     *bit = type;
-    pass = 0;
+    pass[gpio] = 0;
 
     return 1;
   }
-  pass++;
+  pass[gpio]++;
 
   return 0;
 }
 
-static int read_byte(char bit, char *byte)
+static int read_byte(unsigned int gpio, unsigned char bit, unsigned char *byte)
 {
-  static char b = 0;
-  static char d = 7;
+  static unsigned char b[MAX_GPIO];
+  static unsigned char d[MAX_GPIO];
+  static char init = 0;
 
-  if (d != 0) {
-    b |= bit << d--;
+  if (!init) {
+    memset(b, 0, sizeof(b));
+    memset(d, 7, sizeof(d));
+    init = 1;
+  }
+
+  if (d[gpio] != 0) {
+    b[gpio] |= bit << d[gpio]--;
 
     return 0;
   }
-  *byte = b | bit;
+  *byte = b[gpio] | bit;
 
-  b = 0;
-  d = 7;
+  b[gpio] = 0;
+  d[gpio] = 7;
 
   return 1;
 }
@@ -423,46 +458,55 @@ unsigned char srts_get_ctrl_int(const char *ctrl)
   return SRTS_UNKNOWN;
 }
 
-
 int srts_get_address(struct srts_payload *payload)
 {
-  int address = 0;
-  char *ptr;
+  unsigned int address;
 
-  ptr = (char *) &address;
-  ptr[0] = payload->address.byte1;
-  ptr[1] = payload->address.byte2;
-  ptr[2] = payload->address.byte3;
+  address = payload->address.byte1;
+  address += payload->address.byte2 << 8;
+  address += (payload->address.byte3 << 16);
 
   return address;
 }
 
-void srts_print_payload(struct srts_payload *payload)
+void srts_print_payload(FILE *fp, struct srts_payload *payload)
 {
-  printf("key: %d\n", payload->key);
-  printf("checksum: %d\n", payload->checksum);
-  printf("ctrl: %d\n", payload->ctrl);
-  printf("code: %d\n", payload->code);
-  printf("address 1: %d\n", payload->address.byte1);
-  printf("address 2: %d\n", payload->address.byte2);
-  printf("address 3: %d\n", payload->address.byte3);
-  printf("address: %d\n", srts_get_address(payload));
+  fprintf(fp, "key: %d\n", payload->key);
+  fprintf(fp, "checksum: %d\n", payload->checksum);
+  fprintf(fp, "ctrl: %d\n", payload->ctrl);
+  fprintf(fp, "code: %d\n", payload->code);
+  fprintf(fp, "address 1: %d\n", payload->address.byte1);
+  fprintf(fp, "address 2: %d\n", payload->address.byte2);
+  fprintf(fp, "address 3: %d\n", payload->address.byte3);
+  fprintf(fp, "address: %d\n", srts_get_address(payload));
 }
 
-int srts_receive(int type, int duration, struct srts_payload *payload)
+int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
+        struct srts_payload *payload)
 {
-  static unsigned int sync = 0;
-  static unsigned int index = 0;
-  static char bytes[7];
-  char bit;
+  static unsigned char sync[MAX_GPIO];
+  static unsigned char index[MAX_GPIO];
+  static unsigned char bytes[MAX_GPIO][7];
+  static char init = 0;
+  unsigned char bit;
   int rc;
 
-  if (!sync) {
-    sync = detect_sync(type, &duration);
-    if (!sync) {
+  if (!init) {
+    memset(sync, 0, sizeof(sync));
+    memset(index, 0, sizeof(index));
+    init = 1;
+  }
+
+  if (gpio > MAX_GPIO) {
+    dlog(DLOG, DLOG_ERR, "Somfy RST, Max gpio number allowed is %d", MAX_GPIO);
+    return SRTS_BAD_GPIO;
+  }
+
+  if (!sync[gpio]) {
+    sync[gpio] = detect_sync(gpio, type, &duration);
+    if (!sync[gpio]) {
       return 0;
     }
-    memset(bytes, 0, 7);
 
     /* to short, ignore trailling signal */
     if (duration < 400) {
@@ -471,25 +515,24 @@ int srts_receive(int type, int duration, struct srts_payload *payload)
   }
 
   while (duration > 0) {
-    rc = read_bit(type, &duration, &bit, index == 6);
+    rc = read_bit(gpio, type, &duration, &bit, index[gpio] == 6);
     if (rc == -1) {
-      sync = 0;
-      index = 0;
+      sync[gpio] = 0;
+      index[gpio] = 0;
 
       return -1;
     } else if (rc == 1) {
-      rc = read_byte(bit, bytes + index);
+      rc = read_byte(gpio, bit, bytes[gpio] + index[gpio]);
       if (rc) {
-        if (++index == 7) {
-          sync = 0;
-          index = 0;
+        if (++index[gpio] == 7) {
+          sync[gpio] = 0;
+          index[gpio] = 0;
 
-          unfuscate_payload(bytes, payload);
+          unfuscate_payload(bytes[gpio], payload);
           rc = validate_checksum(payload);
           if (rc == 0) {
             dlog(DLOG, DLOG_DEBUG, "Somfy RST, Checksum error");
-
-            return -1;
+            return SRTS_BAD_CHECKSUM;
           }
           payload->code = htons(payload->code);
 

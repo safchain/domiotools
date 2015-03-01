@@ -69,7 +69,7 @@ void random_signal()
 
   for (i = 0; i != 33; i++) {
     value = 1 - value;
-    homeasy_receive(value, 300, &payload);
+    homeasy_receive(2, value, 300, &payload);
   }
 }
 
@@ -85,7 +85,7 @@ static int receive_pulses(struct homeasy_payload *payload)
 
   for (i = 0; i < pulses; i++) {
     pulse = (struct pulse *) mock_call("digitalWrite", i);
-    rc = homeasy_receive(pulse->value, pulse->duration, payload);
+    rc = homeasy_receive(2, pulse->value, pulse->duration, payload);
     if (rc != 0) {
       return rc;
     }

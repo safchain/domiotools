@@ -35,7 +35,7 @@
 #include "logging.h"
 #include "homeasy.h"
 
-extern struct dlog *DLOG;
+#define MAX_GPIO    32
 
 enum {
   SRTS = 1,
@@ -43,14 +43,17 @@ enum {
 };
 
 struct rf_device {
-  int type;
-  int address;
-  int repeat;
+  unsigned int gpio;
+  unsigned int type;
+  unsigned short address;
+  unsigned int repeat;
+  config_setting_t *config_h;
 };
 
+extern struct dlog *DLOG;
+
 static config_t cfg;
-static int gpio;
-static int publisher_types;
+static int publisher_types[MAX_GPIO];
 static char *persistence_path = "/var/lib/";
 
 static const char *translate_value(config_setting_t *config, const char *value)
@@ -191,12 +194,12 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
   return 1;
 }
 
-static int homeasy_handler(int type, int duration)
+static int homeasy_handler(unsigned int gpio, unsigned int type, int duration)
 {
   struct homeasy_payload payload;
   int rc;
 
-  rc = homeasy_receive(type, duration, &payload);
+  rc = homeasy_receive(gpio, type, duration, &payload);
   if (rc == 1) {
     dlog(DLOG, DLOG_INFO, "Homeasy, Message received correctly");
 
@@ -205,13 +208,13 @@ static int homeasy_handler(int type, int duration)
   return rc;
 }
 
-static int srts_handler(int type, int duration)
+static int srts_handler(unsigned int gpio, unsigned int type, int duration)
 {
   struct srts_payload payload;
   static int last_key = 0;
   int rc;
 
-  rc = srts_receive(type, duration, &payload);
+  rc = srts_receive(gpio, type, duration, &payload);
   if (rc == 1) {
     if (last_key && payload.key == last_key) {
       return 0;
@@ -225,7 +228,7 @@ static int srts_handler(int type, int duration)
   return rc;
 }
 
-void rf_gw_handle_interrupt(int type, long time)
+void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time)
 {
   static unsigned int last_change = 0;
   static unsigned int total_duration = 0;
@@ -242,11 +245,11 @@ void rf_gw_handle_interrupt(int type, long time)
   if (total_duration > 50) {
 
     /* ask for all defined publisher */
-    if (publisher_types & SRTS) {
-      rc = srts_handler(type, total_duration);
+    if (publisher_types[gpio] & SRTS) {
+      rc = srts_handler(gpio, type, total_duration);
     }
-    if (rc != 1 && (publisher_types & HOMEASY)) {
-      homeasy_handler(type, total_duration);
+    if (rc != 1 && (publisher_types[gpio] & HOMEASY)) {
+      homeasy_handler(gpio, type, total_duration);
     }
     total_duration = 0;
   }
@@ -263,14 +266,14 @@ static int str_type_to_int(const char *type)
   return 0;
 }
 
-static int add_publisher_type(const char *type)
+static int add_publisher_type(unsigned int gpio, const char *type)
 {
   int t = str_type_to_int(type);
   if (!t) {
     dlog(DLOG, DLOG_ERR, "Publisher type unknown: %s", type);
     return 0;
   }
-  publisher_types |= t;
+  publisher_types[gpio] |= t;
 
   return 1;
 }
@@ -291,7 +294,7 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
         goto clean;
       }
 
-      srts_transmit_persist(gpio, 0, device->address, ctrl,
+      srts_transmit_persist(device->gpio, 0, device->address, ctrl,
               device->repeat, persistence_path);
       break;
     case HOMEASY:
@@ -300,7 +303,7 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
         goto clean;
       }
 
-      homeasy_transmit(gpio, device->address, 0, ctrl, 0, device->repeat);
+      homeasy_transmit(device->gpio, device->address, 0, ctrl, 0, device->repeat);
       break;
   }
 
@@ -313,7 +316,9 @@ static int subscribe()
   config_setting_t *hs, *h;
   struct rf_device *device;
   char *input, *type;
-  int address, repeat = 0, t, i = 0;
+  unsigned short address;
+  unsigned int gpio, repeat = 0;
+  int t, i = 0;
 
   hs = config_lookup(&cfg, "config.subscribers");
   if (hs == NULL) {
@@ -329,9 +334,19 @@ static int subscribe()
                 config_setting_source_line(h));
         return 0;
       }
-      if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
-        dlog(DLOG, DLOG_ERR, "No type defined for the subscriber line: %d",
+      if (!config_setting_lookup_int(h, "gpio", (int *) &gpio)) {
+        dlog(DLOG, DLOG_ERR, "No GPIO defined for the publisher line: %d",
                 config_setting_source_line(h));
+        return 0;
+      }
+      if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
+          dlog(DLOG, DLOG_ERR, "No type defined for the subscriber line: %d",
+                config_setting_source_line(h));
+        return 0;
+      }
+      t = str_type_to_int(type);
+      if (!t) {
+        dlog(DLOG, DLOG_ERR, "Subscriber type unknown: %s", type);
         return 0;
       }
       if (!config_setting_lookup_int(h, "address", (int *) &address)) {
@@ -341,15 +356,12 @@ static int subscribe()
       }
       config_setting_lookup_int(h, "repeat", (int *) &repeat);
 
-      t = str_type_to_int(type);
-      if (!t) {
-        dlog(DLOG, DLOG_ERR, "Subscriber type unknown: %s", type);
-        return 0;
-      }
       device = xmalloc(sizeof(struct rf_device));
+      device->gpio = gpio;
       device->address = address;
       device->type = t;
       device->repeat = repeat;
+      device->config_h = h;
 
       if (!mqtt_subscribe(input, device, rf_mqtt_callback)) {
         return 0;
@@ -365,7 +377,8 @@ static int config_read_publisher_types()
 {
   config_setting_t *hs, *h;
   char *type, *output;
-  int address, i = 0;
+  unsigned int gpio, i = 0;
+  unsigned short address;
 
   hs = config_lookup(&cfg, "config.publishers");
   if (hs == NULL) {
@@ -376,8 +389,13 @@ static int config_read_publisher_types()
   do {
     h = config_setting_get_elem(hs, i);
     if (h != NULL) {
+      if (!config_setting_lookup_int(h, "gpio", (int *) &gpio)) {
+        dlog(DLOG, DLOG_ERR, "No GPIO defined for the publisher line: %d",
+                config_setting_source_line(h));
+        return 0;
+      }
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
-        dlog(DLOG, DLOG_ERR, "No type defined for the publisher line: %d",
+          dlog(DLOG, DLOG_ERR, "No type defined for the publisher line: %d",
                 config_setting_source_line(h));
         return 0;
       }
@@ -392,7 +410,7 @@ static int config_read_publisher_types()
         return 0;
       }
 
-      if (!add_publisher_type(type)) {
+      if (!add_publisher_type(gpio, type)) {
         return 0;
       }
     }
@@ -405,12 +423,6 @@ static int config_read_publisher_types()
 static int config_read_globals()
 {
   int rc;
-
-  rc = config_lookup_int(&cfg, "config.globals.gpio", &gpio);
-  if (rc == CONFIG_FALSE) {
-    dlog(DLOG, DLOG_ERR, "No gpio defined");
-    return 0;
-  }
 
   rc = config_lookup_string(&cfg, "config.globals.persistence_path",
                             (const char **) &persistence_path);

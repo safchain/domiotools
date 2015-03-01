@@ -64,7 +64,7 @@ void random_signal()
 
   for (i = 0; i != 33; i++) {
     value = 1 - value;
-    srts_receive(value, 300, &payload);
+    srts_receive(2, value, 300, &payload);
   }
 }
 
@@ -80,13 +80,41 @@ static int receive_pulses(struct srts_payload *payload)
 
   for (i = 0; i < pulses; i++) {
     pulse = (struct pulse *) mock_call("digitalWrite", i);
-    rc = srts_receive(pulse->value, pulse->duration, payload);
+    rc = srts_receive(2, pulse->value, pulse->duration, payload);
     if (rc != 0) {
       return rc;
     }
   }
 
   return rc;
+}
+
+static int receive_parallel_pulses(struct srts_payload *payload)
+{
+  struct pulse *pulse;
+  int i, pulses, total = 0, rc = 0;
+
+  pulses = mock_calls("digitalWrite");
+  if (!pulses) {
+    return 0;
+  }
+
+  for (i = 0; i < pulses; i++) {
+    pulse = (struct pulse *) mock_call("digitalWrite", i);
+    rc = srts_receive(2, pulse->value, pulse->duration, payload);
+    if (rc < 0) {
+      return rc;
+    }
+    total += rc;
+
+    rc = srts_receive(3, pulse->value, pulse->duration, payload);
+    if (rc < 0) {
+      return rc;
+    }
+    total += rc;
+  }
+
+  return total;
 }
 
 static void free_pulses()
@@ -162,6 +190,23 @@ START_TEST(test_srts_transmit_two_receives)
 }
 END_TEST
 
+START_TEST(test_srts_transmit_two_parallel_receives)
+{
+  struct srts_payload payload;
+  int rc;
+
+  memset(&payload, 0, sizeof(struct srts_payload));
+
+  random_signal();
+  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
+
+  rc = receive_parallel_pulses(&payload);
+  ck_assert_int_eq(2, rc);
+
+  free_pulses();
+}
+END_TEST
+
 START_TEST(test_srts_transmit_receive_repeated)
 {
   struct srts_payload payload;
@@ -193,6 +238,28 @@ START_TEST(test_srts_transmit_receive_repeated)
   ck_assert_int_eq(456, srts_get_address(&payload));
   ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
+
+  free_pulses();
+}
+END_TEST
+
+START_TEST(test_srts_transmit_print_receive)
+{
+  struct srts_payload payload;
+  FILE *fp;
+  int rc;
+
+  memset(&payload, 0, sizeof(struct srts_payload));
+
+  random_signal();
+  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
+
+  rc = receive_pulses(&payload);
+  ck_assert_int_eq(1, rc);
+
+  fp = tmpfile();
+  srts_print_payload(fp, &payload);
+  fclose(fp);
 
   free_pulses();
 }
@@ -237,6 +304,16 @@ START_TEST(test_srts_transmit_persist)
 }
 END_TEST
 
+START_TEST(test_srts_receive_bad_gpio)
+{
+  struct srts_payload payload;
+  int rc;
+
+  rc = srts_receive(3333, 1, 55, &payload);
+  ck_assert_int_eq(SRTS_BAD_GPIO, rc);
+}
+END_TEST
+
 void test_srts_setup()
 {
   mock_init();
@@ -258,8 +335,11 @@ Suite *srts_suite(void)
   tcase_add_checked_fixture(tc_srts, test_srts_setup, test_srts_teardown);
   tcase_add_test(tc_srts, test_srts_transmit_receive);
   tcase_add_test(tc_srts, test_srts_transmit_two_receives);
+  tcase_add_test(tc_srts, test_srts_transmit_two_parallel_receives);
   tcase_add_test(tc_srts, test_srts_transmit_receive_repeated);
   tcase_add_test(tc_srts, test_srts_transmit_persist);
+  tcase_add_test(tc_srts, test_srts_receive_bad_gpio);
+  tcase_add_test(tc_srts, test_srts_transmit_print_receive);
 
   suite_add_tcase(s, tc_srts);
 
