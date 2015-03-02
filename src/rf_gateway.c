@@ -52,9 +52,10 @@ struct rf_device {
 
 extern struct dlog *DLOG;
 
-static config_t cfg;
-static int publisher_types[MAX_GPIO];
-static char *persistence_path = "/var/lib/";
+static config_t rf_cfg;
+static int rf_publisher_types[MAX_GPIO];
+static char *rf_persistence_path = "/var/lib/";
+static LIST *rf_subscribers = NULL;
 
 static const char *translate_value(config_setting_t *config, const char *value)
 {
@@ -118,7 +119,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
   int address, value, i = 0;
   const char *ctrl;
 
-  hs = config_lookup(&cfg, "config.publishers");
+  hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
     dlog(DLOG, DLOG_ERR, "No publisher defined");
     return 0;
@@ -159,7 +160,7 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
   int value, i = 0;
   const char *ctrl;
 
-  hs = config_lookup(&cfg, "config.publishers");
+  hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
     dlog(DLOG, DLOG_ERR, "No publisher defined");
     return 0;
@@ -245,10 +246,10 @@ void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time)
   if (total_duration > 50) {
 
     /* ask for all defined publisher */
-    if (publisher_types[gpio] & SRTS) {
+    if (rf_publisher_types[gpio] & SRTS) {
       rc = srts_handler(gpio, type, total_duration);
     }
-    if (rc != 1 && (publisher_types[gpio] & HOMEASY)) {
+    if (rc != 1 && (rf_publisher_types[gpio] & HOMEASY)) {
       homeasy_handler(gpio, type, total_duration);
     }
     total_duration = 0;
@@ -273,7 +274,7 @@ static int add_publisher_type(unsigned int gpio, const char *type)
     dlog(DLOG, DLOG_ERR, "Publisher type unknown: %s", type);
     return 0;
   }
-  publisher_types[gpio] |= t;
+  rf_publisher_types[gpio] |= t;
 
   return 1;
 }
@@ -295,7 +296,7 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
       }
 
       srts_transmit_persist(device->gpio, 0, device->address, ctrl,
-              device->repeat, persistence_path);
+              device->repeat, rf_persistence_path);
       break;
     case HOMEASY:
       ctrl = homeasy_get_ctrl_int(value);
@@ -303,7 +304,8 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
         goto clean;
       }
 
-      homeasy_transmit(device->gpio, device->address, 0, ctrl, 0, device->repeat);
+      homeasy_transmit(device->gpio, device->address, 0, ctrl, 0,
+              device->repeat);
       break;
   }
 
@@ -320,10 +322,15 @@ static int subscribe()
   unsigned int gpio, repeat = 0;
   int t, i = 0;
 
-  hs = config_lookup(&cfg, "config.subscribers");
+  hs = config_lookup(&rf_cfg, "config.subscribers");
   if (hs == NULL) {
     dlog(DLOG, DLOG_INFO, "No subscriber defined");
     return 1;
+  }
+
+  rf_subscribers = hl_list_alloc();
+  if (rf_subscribers == NULL) {
+    alloc_error();
   }
 
   do {
@@ -364,7 +371,13 @@ static int subscribe()
       device->config_h = h;
 
       if (!mqtt_subscribe(input, device, rf_mqtt_callback)) {
+        free(device);
         return 0;
+      }
+
+      if (hl_list_push(rf_subscribers,  &device,
+                  sizeof(struct rf_device *)) == -1) {
+        alloc_error();
       }
     }
     i++;
@@ -373,14 +386,14 @@ static int subscribe()
   return 1;
 }
 
-static int config_read_publisher_types()
+static int config_read_rf_publisher_types()
 {
   config_setting_t *hs, *h;
   char *type, *output;
   unsigned int gpio, i = 0;
   unsigned short address;
 
-  hs = config_lookup(&cfg, "config.publishers");
+  hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
     dlog(DLOG, DLOG_INFO, "No publisher defined");
     return 1;
@@ -424,11 +437,11 @@ static int config_read_globals()
 {
   int rc;
 
-  rc = config_lookup_string(&cfg, "config.globals.persistence_path",
-                            (const char **) &persistence_path);
+  rc = config_lookup_string(&rf_cfg, "config.globals.persistence_path",
+                            (const char **) &rf_persistence_path);
   if (rc == CONFIG_FALSE) {
     dlog(DLOG, DLOG_WARNING, "No persistence path defined, using the "
-         "default value: %s", persistence_path);
+         "default value: %s", rf_persistence_path);
   }
 
   return 1;
@@ -438,18 +451,19 @@ int rf_gw_read_config(char *in, int file)
 {
   int rc;
 
-  config_init(&cfg);
+  config_init(&rf_cfg);
 
   if (file) {
-    rc = config_read_file(&cfg, in);
+    rc = config_read_file(&rf_cfg, in);
   } else {
-    rc = config_read_string(&cfg, in);
+    rc = config_read_string(&rf_cfg, in);
   }
 
   if (!rc) {
     dlog(DLOG, DLOG_CRIT, "Configuration file malformed, %s:%d - %s",
-         config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
-    config_destroy(&cfg);
+         config_error_file(&rf_cfg), config_error_line(&rf_cfg),
+         config_error_text(&rf_cfg));
+    config_destroy(&rf_cfg);
     return 0;
   }
 
@@ -457,7 +471,7 @@ int rf_gw_read_config(char *in, int file)
     return 0;
   }
 
-  if (!config_read_publisher_types()) {
+  if (!config_read_rf_publisher_types()) {
     return 0;
   }
 
@@ -472,5 +486,17 @@ void rf_gw_loop()
 {
   while (1) {
     sleep(1);
+  }
+}
+
+void rf_gw_destroy() {
+  LIST_ITERATOR iterator;
+  struct rf_device **device;
+
+  if (rf_subscribers != NULL) {
+    hl_list_init_iterator(rf_subscribers, &iterator);
+    while((device = hl_list_iterate(&iterator)) != NULL) {
+      free(*device);
+    }
   }
 }

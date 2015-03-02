@@ -82,6 +82,7 @@ int srts_get_code(const char *persistence_path, unsigned int address)
     goto clean;
   }
   fclose(fp);
+  free(path);
 
   return c;
 
@@ -106,7 +107,7 @@ static int store_code(const char *persistence_path, unsigned int address,
 
   if ((fp = fopen(path, "w+")) == NULL) {
     dlog(DLOG, DLOG_ERR, "Unable to create the srts code file: %s", path);
-    return -1;
+    goto clean;
   }
 
   sprintf(code, "%d\n", new_code);
@@ -114,10 +115,14 @@ static int store_code(const char *persistence_path, unsigned int address,
     dlog(DLOG, DLOG_ERR, "Unable to write the srts code to the file: %s",
             path);
   }
-
   fclose(fp);
+  free(path);
 
   return 1;
+
+clean:
+  free(path);
+  return -1;
 }
 
 static void obfuscate_payload(struct srts_payload *payload)

@@ -20,5 +20,6 @@
 void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time);
 int rf_gw_read_config(char *in, int file);
 void rf_gw_loop();
+void rf_gw_destroy();
 
 #endif
