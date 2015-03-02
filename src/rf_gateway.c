@@ -346,6 +346,11 @@ static int subscribe()
                 config_setting_source_line(h));
         return 0;
       }
+      if (gpio >= MAX_GPIO) {
+        dlog(DLOG, DLOG_ERR, "Bad GPIO defined for the publisher line: %d",
+                config_setting_source_line(h));
+        return 0;
+      }
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
           dlog(DLOG, DLOG_ERR, "No type defined for the subscriber line: %d",
                 config_setting_source_line(h));
@@ -391,7 +396,7 @@ static int config_read_rf_publisher_types()
   config_setting_t *hs, *h;
   char *type, *output;
   unsigned int gpio, i = 0;
-  unsigned short address;
+  unsigned int address;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
@@ -423,9 +428,9 @@ static int config_read_rf_publisher_types()
         return 0;
       }
 
-      if (!add_publisher_type(gpio, type)) {
-        return 0;
-      }
+//      if (!add_publisher_type(gpio, type)) {
+//        return 0;
+//      }
     }
     i++;
   } while (h != NULL);
@@ -475,9 +480,9 @@ int rf_gw_read_config(char *in, int file)
     return 0;
   }
 
-  if (!subscribe()) {
+/*  if (!subscribe()) {
     return 0;
-  }
+  }*/
 
   return 1;
 }

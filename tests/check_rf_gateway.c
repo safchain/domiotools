@@ -23,6 +23,9 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <cmocker.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "mem.h"
 #include "rf_gateway.h"
@@ -34,6 +37,19 @@
 int debug;
 int verbose;
 struct dlog *DLOG;
+
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
 
 int mqtt_publish(const char *output, const char *value)
 {
@@ -612,11 +628,11 @@ Suite *rf_suite(void)
   tc_rf = tcase_create("rf_gateway");
 
   tcase_add_checked_fixture(tc_rf, test_rf_setup, test_rf_teardown);
-  tcase_add_test(tc_rf, test_config_publishers_no_type_error);
+/*  tcase_add_test(tc_rf, test_config_publishers_no_type_error);
   tcase_add_test(tc_rf, test_config_publishers_no_output_error);
-  tcase_add_test(tc_rf, test_config_publishers_no_address_error);
+  tcase_add_test(tc_rf, test_config_publishers_no_address_error);*/
   tcase_add_test(tc_rf, test_config_publishers_success);
-  tcase_add_test(tc_rf, test_config_subscribers_no_type_error);
+/*  tcase_add_test(tc_rf, test_config_subscribers_no_type_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_output_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_address_error);
   tcase_add_test(tc_rf, test_config_subscribers_success);
@@ -627,7 +643,7 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
   tcase_add_test(tc_rf, test_srts_publish_translations);
-  tcase_add_test(tc_rf, test_homeasy_publish);
+  tcase_add_test(tc_rf, test_homeasy_publish);*/
   suite_add_tcase(s, tc_rf);
 
   return s;
@@ -638,10 +654,13 @@ int main(void)
   SRunner *sr;
   int number_failed;
 
+  signal(SIGSEGV, handler);
+
   DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
   assert(DLOG != NULL);
 
   sr = srunner_create(rf_suite ());
+  srunner_set_fork_status (sr, CK_NOFORK);
   srunner_run_all(sr, CK_VERBOSE);
 
   number_failed = srunner_ntests_failed(sr);
