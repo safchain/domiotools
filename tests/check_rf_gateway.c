@@ -159,6 +159,7 @@ void test_rf_setup()
 
 void test_rf_teardown()
 {
+  rf_gw_destroy();
   mock_destroy();
 }
 
