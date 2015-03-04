@@ -45,7 +45,7 @@ enum {
 struct rf_device {
   unsigned int gpio;
   unsigned int type;
-  unsigned short address;
+  unsigned int address;
   unsigned int repeat;
   config_setting_t *config_h;
 };
@@ -116,7 +116,7 @@ static int config_lookup_type(config_setting_t *h, const char *type)
 static int srts_lookup_for_publisher(struct srts_payload *payload)
 {
   config_setting_t *hs, *h;
-  int address, value, i = 0;
+  unsigned int address, value, i = 0;
   const char *ctrl;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
@@ -157,7 +157,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
 static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
 {
   config_setting_t *hs, *h;
-  int value, i = 0;
+  unsigned int value, i = 0;
   const char *ctrl;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
@@ -318,8 +318,7 @@ static int subscribe()
   config_setting_t *hs, *h;
   struct rf_device *device;
   char *input, *type;
-  unsigned short address;
-  unsigned int gpio, repeat = 0;
+  unsigned int gpio, address, repeat = 0;
   int t, i = 0;
 
   hs = config_lookup(&rf_cfg, "config.subscribers");
@@ -390,8 +389,7 @@ static int config_read_rf_publisher_types()
 {
   config_setting_t *hs, *h;
   char *type, *output;
-  unsigned int gpio, i = 0;
-  unsigned short address;
+  unsigned int gpio, address, i = 0;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
