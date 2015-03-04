@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   unsigned short address = 0;
   unsigned short code = 0;
   long int a2i;
-  int gpio = -1, repeat, c, i;
+  int gpio = -1, repeat = 0, c, i;
   char command = SRTS_UNKNOWN;
   char *persistence_path = "/var/lib/", *end;
 
