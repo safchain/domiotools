@@ -21,6 +21,7 @@
 #include <limits.h>
 #include <errno.h>
 
+#include "mem.h"
 #include "urlparser.h"
 
 static int astrncpy(char **dst, char *ptr, unsigned int len)
@@ -29,10 +30,7 @@ static int astrncpy(char **dst, char *ptr, unsigned int len)
     *dst = NULL;
     return 1;
   }
-  *dst = calloc(1, len + 1);
-  if (*dst == NULL) {
-    return 0;
-  }
+  *dst = xcalloc(1, len + 1);
   strncpy(*dst, ptr, len);
 
   return 1;
@@ -70,10 +68,7 @@ struct url *parse_url(const char *str)
   struct url *url;
   int len;
 
-  url = (struct url *) calloc(1, sizeof(struct url));
-  if (!url) {
-    return NULL;
-  }
+  url = (struct url *) xcalloc(1, sizeof(struct url));
   ptr = (char *) str;
 
   /* parse scheme */
@@ -82,9 +77,7 @@ struct url *parse_url(const char *str)
     if (strncmp(ptr + len, "://", 3) != 0) {
       goto clean;
     }
-    if (!astrncpy(&(url->scheme), ptr, len)) {
-      goto clean;
-    }
+    astrncpy(&(url->scheme), ptr, len);
     ptr = tmp + 3;
   } else {
     goto clean;
@@ -94,17 +87,13 @@ struct url *parse_url(const char *str)
   if ((tmp = strchr(ptr, '@')) != NULL) {
     if ((tmp2 = strchr(ptr, ':')) != 0 && tmp2 < tmp) {
       len = tmp - tmp2;
-      if (!astrncpy(&(url->password), tmp2 + 1, len - 1)) {
-        goto clean;
-      }
+      astrncpy(&(url->password), tmp2 + 1, len - 1);
     } else {
       len = 0;
     }
 
     len = tmp - ptr - len;
-    if (!astrncpy(&(url->username), ptr, len)) {
-      goto clean;
-    }
+    astrncpy(&(url->username), ptr, len);
     ptr += tmp - ptr + 1;
   }
 
@@ -112,9 +101,8 @@ struct url *parse_url(const char *str)
   tmp = strchrnul(ptr, '/');
   if ((tmp2 = strchr(ptr, ':')) != 0 && tmp2 < tmp) {
     len = tmp - tmp2;
-    if (!astrncpy(&buf, tmp2 + 1, len - 1)) {
-      goto clean;
-    }
+    astrncpy(&buf, tmp2 + 1, len - 1);
+
     url->port = strtol(buf, &end, 10);
     free(buf);
 
@@ -126,9 +114,7 @@ struct url *parse_url(const char *str)
   }
 
   len = tmp - ptr - len;
-  if (!astrncpy(&(url->hostname), ptr, len)) {
-    goto clean;
-  }
+  astrncpy(&(url->hostname), ptr, len);
   ptr += tmp - ptr;
 
   /* path */
@@ -140,26 +126,18 @@ struct url *parse_url(const char *str)
     ptr += tmp - ptr;
 
     tmp2 = strchrnul(ptr, '#');
-    if (!astrncpy(&(url->query), tmp + 1, tmp2 - tmp - 1)) {
-      goto clean;
-    }
-    if (!astrncpy(&(url->fragment), tmp2 + 1, strlen(tmp2))) {
-      goto clean;
-    }
+    astrncpy(&(url->query), tmp + 1, tmp2 - tmp - 1);
+    astrncpy(&(url->fragment), tmp2 + 1, strlen(tmp2));
   } else if ((tmp = strchr(ptr, '#')) != NULL) {
     end = tmp;
     ptr += tmp - ptr;
 
-    if (!astrncpy(&(url->fragment), ptr + 1, strlen(ptr))) {
-      goto clean;
-    }
+    astrncpy(&(url->fragment), ptr + 1, strlen(ptr));
   } else {
     end = buf + strlen(buf);
   }
 
-  if (!astrncpy(&(url->path), buf, end - buf)) {
-    goto clean;
-  }
+  astrncpy(&(url->path), buf, end - buf);
 
   return url;
 

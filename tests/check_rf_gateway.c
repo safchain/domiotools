@@ -163,6 +163,21 @@ void test_rf_teardown()
   mock_destroy();
 }
 
+START_TEST(test_config_syntax_error)
+{
+  char *conf = "config:{"
+    "publishers:"
+        "gpio: 2;"
+        "address: 3333;"
+        "output: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc;
+
+  rc = rf_gw_read_config(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
 START_TEST(test_config_publishers_no_type_error)
 {
   char *conf = "config:{"
@@ -613,6 +628,7 @@ Suite *rf_suite(void)
   tc_rf = tcase_create("rf_gateway");
 
   tcase_add_checked_fixture(tc_rf, test_rf_setup, test_rf_teardown);
+  tcase_add_test(tc_rf, test_config_syntax_error);
   tcase_add_test(tc_rf, test_config_publishers_no_type_error);
   tcase_add_test(tc_rf, test_config_publishers_no_output_error);
   tcase_add_test(tc_rf, test_config_publishers_no_address_error);

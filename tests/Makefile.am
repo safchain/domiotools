@@ -21,6 +21,7 @@ check_logging_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -W
 check_logging_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 
 check_urlparser_SOURCES = check_urlparser.c \
+						  $(top_builddir)/src/mem.c \
 						  $(top_builddir)/src/urlparser.c
 check_urlparser_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_urlparser_LDADD = @CHECK_LIBS@ @GCOV_LIBS@

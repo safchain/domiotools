@@ -102,6 +102,7 @@ check_srts_LINK = $(CCLD) $(check_srts_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am_check_urlparser_OBJECTS =  \
 	check_urlparser-check_urlparser.$(OBJEXT) \
+	check_urlparser-mem.$(OBJEXT) \
 	check_urlparser-urlparser.$(OBJEXT)
 check_urlparser_OBJECTS = $(am_check_urlparser_OBJECTS)
 check_urlparser_DEPENDENCIES =
@@ -239,6 +240,7 @@ check_logging_SOURCES = check_logging.c \
 check_logging_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_logging_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 check_urlparser_SOURCES = check_urlparser.c \
+						  $(top_builddir)/src/mem.c \
 						  $(top_builddir)/src/urlparser.c
 
 check_urlparser_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
@@ -379,6 +381,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_urlparser-check_urlparser.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_urlparser-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_urlparser-urlparser.Po@am__quote@
 
 .c.o:
@@ -842,6 +845,20 @@ check_urlparser-check_urlparser.obj: check_urlparser.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_urlparser.c' object='check_urlparser-check_urlparser.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_urlparser_CFLAGS) $(CFLAGS) -c -o check_urlparser-check_urlparser.obj `if test -f 'check_urlparser.c'; then $(CYGPATH_W) 'check_urlparser.c'; else $(CYGPATH_W) '$(srcdir)/check_urlparser.c'; fi`
+
+check_urlparser-mem.o: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_urlparser_CFLAGS) $(CFLAGS) -MT check_urlparser-mem.o -MD -MP -MF $(DEPDIR)/check_urlparser-mem.Tpo -c -o check_urlparser-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_urlparser-mem.Tpo $(DEPDIR)/check_urlparser-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_urlparser-mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_urlparser_CFLAGS) $(CFLAGS) -c -o check_urlparser-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+
+check_urlparser-mem.obj: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_urlparser_CFLAGS) $(CFLAGS) -MT check_urlparser-mem.obj -MD -MP -MF $(DEPDIR)/check_urlparser-mem.Tpo -c -o check_urlparser-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_urlparser-mem.Tpo $(DEPDIR)/check_urlparser-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_urlparser-mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_urlparser_CFLAGS) $(CFLAGS) -c -o check_urlparser-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
 
 check_urlparser-urlparser.o: $(top_builddir)/src/urlparser.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_urlparser_CFLAGS) $(CFLAGS) -MT check_urlparser-urlparser.o -MD -MP -MF $(DEPDIR)/check_urlparser-urlparser.Tpo -c -o check_urlparser-urlparser.o `test -f '$(top_builddir)/src/urlparser.c' || echo '$(srcdir)/'`$(top_builddir)/src/urlparser.c
