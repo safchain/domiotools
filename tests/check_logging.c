@@ -34,6 +34,41 @@ START_TEST(test_log_null)
 }
 END_TEST
 
+START_TEST(test_log_file_fails)
+{
+  struct dlog *log;
+
+  log = dlog_init(DLOG_FILE, DLOG_DEBUG, "/tmpXXX");
+  ck_assert(log == NULL);
+}
+END_TEST
+
+START_TEST(test_log_file)
+{
+  struct dlog *log;
+  char *filename, buff[BUFSIZ], *str;
+  FILE *fp;
+
+  filename = tmpnam(NULL);
+
+  log = dlog_init(DLOG_FILE, DLOG_DEBUG, filename);
+  ck_assert(log != NULL);
+
+  dlog(log, DLOG_DEBUG, "%s", "test123");
+
+  fp = fopen(filename, "r");
+  ck_assert(fp != NULL);
+
+  fgets(buff, BUFSIZ, fp);
+
+  str = strstr(buff, "test123");
+  ck_assert(str != NULL);
+
+  dlog_destroy(log);
+  fclose(fp);
+}
+END_TEST
+
 START_TEST(test_log_fp)
 {
   struct dlog *log;
@@ -158,6 +193,8 @@ Suite *logging_suite(void)
   tc_logging = tcase_create("logging");
 
   tcase_add_test(tc_logging, test_log_null);
+  tcase_add_test(tc_logging, test_log_file_fails);
+  tcase_add_test(tc_logging, test_log_file);
   tcase_add_test(tc_logging, test_log_fp);
   tcase_add_test(tc_logging, test_log_fp_priority);
   tcase_add_test(tc_logging, test_log_syslog);
