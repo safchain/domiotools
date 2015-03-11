@@ -213,7 +213,7 @@ START_TEST(test_mqtt_publish_success)
           MOCK_RETURNED_ALWAYS);
   mock_will_return("mosquitto_loop", &rc_success, MOCK_RETURNED_ALWAYS);
 
-  rc = mqtt_publish("mqtt://locahost:1843/test", "test");
+  rc = mqtt_publish("mqtt://user1:pass1@locahost:1843/test", "test");
   ck_assert_int_eq(rc, MQTT_SUCCESS);
 
   rc = mock_wait_to_be_called("mosquitto_publish", 2);
@@ -304,7 +304,7 @@ START_TEST(test_mqtt_disconnect)
   ck_assert_int_eq(rc, MQTT_SUCCESS);
 
   loop = mock_calls("mosquitto_loop");
-  loop = mock_wait_for_call_num_higher_than("mosquitto_loop", loop + 2, 2);
+  mock_wait_for_call_num_higher_than("mosquitto_loop", loop + 2, 2);
 
   /* check that since we are disconnected there is no publish */
   rc = mock_calls("mosquitto_publish");

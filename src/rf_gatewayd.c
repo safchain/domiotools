@@ -64,30 +64,26 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!rf_gw_read_config("rules.cfg", 1)) {
-    return -1;
-  }
-
-  if (wiringPiSetup() == -1) {
-    fprintf(stderr, "Wiring Pi not installed");
-    return -1;
-  }
+  srand(time(NULL));
 
   DLOG = dlog_init(DLOG_SYSLOG, DLOG_DEBUG, "rf_gateway");
   assert(DLOG != NULL);
 
-  srand(time(NULL));
-
   mqtt_init();
+
+  if (!rf_gw_start("rules.cfg", 1)) {
+    return -1;
+  }
+
+  /*if (wiringPiSetup() == -1) {
+    fprintf(stderr, "Wiring Pi not installed");
+    return -1;
+  }*/
 
   verbose = 1;
   debug = 1;
 
-  piHiPri(99);
-  pinMode(gpio, INPUT);
-  wiringPiISR(gpio, INT_EDGE_BOTH, handle_interrupt);
-
-  rf_gw_loop();
+  rf_gw_wait();
 
   return 0;
 }

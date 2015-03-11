@@ -14,12 +14,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef __RF_GATEWAY_H
-#define __RF_GATEWAY_H
+#ifndef __GPIO_H
+#define __GPIO_H
 
-void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time);
-int rf_gw_start(char *in, int file);
-void rf_gw_wait();
-void rf_gw_destroy();
+#define GPIO_LOW    0
+#define GPIO_HIGH   1
+
+void gpio_set_syspath(const char *path);
+int gpio_export(unsigned int gpio);
+int gpio_direction(unsigned int gpio, const char *direction);
+int gpio_edge_detection(unsigned int gpio, const char *edge);
+int gpio_open(unsigned int gpio);
+unsigned long gpio_time();
 
 #endif

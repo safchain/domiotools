@@ -3,7 +3,7 @@
 cd /tmp
 
 sudo apt-get -y install check libc-ares-dev make gcc libssl-dev g++ \
-    autoconf automake libtool flex bison
+    autoconf automake libtool flex bison libev-dev
 
 # libconfig
 git clone https://github.com/hyperrealm/libconfig.git

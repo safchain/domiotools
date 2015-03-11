@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
+#include <ev.h>
 
 #include "common.h"
 #include "mem.h"
@@ -34,6 +35,7 @@
 #include "mqtt.h"
 #include "logging.h"
 #include "homeasy.h"
+#include "gpio.h"
 
 #define MAX_GPIO    32
 
@@ -50,12 +52,19 @@ struct rf_device {
   config_setting_t *config_h;
 };
 
+struct rf_publisher {
+  unsigned int gpio;
+  ev_io watcher;
+};
+
 extern struct dlog *DLOG;
 
 static config_t rf_cfg;
-static int rf_publisher_types[MAX_GPIO];
+static int rf_publisher_types[MAX_GPIO + 1];
 static char *rf_persistence_path = "/var/lib/";
 static LIST *rf_subscribers = NULL;
+static LIST *rf_publishers = NULL;
+static struct ev_loop *rf_loop = NULL;
 
 static const char *translate_value(config_setting_t *config, const char *value)
 {
@@ -132,7 +141,8 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
         continue;
       }
 
-      if (config_setting_lookup_int(h, "address", &value) != CONFIG_TRUE) {
+      if (config_setting_lookup_int(h, "address",
+                  (int *) &value) != CONFIG_TRUE) {
         dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
                 config_setting_source_line(h));
         continue;
@@ -173,7 +183,8 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
         continue;
       }
 
-      if (config_setting_lookup_int(h, "address", &value) != CONFIG_TRUE) {
+      if (config_setting_lookup_int(h, "address",
+                  (int *) &value) != CONFIG_TRUE) {
         dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
                 config_setting_source_line(h));
         continue;
@@ -256,7 +267,7 @@ void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time)
   }
 }
 
-static int str_type_to_int(const char *type)
+static unsigned int str_type_to_int(const char *type)
 {
   if (strcmp(type, "srts") == 0) {
     return SRTS;
@@ -269,7 +280,7 @@ static int str_type_to_int(const char *type)
 
 static int add_publisher_type(unsigned int gpio, const char *type)
 {
-  int t = str_type_to_int(type);
+  unsigned int t = str_type_to_int(type);
   if (!t) {
     dlog(DLOG, DLOG_ERR, "Publisher type unknown: %s", type);
     return 0;
@@ -313,13 +324,31 @@ clean:
   free(value);
 }
 
-static int subscribe()
+static void gpio_cb(EV_P_ struct ev_io *io, int revents)
+{
+  long time;
+  int type;
+
+  printf("####################\n");
+
+  (void)read (io->fd, &type, 1);
+  if (type == GPIO_LOW) {
+    type = GPIO_HIGH;
+  } else {
+    type = GPIO_LOW;
+  }
+
+  time = gpio_time();
+  rf_gw_handle_interrupt(2, type, time);
+}
+
+static int start_subscribes()
 {
   config_setting_t *hs, *h;
   struct rf_device *device;
   char *input, *type;
   unsigned int gpio, address, repeat = 0;
-  int t, i = 0;
+  unsigned int t, i = 0;
 
   hs = config_lookup(&rf_cfg, "config.subscribers");
   if (hs == NULL) {
@@ -385,7 +414,7 @@ static int subscribe()
   return 1;
 }
 
-static int config_read_rf_publisher_types()
+static int config_read_publishers()
 {
   config_setting_t *hs, *h;
   char *type, *output;
@@ -405,12 +434,19 @@ static int config_read_rf_publisher_types()
                 config_setting_source_line(h));
         return 0;
       }
+      if (gpio > MAX_GPIO) {
+        dlog(DLOG, DLOG_ERR, "Unsupported GPIO for the publisher line: %d,"
+                "maximum supported %d", config_setting_source_line(h),
+                MAX_GPIO);
+        return 0;
+      }
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
           dlog(DLOG, DLOG_ERR, "No type defined for the publisher line: %d",
                 config_setting_source_line(h));
         return 0;
       }
-      if (!config_setting_lookup_string(h, "output", (const char **) &output)) {
+      if (!config_setting_lookup_string(h, "output",
+                  (const char **) &output)) {
         dlog(DLOG, DLOG_ERR, "No output defined for the publisher line: %d",
                 config_setting_source_line(h));
         return 0;
@@ -431,6 +467,58 @@ static int config_read_rf_publisher_types()
   return 1;
 }
 
+static int start_publishers()
+{
+  struct rf_publisher publisher;
+  unsigned int gpio, fd;
+
+  rf_publishers = hl_list_alloc();
+  if (rf_publishers == NULL) {
+    alloc_error();
+  }
+
+  if (!config_read_publishers()) {
+    return 0;
+  }
+
+  for (gpio = 0; gpio != MAX_GPIO; gpio++) {
+    if (rf_publisher_types[gpio]) {
+      if (!gpio_export(gpio)) {
+          dlog(DLOG, DLOG_ERR, "Unable to export the GPIO: %d", gpio);
+          return 0;
+      }
+
+      if (!gpio_direction(gpio, "in")) {
+        dlog(DLOG, DLOG_ERR, "Unable to set the direction for the GPIO: %d",
+                gpio);
+        return 0;
+      }
+
+      if (!gpio_edge_detection(gpio, "both")) {
+        dlog(DLOG, DLOG_ERR,
+                "Unable to set the edge detection mode for the GPIO: %d",
+                gpio);
+        return 0;
+      }
+
+      fd = gpio_open(gpio);
+      if (fd == -1) {
+        dlog(DLOG, DLOG_ERR,
+                "Unable to open GPIO pin: %d, %s", gpio, strerror(errno));
+        return 0;
+      }
+
+      publisher.gpio = gpio;
+      ev_io_init (&(publisher.watcher), gpio_cb, fd, EV_READ);
+
+      hl_list_push(rf_publishers, &publisher, sizeof(struct rf_publisher));
+    }
+  }
+
+  return 1;
+}
+
+
 static int config_read_globals()
 {
   int rc;
@@ -445,13 +533,18 @@ static int config_read_globals()
   return 1;
 }
 
-int rf_gw_read_config(char *in, int file)
+int rf_gw_start(char *in, int file)
 {
   int rc;
 
   config_init(&rf_cfg);
 
   if (file) {
+    if (in == NULL || access(in, R_OK) != 0) {
+      dlog(DLOG, DLOG_CRIT, "Configuration file not readable: %s", in);
+      return 0;
+    }
+
     rc = config_read_file(&rf_cfg, in);
   } else {
     rc = config_read_string(&rf_cfg, in);
@@ -465,23 +558,31 @@ int rf_gw_read_config(char *in, int file)
     return 0;
   }
 
+  rf_loop = ev_default_loop(0);
+
   if (!config_read_globals()) {
     return 0;
   }
 
-  if (!config_read_rf_publisher_types()) {
+  if (!config_read_publishers()) {
     return 0;
   }
 
-  if (!subscribe()) {
+  if (!start_subscribes()) {
+    return 0;
+  }
+
+  if (!start_publishers()) {
     return 0;
   }
 
   return 1;
 }
 
-void rf_gw_loop()
+void rf_gw_wait()
 {
+  ev_loop(rf_loop, 0);
+
   while (1) {
     sleep(1);
   }

@@ -310,9 +310,9 @@ static int is_on_time(unsigned int duration, unsigned int expected)
 static int detect_sync(unsigned int gpio, unsigned int type,
         unsigned int *duration)
 {
-  static unsigned char init_sync[MAX_GPIO];
-  static unsigned char hard_sync[MAX_GPIO];
-  static unsigned char soft_sync[MAX_GPIO];
+  static unsigned char init_sync[MAX_GPIO + 1];
+  static unsigned char hard_sync[MAX_GPIO + 1];
+  static unsigned char soft_sync[MAX_GPIO + 1];
   static char init = 0;
 
   if (!init) {
@@ -355,7 +355,7 @@ static int detect_sync(unsigned int gpio, unsigned int type,
 static int read_bit(unsigned int gpio, unsigned int type,
         unsigned int *duration, unsigned char *bit, unsigned int last)
 {
-  static unsigned char pass[MAX_GPIO];
+  static unsigned char pass[MAX_GPIO + 1];
   static char init = 0;
 
   if (!init) {
@@ -391,8 +391,8 @@ static int read_bit(unsigned int gpio, unsigned int type,
 
 static int read_byte(unsigned int gpio, unsigned char bit, unsigned char *byte)
 {
-  static unsigned char b[MAX_GPIO];
-  static unsigned char d[MAX_GPIO];
+  static unsigned char b[MAX_GPIO + 1];
+  static unsigned char d[MAX_GPIO + 1];
   static char init = 0;
 
   if (!init) {
@@ -489,9 +489,9 @@ void srts_print_payload(FILE *fp, struct srts_payload *payload)
 int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
         struct srts_payload *payload)
 {
-  static unsigned char sync[MAX_GPIO];
-  static unsigned char index[MAX_GPIO];
-  static unsigned char bytes[MAX_GPIO][7];
+  static unsigned char sync[MAX_GPIO + 1];
+  static unsigned char index[MAX_GPIO + 1];
+  static unsigned char bytes[MAX_GPIO + 1][7];
   static char init = 0;
   unsigned char bit;
   int rc;

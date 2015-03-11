@@ -1,7 +1,7 @@
 TESTS = check_hl check_urlparser check_mqtt check_rf_gateway check_srts \
-		check_logging check_mem check_homeasy
+		check_logging check_mem check_homeasy check_gpio
 check_PROGRAMS = check_hl check_urlparser check_mqtt check_rf_gateway \
-				 check_srts check_logging check_mem check_homeasy
+				 check_srts check_logging check_mem check_homeasy check_gpio
 
 check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
@@ -19,6 +19,12 @@ check_logging_SOURCES = check_logging.c \
 				        $(top_builddir)/src/logging.c
 check_logging_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_logging_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
+
+check_gpio_SOURCES = check_gpio.c \
+					 $(top_builddir)/src/mem.c \
+					 $(top_builddir)/src/gpio.c
+check_gpio_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
+check_gpio_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 
 check_urlparser_SOURCES = check_urlparser.c \
 						  $(top_builddir)/src/mem.c \

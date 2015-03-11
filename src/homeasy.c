@@ -120,7 +120,7 @@ static int is_on_time(unsigned int duration, unsigned int expected)
 static int detect_sync(unsigned int gpio, unsigned int type,
         unsigned int *duration)
 {
-  static unsigned char sync[MAX_GPIO];
+  static unsigned char sync[MAX_GPIO + 1];
   static char init = 0;
 
   if (!init) {
@@ -176,7 +176,7 @@ static int _read_bit(unsigned int type, unsigned int duration,
 static int read_bit(unsigned int gpio, unsigned int type,
         unsigned int duration, unsigned char *bit)
 {
-  static unsigned int pass[MAX_GPIO];
+  static unsigned int pass[MAX_GPIO + 1];
   static char init = 0;
   unsigned char b;
   int rc;
@@ -211,8 +211,8 @@ static int read_bit(unsigned int gpio, unsigned int type,
 
 static int read_byte(unsigned int gpio, unsigned char bit, unsigned char *byte)
 {
-  static unsigned char b[MAX_GPIO];
-  static unsigned char d[MAX_GPIO];
+  static unsigned char b[MAX_GPIO + 1];
+  static unsigned char d[MAX_GPIO + 1];
   static char init = 0;
 
   if (!init) {
@@ -237,9 +237,9 @@ static int read_byte(unsigned int gpio, unsigned char bit, unsigned char *byte)
 int homeasy_receive(unsigned int gpio, unsigned int type,
         unsigned int duration, struct homeasy_payload *payload)
 {
-  static unsigned char sync[MAX_GPIO];
-  static unsigned char index[MAX_GPIO];
-  static unsigned char bytes[MAX_GPIO][4];
+  static unsigned char sync[MAX_GPIO + 1];
+  static unsigned char index[MAX_GPIO + 1];
+  static unsigned char bytes[MAX_GPIO + 1][4];
   static char init = 0;
   unsigned char bit;
   int rc, *i;

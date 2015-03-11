@@ -48,7 +48,8 @@ PROGRAMS = $(bin_PROGRAMS)
 am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) common.$(OBJEXT) \
 	srts.$(OBJEXT) hmap.$(OBJEXT) list.$(OBJEXT) \
 	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT) \
-	mem.$(OBJEXT) logging.$(OBJEXT) homeasy.$(OBJEXT)
+	mem.$(OBJEXT) logging.$(OBJEXT) homeasy.$(OBJEXT) \
+	gpio.$(OBJEXT)
 rf_gatewayd_OBJECTS = $(am_rf_gatewayd_OBJECTS)
 rf_gatewayd_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -160,9 +161,9 @@ top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
 rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c \
-					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c
+					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c gpio.c
 
-rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread @GCOV_LIBS@
+rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread -lev @GCOV_LIBS@
 all: all-am
 
 .SUFFIXES:
@@ -245,6 +246,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gpio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@

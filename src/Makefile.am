@@ -11,5 +11,5 @@ CLEANFILES = *~ *.gcno *.gcda *.gcov
 bin_PROGRAMS = rf_gatewayd
 
 rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c \
-					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c
-rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread @GCOV_LIBS@
+					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c gpio.c
+rf_gatewayd_LDADD = -lwiringPi -lmosquitto -lconfig -lpthread -lev @GCOV_LIBS@

@@ -34,11 +34,11 @@ POST_UNINSTALL = :
 TESTS = check_hl$(EXEEXT) check_urlparser$(EXEEXT) check_mqtt$(EXEEXT) \
 	check_rf_gateway$(EXEEXT) check_srts$(EXEEXT) \
 	check_logging$(EXEEXT) check_mem$(EXEEXT) \
-	check_homeasy$(EXEEXT)
+	check_homeasy$(EXEEXT) check_gpio$(EXEEXT)
 check_PROGRAMS = check_hl$(EXEEXT) check_urlparser$(EXEEXT) \
 	check_mqtt$(EXEEXT) check_rf_gateway$(EXEEXT) \
 	check_srts$(EXEEXT) check_logging$(EXEEXT) check_mem$(EXEEXT) \
-	check_homeasy$(EXEEXT)
+	check_homeasy$(EXEEXT) check_gpio$(EXEEXT)
 subdir = tests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -49,6 +49,12 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+am_check_gpio_OBJECTS = check_gpio-check_gpio.$(OBJEXT) \
+	check_gpio-mem.$(OBJEXT) check_gpio-gpio.$(OBJEXT)
+check_gpio_OBJECTS = $(am_check_gpio_OBJECTS)
+check_gpio_DEPENDENCIES =
+check_gpio_LINK = $(CCLD) $(check_gpio_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_check_hl_OBJECTS = check_hl-check_hl.$(OBJEXT) \
 	check_hl-list.$(OBJEXT) check_hl-hmap.$(OBJEXT)
 check_hl_OBJECTS = $(am_check_hl_OBJECTS)
@@ -116,14 +122,16 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(check_hl_SOURCES) $(check_homeasy_SOURCES) \
-	$(check_logging_SOURCES) $(check_mem_SOURCES) \
-	$(check_mqtt_SOURCES) $(check_rf_gateway_SOURCES) \
-	$(check_srts_SOURCES) $(check_urlparser_SOURCES)
-DIST_SOURCES = $(check_hl_SOURCES) $(check_homeasy_SOURCES) \
-	$(check_logging_SOURCES) $(check_mem_SOURCES) \
-	$(check_mqtt_SOURCES) $(check_rf_gateway_SOURCES) \
-	$(check_srts_SOURCES) $(check_urlparser_SOURCES)
+SOURCES = $(check_gpio_SOURCES) $(check_hl_SOURCES) \
+	$(check_homeasy_SOURCES) $(check_logging_SOURCES) \
+	$(check_mem_SOURCES) $(check_mqtt_SOURCES) \
+	$(check_rf_gateway_SOURCES) $(check_srts_SOURCES) \
+	$(check_urlparser_SOURCES)
+DIST_SOURCES = $(check_gpio_SOURCES) $(check_hl_SOURCES) \
+	$(check_homeasy_SOURCES) $(check_logging_SOURCES) \
+	$(check_mem_SOURCES) $(check_mqtt_SOURCES) \
+	$(check_rf_gateway_SOURCES) $(check_srts_SOURCES) \
+	$(check_urlparser_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -239,6 +247,12 @@ check_logging_SOURCES = check_logging.c \
 
 check_logging_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_logging_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
+check_gpio_SOURCES = check_gpio.c \
+					 $(top_builddir)/src/mem.c \
+					 $(top_builddir)/src/gpio.c
+
+check_gpio_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
+check_gpio_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 check_urlparser_SOURCES = check_urlparser.c \
 						  $(top_builddir)/src/mem.c \
 						  $(top_builddir)/src/urlparser.c
@@ -318,6 +332,9 @@ $(am__aclocal_m4_deps):
 
 clean-checkPROGRAMS:
 	-test -z "$(check_PROGRAMS)" || rm -f $(check_PROGRAMS)
+check_gpio$(EXEEXT): $(check_gpio_OBJECTS) $(check_gpio_DEPENDENCIES) $(EXTRA_check_gpio_DEPENDENCIES) 
+	@rm -f check_gpio$(EXEEXT)
+	$(check_gpio_LINK) $(check_gpio_OBJECTS) $(check_gpio_LDADD) $(LIBS)
 check_hl$(EXEEXT): $(check_hl_OBJECTS) $(check_hl_DEPENDENCIES) $(EXTRA_check_hl_DEPENDENCIES) 
 	@rm -f check_hl$(EXEEXT)
 	$(check_hl_LINK) $(check_hl_OBJECTS) $(check_hl_LDADD) $(LIBS)
@@ -349,6 +366,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_gpio-check_gpio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_gpio-gpio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_gpio-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-check_hl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-list.Po@am__quote@
@@ -397,6 +417,48 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+check_gpio-check_gpio.o: check_gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-check_gpio.o -MD -MP -MF $(DEPDIR)/check_gpio-check_gpio.Tpo -c -o check_gpio-check_gpio.o `test -f 'check_gpio.c' || echo '$(srcdir)/'`check_gpio.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-check_gpio.Tpo $(DEPDIR)/check_gpio-check_gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_gpio.c' object='check_gpio-check_gpio.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-check_gpio.o `test -f 'check_gpio.c' || echo '$(srcdir)/'`check_gpio.c
+
+check_gpio-check_gpio.obj: check_gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-check_gpio.obj -MD -MP -MF $(DEPDIR)/check_gpio-check_gpio.Tpo -c -o check_gpio-check_gpio.obj `if test -f 'check_gpio.c'; then $(CYGPATH_W) 'check_gpio.c'; else $(CYGPATH_W) '$(srcdir)/check_gpio.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-check_gpio.Tpo $(DEPDIR)/check_gpio-check_gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='check_gpio.c' object='check_gpio-check_gpio.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-check_gpio.obj `if test -f 'check_gpio.c'; then $(CYGPATH_W) 'check_gpio.c'; else $(CYGPATH_W) '$(srcdir)/check_gpio.c'; fi`
+
+check_gpio-mem.o: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-mem.o -MD -MP -MF $(DEPDIR)/check_gpio-mem.Tpo -c -o check_gpio-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-mem.Tpo $(DEPDIR)/check_gpio-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_gpio-mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+
+check_gpio-mem.obj: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-mem.obj -MD -MP -MF $(DEPDIR)/check_gpio-mem.Tpo -c -o check_gpio-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-mem.Tpo $(DEPDIR)/check_gpio-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_gpio-mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+
+check_gpio-gpio.o: $(top_builddir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-gpio.o -MD -MP -MF $(DEPDIR)/check_gpio-gpio.Tpo -c -o check_gpio-gpio.o `test -f '$(top_builddir)/src/gpio.c' || echo '$(srcdir)/'`$(top_builddir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-gpio.Tpo $(DEPDIR)/check_gpio-gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/gpio.c' object='check_gpio-gpio.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-gpio.o `test -f '$(top_builddir)/src/gpio.c' || echo '$(srcdir)/'`$(top_builddir)/src/gpio.c
+
+check_gpio-gpio.obj: $(top_builddir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-gpio.obj -MD -MP -MF $(DEPDIR)/check_gpio-gpio.Tpo -c -o check_gpio-gpio.obj `if test -f '$(top_builddir)/src/gpio.c'; then $(CYGPATH_W) '$(top_builddir)/src/gpio.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/gpio.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-gpio.Tpo $(DEPDIR)/check_gpio-gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/gpio.c' object='check_gpio-gpio.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-gpio.obj `if test -f '$(top_builddir)/src/gpio.c'; then $(CYGPATH_W) '$(top_builddir)/src/gpio.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/gpio.c'; fi`
 
 check_hl-check_hl.o: check_hl.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -MT check_hl-check_hl.o -MD -MP -MF $(DEPDIR)/check_hl-check_hl.Tpo -c -o check_hl-check_hl.o `test -f 'check_hl.c' || echo '$(srcdir)/'`check_hl.c

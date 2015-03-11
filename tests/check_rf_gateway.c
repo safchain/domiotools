@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <cmocker.h>
+#include <sys/time.h>
 
 #include "mem.h"
 #include "rf_gateway.h"
@@ -30,10 +31,58 @@
 #include "mqtt.h"
 #include "logging.h"
 #include "homeasy.h"
+#include "gpio.h"
 
 int debug;
 int verbose;
 struct dlog *DLOG;
+
+int gpio_export(unsigned int gpio)
+{
+  mock_called("gpio_export");
+
+  return 1;
+}
+
+int gpio_direction(unsigned int gpio, const char *direction)
+{
+  mock_called("gpio_direction");
+
+  return 1;
+}
+
+int gpio_edge_detection(unsigned int gpio, const char *edge)
+{
+  mock_called("gpio_edge_detection");
+
+  return 1;
+}
+
+unsigned long gpio_time()
+{
+  struct timeval tv;
+  unsigned long now;
+
+  gettimeofday(&tv, NULL);
+  now = tv.tv_sec * 1000000 + tv.tv_usec;
+
+  return now;
+}
+
+int gpio_open(unsigned int gpio)
+{
+  return 2;
+}
+
+struct ev_loop *ev_default_loop(int value)
+{
+  return NULL;
+}
+
+int ev_run(struct ev_loop *loop, int flags)
+{
+  return 1;
+}
 
 int mqtt_publish(const char *output, const char *value)
 {
@@ -173,7 +222,7 @@ START_TEST(test_config_syntax_error)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -188,7 +237,7 @@ START_TEST(test_config_publishers_no_type_error)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -203,7 +252,7 @@ START_TEST(test_config_publishers_no_output_error)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -218,7 +267,7 @@ START_TEST(test_config_publishers_no_address_error)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -234,8 +283,11 @@ START_TEST(test_config_publishers_success)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("gpio_export"));
+  ck_assert_int_eq(1, mock_calls("gpio_direction"));
+  ck_assert_int_eq(1, mock_calls("gpio_edge_detection"));
 }
 END_TEST
 
@@ -249,7 +301,7 @@ START_TEST(test_config_subscribers_no_type_error)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(0, rc);
   ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
@@ -265,7 +317,7 @@ START_TEST(test_config_subscribers_no_output_error)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(0, rc);
   ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
@@ -281,7 +333,7 @@ START_TEST(test_config_subscribers_no_address_error)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(0, rc);
   ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
@@ -298,7 +350,7 @@ START_TEST(test_config_subscribers_success)
     "}";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 }
@@ -321,7 +373,7 @@ START_TEST(test_config_subscribers_srts_callback)
   char *payload = "UP", *path;
   int rc, *value;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -364,7 +416,7 @@ START_TEST(test_config_subscribers_srts_callback_unknow_ctrl)
   char *payload = "AAA";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -393,7 +445,7 @@ START_TEST(test_config_subscribers_homeasy_callback)
   char *payload = "ON";
   int rc, *value;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -433,7 +485,7 @@ START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
   char *payload = "BBB";
   int rc;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -456,7 +508,7 @@ START_TEST(test_srts_publish)
     "}";
   int rc, key, address;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   key = 88768;
@@ -500,7 +552,7 @@ START_TEST(test_srts_publish_same_twice)
     "}";
   int rc, key, address;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   key = 3454;
@@ -546,7 +598,7 @@ START_TEST(test_srts_publish_translations)
     "}";
   int rc, key, address;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   key = 88768;
@@ -590,7 +642,7 @@ START_TEST(test_homeasy_publish)
     "}";
   int rc, address;
 
-  rc = rf_gw_read_config(conf, 0);
+  rc = rf_gw_start(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   address = 1111;

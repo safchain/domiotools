@@ -65,7 +65,7 @@ void delay(unsigned int howLong)
 void random_signal()
 {
   struct homeasy_payload payload;
-  int i, value;
+  int i, value = 0;
 
   for (i = 0; i != 33; i++) {
     value = 1 - value;
