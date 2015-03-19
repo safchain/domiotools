@@ -24,7 +24,7 @@ check_gpio_SOURCES = check_gpio.c \
 					 $(top_builddir)/src/mem.c \
 					 $(top_builddir)/src/gpio.c
 check_gpio_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
-check_gpio_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
+check_gpio_LDADD = @CHECK_LIBS@ @GCOV_LIBS@ -lrt
 
 check_urlparser_SOURCES = check_urlparser.c \
 						  $(top_builddir)/src/mem.c \

@@ -26,8 +26,7 @@
 
 #include "homeasy.h"
 #include "logging.h"
-
-#define MAX_GPIO    32
+#include "gpio.h"
 
 extern struct dlog *DLOG;
 

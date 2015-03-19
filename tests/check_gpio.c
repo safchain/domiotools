@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "gpio.h"
 
@@ -93,6 +94,49 @@ START_TEST(test_open_success)
 }
 END_TEST
 
+START_TEST(test_read_write)
+{
+  char value;
+  int fd;
+
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  fd = open("/tmp/gpio2/value", O_WRONLY | O_CREAT, 0655);
+  ck_assert_int_ne(-1, fd);
+  close(fd);
+
+  fd = gpio_open(2);
+  ck_assert_int_ne(-1, fd);
+
+  ck_assert_int_ne(-1, gpio_write(2, GPIO_HIGH));
+  lseek(fd, 0, SEEK_SET);
+
+  value = gpio_read(2);
+  ck_assert_int_eq(GPIO_HIGH, value);
+}
+END_TEST
+
+START_TEST(test_usleep)
+{
+  unsigned long start, end, diff;
+
+  start = gpio_time();
+  gpio_usleep(400);
+  end = gpio_time();
+
+  diff = end - start;
+  ck_assert(diff > 400 && diff < 500);
+
+  start = gpio_time();
+  gpio_usleep(2500);
+  end = gpio_time();
+
+  diff = end - start;
+  ck_assert(diff > 2500 && diff < 2600);
+}
+END_TEST
+
 Suite *gpio_suite(void)
 {
   Suite *s;
@@ -109,6 +153,8 @@ Suite *gpio_suite(void)
   tcase_add_test(tc_gpio, test_edge_detection_success);
   tcase_add_test(tc_gpio, test_open_fails);
   tcase_add_test(tc_gpio, test_open_success);
+  tcase_add_test(tc_gpio, test_read_write);
+  tcase_add_test(tc_gpio, test_usleep);
   suite_add_tcase(s, tc_gpio);
 
   return s;

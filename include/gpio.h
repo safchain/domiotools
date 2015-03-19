@@ -17,6 +17,8 @@
 #ifndef __GPIO_H
 #define __GPIO_H
 
+#define MAX_GPIO    64
+
 #define GPIO_LOW    0
 #define GPIO_HIGH   1
 
@@ -25,6 +27,9 @@ int gpio_export(unsigned int gpio);
 int gpio_direction(unsigned int gpio, const char *direction);
 int gpio_edge_detection(unsigned int gpio, const char *edge);
 int gpio_open(unsigned int gpio);
+int gpio_write(unsigned int gpio, char value);
+char gpio_read(unsigned int gpio);
 unsigned long gpio_time();
+void gpio_usleep(unsigned int usec);
 
 #endif

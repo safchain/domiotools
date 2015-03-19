@@ -37,8 +37,6 @@
 #include "homeasy.h"
 #include "gpio.h"
 
-#define MAX_GPIO    32
-
 enum {
   SRTS = 1,
   HOMEASY

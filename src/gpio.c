@@ -20,10 +20,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <time.h>
 
+#include "gpio.h"
 #include "mem.h"
 
 static const char *syspath = "/sys/class/gpio";
+static int fds[MAX_GPIO + 1];
 
 void gpio_set_syspath(const char *path)
 {
@@ -113,7 +117,30 @@ int gpio_open(unsigned int gpio)
 
   free(filename);
 
+  fds[gpio] = fd;
+
   return fd;
+}
+
+int gpio_write(unsigned int gpio, char value)
+{
+  return write(fds[gpio], &value, sizeof(char));
+}
+
+char gpio_read(unsigned int gpio)
+{
+  char value;
+
+  if (read(fds[gpio], &value, sizeof(unsigned char)) > 0) {
+    return value;
+  }
+
+  return -1;
+}
+
+void gpio_close(unsigned int gpio)
+{
+  close(fds[gpio]);
 }
 
 unsigned long gpio_time()
@@ -125,4 +152,33 @@ unsigned long gpio_time()
   now = tv.tv_sec * 1000000 + tv.tv_usec;
 
   return now;
+}
+
+void gpio_usleep(unsigned int usec)
+{
+  struct timespec ttime, curtime;
+  unsigned int nsec = usec * 1000;
+
+  if (usec > 500) {
+    ttime.tv_sec = 0;
+    ttime.tv_nsec = nsec;
+    nanosleep(&ttime, NULL);
+  } else {
+    clock_gettime(CLOCK_REALTIME, &ttime);
+
+    nsec += ttime.tv_nsec;
+    if (nsec > 999999999) {
+      ttime.tv_sec += 1;
+      ttime.tv_nsec = nsec - 999999999;
+    } else {
+      ttime.tv_nsec = nsec;
+    }
+
+    while(1) {
+      clock_gettime(CLOCK_REALTIME, &curtime);
+      if (curtime.tv_sec == ttime.tv_sec && curtime.tv_nsec > ttime.tv_nsec) {
+        break;
+      }
+    }
+  }
 }
