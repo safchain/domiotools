@@ -20,5 +20,6 @@ homeasy_sender_SOURCES = $(top_srcdir)/src/common.c \
                          $(top_srcdir)/src/mem.c \
                          $(top_srcdir)/src/homeasy.c \
                          $(top_srcdir)/src/logging.c \
+                         $(top_srcdir)/src/gpio.c \
                          homeasy_sender.c
-homeasy_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
+homeasy_sender_LDADD = -lpthread @GCOV_LIBS@

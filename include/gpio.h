@@ -22,6 +22,13 @@
 #define GPIO_LOW    0
 #define GPIO_HIGH   1
 
+#define GPIO_OUT    "out"
+#define GPIO_IN     "in"
+
+#define EDGE_FALLING    "falling"
+#define EDGE_RISING     "rising"
+#define EDGE_BOTH       "both"
+
 void gpio_set_syspath(const char *path);
 int gpio_export(unsigned int gpio);
 int gpio_direction(unsigned int gpio, const char *direction);
@@ -31,5 +38,6 @@ int gpio_write(unsigned int gpio, char value);
 char gpio_read(unsigned int gpio);
 unsigned long gpio_time();
 void gpio_usleep(unsigned int usec);
+int gpio_sched_priority(int priority);
 
 #endif

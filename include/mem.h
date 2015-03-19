@@ -21,8 +21,10 @@
 #define xmalloc(X)      _xmalloc(X, __FILE__, __LINE__)
 #define xcalloc(X, Y)   _xcalloc(X, Y, __FILE__, __LINE__)
 
-void _alloc_error(const char *file, int line);
+void *_alloc_error(const char *file, int line);
 void *_xmalloc(size_t size, const char *file, int line);
 void *_xcalloc(size_t nmemb, size_t size, const char *file, int line);
+void mem_disable_abort_on_error();
+void mem_enable_abort_on_error();
 
 #endif

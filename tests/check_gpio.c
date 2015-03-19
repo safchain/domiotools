@@ -137,6 +137,21 @@ START_TEST(test_usleep)
 }
 END_TEST
 
+START_TEST(test_sched)
+{
+  int rc;
+
+  /* need to be root */
+  rc = gpio_sched_priority(88);
+  ck_assert_int_eq(-1, rc);
+  ck_assert_int_eq(EPERM, errno);
+
+  rc = gpio_sched_priority(88888888);
+  ck_assert_int_eq(-1, rc);
+  ck_assert_int_eq(EPERM, errno);
+}
+END_TEST
+
 Suite *gpio_suite(void)
 {
   Suite *s;
@@ -155,6 +170,7 @@ Suite *gpio_suite(void)
   tcase_add_test(tc_gpio, test_open_success);
   tcase_add_test(tc_gpio, test_read_write);
   tcase_add_test(tc_gpio, test_usleep);
+  tcase_add_test(tc_gpio, test_sched);
   suite_add_tcase(s, tc_gpio);
 
   return s;

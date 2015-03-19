@@ -22,6 +22,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
+#include <sched.h>
+#include <string.h>
 
 #include "gpio.h"
 #include "mem.h"
@@ -106,7 +108,12 @@ int gpio_edge_detection(unsigned int gpio, const char *edge)
 int gpio_open(unsigned int gpio)
 {
   char *filename;
-  int fd, len;
+  int fd, len, rc;
+
+  rc = gpio_export(gpio);
+  if (!rc) {
+    return -1;
+  }
 
   len = snprintf(NULL, 0, "%s/gpio%d/value", syspath, gpio);
   filename = xcalloc(1, len + 1);
@@ -181,4 +188,18 @@ void gpio_usleep(unsigned int usec)
       }
     }
   }
+}
+
+int gpio_sched_priority(int priority)
+{
+  struct sched_param sched;
+
+  memset(&sched, 0, sizeof(struct sched_param));
+  if (priority > sched_get_priority_max(SCHED_RR)) {
+    sched.sched_priority = sched_get_priority_max(SCHED_RR);
+  } else {
+    sched.sched_priority = priority;
+  }
+
+  return sched_setscheduler(0, SCHED_RR, &sched);
 }

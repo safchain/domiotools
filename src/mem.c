@@ -19,10 +19,26 @@
 
 #include "mem.h"
 
-void _alloc_error(const char *file, int line)
+static int abort_on_error = 1;
+
+void mem_disable_abort_on_error()
+{
+  abort_on_error = 0;
+}
+
+void mem_enable_abort_on_error()
+{
+  abort_on_error = 1;
+}
+
+void *_alloc_error(const char *file, int line)
 {
   fprintf(stderr, "Fatal, Out of Memory in %s at line %d\n", file, line);
-  abort();
+  if (abort_on_error) {
+    abort();
+  }
+
+  return NULL;
 }
 
 void *_xmalloc (size_t n, const char *file, int line)

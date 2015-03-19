@@ -46,7 +46,8 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_homeasy_sender_OBJECTS = common.$(OBJEXT) mem.$(OBJEXT) \
-	homeasy.$(OBJEXT) logging.$(OBJEXT) homeasy_sender.$(OBJEXT)
+	homeasy.$(OBJEXT) logging.$(OBJEXT) gpio.$(OBJEXT) \
+	homeasy_sender.$(OBJEXT)
 homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
 homeasy_sender_DEPENDENCIES =
 am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) \
@@ -172,9 +173,10 @@ homeasy_sender_SOURCES = $(top_srcdir)/src/common.c \
                          $(top_srcdir)/src/mem.c \
                          $(top_srcdir)/src/homeasy.c \
                          $(top_srcdir)/src/logging.c \
+                         $(top_srcdir)/src/gpio.c \
                          homeasy_sender.c
 
-homeasy_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
+homeasy_sender_LDADD = -lpthread @GCOV_LIBS@
 all: all-am
 
 .SUFFIXES:
@@ -260,6 +262,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gpio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy_sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logging.Po@am__quote@
@@ -336,6 +339,20 @@ logging.obj: $(top_srcdir)/src/logging.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/logging.c' object='logging.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o logging.obj `if test -f '$(top_srcdir)/src/logging.c'; then $(CYGPATH_W) '$(top_srcdir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/logging.c'; fi`
+
+gpio.o: $(top_srcdir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gpio.o -MD -MP -MF $(DEPDIR)/gpio.Tpo -c -o gpio.o `test -f '$(top_srcdir)/src/gpio.c' || echo '$(srcdir)/'`$(top_srcdir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/gpio.Tpo $(DEPDIR)/gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/gpio.c' object='gpio.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gpio.o `test -f '$(top_srcdir)/src/gpio.c' || echo '$(srcdir)/'`$(top_srcdir)/src/gpio.c
+
+gpio.obj: $(top_srcdir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gpio.obj -MD -MP -MF $(DEPDIR)/gpio.Tpo -c -o gpio.obj `if test -f '$(top_srcdir)/src/gpio.c'; then $(CYGPATH_W) '$(top_srcdir)/src/gpio.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/gpio.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/gpio.Tpo $(DEPDIR)/gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/gpio.c' object='gpio.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gpio.obj `if test -f '$(top_srcdir)/src/gpio.c'; then $(CYGPATH_W) '$(top_srcdir)/src/gpio.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/gpio.c'; fi`
 
 srts.o: $(top_srcdir)/src/srts.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT srts.o -MD -MP -MF $(DEPDIR)/srts.Tpo -c -o srts.o `test -f '$(top_srcdir)/src/srts.c' || echo '$(srcdir)/'`$(top_srcdir)/src/srts.c

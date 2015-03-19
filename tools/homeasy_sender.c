@@ -14,7 +14,6 @@
  * 02110-1301, USA.
  */
 
-#include <wiringPi.h>
 #include <stdio.h>
 #include <syslog.h>
 #include <getopt.h>
@@ -30,6 +29,7 @@
 #include "common.h"
 #include "homeasy.h"
 #include "logging.h"
+#include "gpio.h"
 
 struct dlog *DLOG;
 
@@ -107,11 +107,6 @@ int main(int argc, char **argv)
   // store pid and lock it
   store_pid();
 
-  if (wiringPiSetup() == -1) {
-    fprintf(stderr, "Wiring Pi not installed");
-    return -1;
-  }
-
   DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
   assert(DLOG != NULL);
 
@@ -120,8 +115,10 @@ int main(int argc, char **argv)
          receiver, command);
   closelog();
 
-  pinMode(gpio, OUTPUT);
-  piHiPri(99);
+  gpio_sched_priority(99);
+
+  gpio_open(gpio);
+  gpio_direction(gpio, GPIO_OUT);
 
   homeasy_transmit(gpio, address, receiver, command, 0, repeat);
 

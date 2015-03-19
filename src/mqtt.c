@@ -159,9 +159,11 @@ static void mqtt_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
   broker->connected = 0;
 }
 
+/*
 static void mqtt_publish_callback(struct mosquitto *mosq, void *obj, int rc)
 {
 }
+*/
 
 static void mqtt_message_callback(struct mosquitto *mosq, void *obj,
         const struct mosquitto_message *message)
@@ -186,10 +188,12 @@ static void mqtt_message_callback(struct mosquitto *mosq, void *obj,
   }
 }
 
+/*
 static void mqtt_subscribe_callback(struct mosquitto *mosq, void *obj, int mid,
         int qos_count, const int *granted_qos)
 {
 }
+*/
 
 static void *mqtt_loop(void *ptr)
 {
@@ -278,8 +282,8 @@ static struct mqtt_broker *mqtt_connect(struct url *url)
   mosquitto_message_retry_set(mosq, 1);
   mosquitto_connect_callback_set(mosq, mqtt_connect_callback);
   mosquitto_disconnect_callback_set(mosq, mqtt_disconnect_callback);
-  mosquitto_publish_callback_set(mosq, mqtt_publish_callback);
-  mosquitto_subscribe_callback_set(mosq, mqtt_subscribe_callback);
+  //mosquitto_publish_callback_set(mosq, mqtt_publish_callback);
+  //mosquitto_subscribe_callback_set(mosq, mqtt_subscribe_callback);
   mosquitto_message_callback_set(mosq, mqtt_message_callback);
 
   broker = mqtt_broker_alloc(mosq, url);

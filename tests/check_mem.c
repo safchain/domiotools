@@ -36,6 +36,33 @@ START_TEST(test_xcalloc_fatal)
 }
 END_TEST
 
+START_TEST(test_xmalloc_fatal_no_abort)
+{
+  mem_disable_abort_on_error();
+
+  void *ptr = xmalloc(10000000000000000);
+  ck_assert(ptr == NULL);
+}
+END_TEST
+
+START_TEST(test_xcalloc_fatal_no_abort)
+{
+  mem_disable_abort_on_error();
+
+  void *ptr = xcalloc(2, 10000000000000000);
+  ck_assert(ptr == NULL);
+}
+END_TEST
+
+void test_mem_setup()
+{
+  mem_enable_abort_on_error();
+}
+
+void test_mem_teardown()
+{
+}
+
 Suite *mem_suite(void)
 {
   Suite *s;
@@ -44,8 +71,11 @@ Suite *mem_suite(void)
   s = suite_create("mem");
   tc_mem = tcase_create("mem");
 
+  tcase_add_checked_fixture(tc_mem, test_mem_setup, test_mem_teardown);
   tcase_add_test_raise_signal(tc_mem, test_xmalloc_fatal, SIGABRT);
   tcase_add_test_raise_signal(tc_mem, test_xcalloc_fatal, SIGABRT);
+  tcase_add_test(tc_mem, test_xmalloc_fatal_no_abort);
+  tcase_add_test(tc_mem, test_xcalloc_fatal_no_abort);
   suite_add_tcase(s, tc_mem);
 
   return s;

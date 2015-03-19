@@ -29,6 +29,7 @@
 #include "mem.h"
 #include "homeasy.h"
 #include "logging.h"
+#include "gpio.h"
 
 struct pulse {
   int value;
@@ -37,29 +38,24 @@ struct pulse {
 
 struct dlog *DLOG;
 
-void digitalWrite(int pin, int value)
+int gpio_write(unsigned int gpio, char value)
 {
   struct pulse *pulse = xmalloc(sizeof(struct pulse));
   pulse->value = value;
 
-  mock_called_with("digitalWrite", pulse);
+  mock_called_with("gpio_write", pulse);
 }
 
-void delayMicroseconds(unsigned int howLong)
+void gpio_usleep(unsigned int usec)
 {
   struct pulse *pulse;
   int rc;
 
-  rc = mock_calls("digitalWrite");
+  rc = mock_calls("gpio_write");
   ck_assert_int_ne(0, rc);
 
-  pulse = mock_call("digitalWrite", rc - 1);
-  pulse->duration = howLong;
-}
-
-void delay(unsigned int howLong)
-{
-  delayMicroseconds(howLong * 1000);
+  pulse = mock_call("gpio_write", rc - 1);
+  pulse->duration = usec;
 }
 
 void random_signal()
@@ -78,13 +74,13 @@ static int receive_pulses(struct homeasy_payload *payload)
   struct pulse *pulse;
   int i, pulses, rc = 0;
 
-  pulses = mock_calls("digitalWrite");
+  pulses = mock_calls("gpio_write");
   if (!pulses) {
     return 0;
   }
 
   for (i = 0; i < pulses; i++) {
-    pulse = (struct pulse *) mock_call("digitalWrite", i);
+    pulse = (struct pulse *) mock_call("gpio_write", i);
     rc = homeasy_receive(2, pulse->value, pulse->duration, payload);
     if (rc != 0) {
       return rc;
@@ -99,12 +95,12 @@ static void free_pulses()
   struct pulse *pulse;
   int i, pulses;
 
-  pulses = mock_calls("digitalWrite");
+  pulses = mock_calls("gpio_write");
   if (!pulses) {
     return;
   }
   for (i = 0; i < pulses; i++) {
-    pulse = (struct pulse*) mock_call("digitalWrite", i);
+    pulse = (struct pulse*) mock_call("gpio_write", i);
     free(pulse);
   }
 }

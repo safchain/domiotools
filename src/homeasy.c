@@ -14,7 +14,6 @@
  * 02110-1301, USA.
  */
 
-#include <wiringPi.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <limits.h>
@@ -33,15 +32,15 @@ extern struct dlog *DLOG;
 static void _write_bit(unsigned int gpio, unsigned char bit)
 {
   if (bit) {
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(300);
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(1300);
+    gpio_write(gpio, GPIO_HIGH);
+    gpio_usleep(300);
+    gpio_write(gpio, GPIO_LOW);
+    gpio_usleep(1300);
   } else {
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(300);
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(300);
+    gpio_write(gpio, GPIO_HIGH);
+    gpio_usleep(300);
+    gpio_write(gpio, GPIO_LOW);
+    gpio_usleep(300);
   }
 }
 
@@ -58,22 +57,22 @@ static void write_bit(unsigned int gpio, unsigned char bit)
 
 static void sync_transmit(unsigned int gpio)
 {
-  digitalWrite(gpio, HIGH);
-  delayMicroseconds(275);
-  digitalWrite(gpio, LOW);
-  delayMicroseconds(9900);
-  digitalWrite(gpio, HIGH);
-  delayMicroseconds(275);
-  digitalWrite(gpio, LOW);
-  delayMicroseconds(2600);
+  gpio_write(gpio, GPIO_HIGH);
+  gpio_usleep(275);
+  gpio_write(gpio, GPIO_LOW);
+  gpio_usleep(9900);
+  gpio_write(gpio, GPIO_HIGH);
+  gpio_usleep(275);
+  gpio_write(gpio, GPIO_LOW);
+  gpio_usleep(2600);
 }
 
 static void write_interval_gap(unsigned int gpio)
 {
-  digitalWrite(gpio, HIGH);
-  delayMicroseconds(275);
-  digitalWrite(gpio, LOW);
-  delay(10);
+  gpio_write(gpio, GPIO_HIGH);
+  gpio_usleep(275);
+  gpio_write(gpio, GPIO_LOW);
+  gpio_usleep(10000);
 }
 
 void homeasy_transmit(unsigned int gpio, unsigned int address,

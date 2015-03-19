@@ -401,6 +401,18 @@ START_TEST(test_mqtt_on_message)
 }
 END_TEST
 
+START_TEST(test_mqtt_broker_connect_before_init)
+{
+  struct mqtt_broker *broker;
+  int rc;
+
+  mqtt_destroy();
+
+  rc = mqtt_publish("mqtt://locahost:1843/test", "test");
+  ck_assert_int_eq(rc, MQTT_CONNECTION_ERROR);
+}
+END_TEST
+
 Suite *mqtt_suite(void)
 {
   Suite *s;
@@ -418,6 +430,7 @@ Suite *mqtt_suite(void)
   tcase_add_test(tc_mqtt, test_mqtt_disconnect);
   tcase_add_test(tc_mqtt, test_mqtt_subscribe);
   tcase_add_test(tc_mqtt, test_mqtt_on_message);
+  tcase_add_test(tc_mqtt, test_mqtt_broker_connect_before_init);
 
   suite_add_tcase(s, tc_mqtt);
 
