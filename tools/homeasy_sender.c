@@ -117,8 +117,7 @@ int main(int argc, char **argv)
 
   gpio_sched_priority(99);
 
-  gpio_open(gpio);
-  gpio_direction(gpio, GPIO_OUT);
+  gpio_open(gpio, GPIO_OUT);
 
   homeasy_transmit(gpio, address, receiver, command, 0, repeat);
 

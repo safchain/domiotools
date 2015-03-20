@@ -13,8 +13,9 @@ srts_sender_SOURCES = $(top_srcdir)/src/srts.c \
                       $(top_srcdir)/src/common.c \
                       $(top_srcdir)/src/logging.c \
                       $(top_srcdir)/src/mem.c \
+                      $(top_srcdir)/src/gpio.c \
                       srts_sender.c
-srts_sender_LDADD = -lwiringPi -lpthread @GCOV_LIBS@
+srts_sender_LDADD = -lpthread -lrt @GCOV_LIBS@
 
 homeasy_sender_SOURCES = $(top_srcdir)/src/common.c \
                          $(top_srcdir)/src/mem.c \

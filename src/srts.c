@@ -14,7 +14,6 @@
  * 02110-1301, USA.
  */
 
-#include <wiringPi.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -154,15 +153,15 @@ static void checksum_payload(struct srts_payload *payload)
 static void write_bit(unsigned int gpio, unsigned char bit)
 {
   if (bit) {
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(660);
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(660);
+    gpio_write(gpio, GPIO_LOW);
+    gpio_usleep(660);
+    gpio_write(gpio, GPIO_HIGH);
+    gpio_usleep(660);
   } else {
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(660);
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(660);
+    gpio_write(gpio, GPIO_HIGH);
+    gpio_usleep(660);
+    gpio_write(gpio, GPIO_LOW);
+    gpio_usleep(660);
   }
 }
 
@@ -187,8 +186,8 @@ static void write_payload(unsigned int gpio, struct srts_payload *payload)
 
 static void write_interval_gap(int gpio)
 {
-  digitalWrite(gpio, LOW);
-  delayMicroseconds(30400);
+  gpio_write(gpio, GPIO_LOW);
+  gpio_usleep(30400);
 }
 
 static void sync_transmit(unsigned int gpio, unsigned int repeated)
@@ -198,17 +197,17 @@ static void sync_transmit(unsigned int gpio, unsigned int repeated)
   if (repeated) {
     count = 7;
   } else {
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(12400);
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(80600);
+    gpio_write(gpio, GPIO_HIGH);
+    gpio_usleep(12400);
+    gpio_write(gpio, GPIO_LOW);
+    gpio_usleep(80600);
     count = 2;
   }
   for (i = 0; i != count; i++) {
-    digitalWrite(gpio, HIGH);
-    delayMicroseconds(2560);
-    digitalWrite(gpio, LOW);
-    delayMicroseconds(2560);
+    gpio_write(gpio, GPIO_HIGH);
+    gpio_usleep(2560);
+    gpio_write(gpio, GPIO_LOW);
+    gpio_usleep(2560);
   }
 }
 
@@ -220,10 +219,10 @@ void srts_transmit(unsigned int gpio, unsigned char key,
 
   sync_transmit(gpio, repeated);
 
-  digitalWrite(gpio, HIGH);
-  delayMicroseconds(4800);
-  digitalWrite(gpio, LOW);
-  delayMicroseconds(660);
+  gpio_write(gpio, GPIO_HIGH);
+  gpio_usleep(4800);
+  gpio_write(gpio, GPIO_LOW);
+  gpio_usleep(660);
 
   if (!key) {
     key = rand() % 255;

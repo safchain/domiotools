@@ -29,7 +29,7 @@
 #include "mem.h"
 
 static const char *syspath = "/sys/class/gpio";
-static int fds[MAX_GPIO + 1];
+static int fds[MAX_GPIO + 1] = { 0 };
 
 void gpio_set_syspath(const char *path)
 {
@@ -105,12 +105,21 @@ int gpio_edge_detection(unsigned int gpio, const char *edge)
   return gpio_write_setting(gpio, "edge", edge);
 }
 
-int gpio_open(unsigned int gpio)
+int gpio_open(unsigned int gpio, const char *direction)
 {
   char *filename;
   int fd, len, rc;
 
+  if (fds[gpio] > 0) {
+    return fds[gpio];
+  }
+
   rc = gpio_export(gpio);
+  if (!rc) {
+    return -1;
+  }
+
+  rc = gpio_direction(gpio, direction);
   if (!rc) {
     return -1;
   }
@@ -156,6 +165,7 @@ char gpio_read(unsigned int gpio)
 void gpio_close(unsigned int gpio)
 {
   close(fds[gpio]);
+  fds[gpio] = 0;
 }
 
 unsigned long gpio_time()

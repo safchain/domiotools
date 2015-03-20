@@ -14,7 +14,6 @@
  * 02110-1301, USA.
  */
 
-#include <wiringPi.h>
 #include <stdio.h>
 #include <syslog.h>
 #include <getopt.h>
@@ -33,6 +32,7 @@
 #include "common.h"
 #include "srts.h"
 #include "logging.h"
+#include "gpio.h"
 
 struct dlog *DLOG;
 
@@ -105,18 +105,14 @@ int main(int argc, char **argv)
   // store pid and lock it
   store_pid();
 
-  if (wiringPiSetup() == -1) {
-    fprintf(stderr, "Wiring Pi not installed");
-    return -1;
-  }
-
   DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
   assert(DLOG != NULL);
 
   openlog("srts", LOG_PID | LOG_CONS, LOG_USER);
 
-  piHiPri(99);
-  pinMode(gpio, OUTPUT);
+  gpio_sched_priority(99);
+
+  gpio_open(gpio, GPIO_OUT);
 
   srts_transmit_persist(gpio, 0, address, command, repeat, persistence_path);
 

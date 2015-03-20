@@ -69,8 +69,10 @@ unsigned long gpio_time()
   return now;
 }
 
-int gpio_open(unsigned int gpio)
+int gpio_open(unsigned int gpio, const char *direction)
 {
+  gpio_direction(gpio, direction);
+
   return 2;
 }
 

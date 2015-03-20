@@ -343,7 +343,7 @@ static void gpio_cb(EV_P_ struct ev_io *io, int revents)
 static int start_subscribes()
 {
   config_setting_t *hs, *h;
-  struct rf_device *device;
+  struct rf_device *device = NULL;
   char *input, *type;
   unsigned int gpio, address, repeat = 0;
   unsigned int t, i = 0;
@@ -396,9 +396,13 @@ static int start_subscribes()
       device->repeat = repeat;
       device->config_h = h;
 
+      if (gpio_open(gpio, GPIO_OUT) == -1) {
+        dlog(DLOG, DLOG_ERR, "Unable to open the GPIO: %d", gpio);
+        goto clean;
+      }
+
       if (!mqtt_subscribe(input, device, rf_mqtt_callback)) {
-        free(device);
-        return 0;
+        goto clean;
       }
 
       if (hl_list_push(rf_subscribers,  &device,
@@ -410,6 +414,13 @@ static int start_subscribes()
   } while (h != NULL);
 
   return 1;
+
+clean:
+  if (device) {
+    free(device);
+  }
+
+  return 0;
 }
 
 static int config_read_publishers()
@@ -486,20 +497,14 @@ static int start_publishers()
           return 0;
       }
 
-      if (!gpio_direction(gpio, "in")) {
-        dlog(DLOG, DLOG_ERR, "Unable to set the direction for the GPIO: %d",
-                gpio);
-        return 0;
-      }
-
-      if (!gpio_edge_detection(gpio, "both")) {
+      if (!gpio_edge_detection(gpio, GPIO_EDGE_BOTH)) {
         dlog(DLOG, DLOG_ERR,
                 "Unable to set the edge detection mode for the GPIO: %d",
                 gpio);
         return 0;
       }
 
-      fd = gpio_open(gpio);
+      fd = gpio_open(gpio, GPIO_IN);
       if (fd == -1) {
         dlog(DLOG, DLOG_ERR,
                 "Unable to open GPIO pin: %d, %s", gpio, strerror(errno));
