@@ -131,7 +131,11 @@ int gpio_open(unsigned int gpio)
 
 int gpio_write(unsigned int gpio, char value)
 {
-  return write(fds[gpio], &value, sizeof(char));
+  if (value) {
+    return write(fds[gpio], "1", 1);
+  } else {
+    return write(fds[gpio], "0", 1);
+  }
 }
 
 char gpio_read(unsigned int gpio)
@@ -166,7 +170,7 @@ void gpio_usleep(unsigned int usec)
   struct timespec ttime, curtime;
   unsigned int nsec = usec * 1000;
 
-  if (usec > 500) {
+  if (nsec > 500) {
     ttime.tv_sec = 0;
     ttime.tv_nsec = nsec;
     nanosleep(&ttime, NULL);
