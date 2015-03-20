@@ -138,21 +138,26 @@ int gpio_open(unsigned int gpio, const char *direction)
   return fd;
 }
 
-int gpio_write(unsigned int gpio, char value)
+int gpio_write_fd(unsigned int fd, char value)
 {
   if (value) {
-    return write(fds[gpio], "1", 1);
+    return write(fd, "1", 1);
   } else {
-    return write(fds[gpio], "0", 1);
+    return write(fd, "0", 1);
   }
 }
 
-char gpio_read(unsigned int gpio)
+int gpio_write(unsigned int gpio, char value)
+{
+  return gpio_write_fd(fds[gpio], value);
+}
+
+char gpio_read_fd(unsigned int fd)
 {
   char value;
 
-  lseek(fds[gpio], 0, SEEK_SET);
-  if (read(fds[gpio], &value, sizeof(unsigned char)) > 0) {
+  lseek(fd, 0, SEEK_SET);
+  if (read(fd, &value, sizeof(unsigned char)) > 0) {
     if (value == '1') {
       return GPIO_HIGH;
     }
@@ -160,6 +165,11 @@ char gpio_read(unsigned int gpio)
   }
 
   return -1;
+}
+
+char gpio_read(unsigned int gpio)
+{
+  return gpio_read_fd(fds[gpio]);
 }
 
 void gpio_close(unsigned int gpio)

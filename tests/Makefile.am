@@ -5,6 +5,7 @@ check_PROGRAMS = check_hl check_urlparser check_mqtt check_rf_gateway \
 
 check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
+				   $(top_builddir)/src/mem.c \
 				   $(top_builddir)/src/hmap.c
 check_hl_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_hl_LDADD = @CHECK_LIBS@ @GCOV_LIBS@

@@ -324,12 +324,11 @@ clean:
 
 static void gpio_cb(EV_P_ struct ev_io *io, int revents)
 {
+  struct rf_publisher *publisher;
   long time;
   int type;
 
-  printf("####################\n");
-
-  (void)read (io->fd, &type, 1);
+  type = gpio_read_fd(io->fd);
   if (type == GPIO_LOW) {
     type = GPIO_HIGH;
   } else {
@@ -337,9 +336,11 @@ static void gpio_cb(EV_P_ struct ev_io *io, int revents)
   }
 
   time = gpio_time();
-  rf_gw_handle_interrupt(2, type, time);
+  publisher = (struct rf_publisher *) io->data;
+  rf_gw_handle_interrupt(publisher->gpio, type, time);
 }
 
+/* MQTT -> RF */
 static int start_subscribes()
 {
   config_setting_t *hs, *h;
@@ -355,9 +356,6 @@ static int start_subscribes()
   }
 
   rf_subscribers = hl_list_alloc();
-  if (rf_subscribers == NULL) {
-    alloc_error();
-  }
 
   do {
     h = config_setting_get_elem(hs, i);
@@ -405,10 +403,7 @@ static int start_subscribes()
         goto clean;
       }
 
-      if (hl_list_push(rf_subscribers,  &device,
-                  sizeof(struct rf_device *)) == -1) {
-        alloc_error();
-      }
+      hl_list_push(rf_subscribers,  &device, sizeof(struct rf_device *));
     }
     i++;
   } while (h != NULL);
@@ -476,15 +471,14 @@ static int config_read_publishers()
   return 1;
 }
 
+/* RF -> MQTT */
 static int start_publishers()
 {
-  struct rf_publisher publisher;
+  struct rf_publisher publisher, *ptr;
   unsigned int gpio, fd;
+  ev_io *watcher;
 
   rf_publishers = hl_list_alloc();
-  if (rf_publishers == NULL) {
-    alloc_error();
-  }
 
   if (!config_read_publishers()) {
     return 0;
@@ -510,11 +504,14 @@ static int start_publishers()
                 "Unable to open GPIO pin: %d, %s", gpio, strerror(errno));
         return 0;
       }
-
       publisher.gpio = gpio;
-      ev_io_init (&(publisher.watcher), gpio_cb, fd, EV_READ);
 
-      hl_list_push(rf_publishers, &publisher, sizeof(struct rf_publisher));
+      watcher = &(publisher.watcher);
+      ev_io_init (watcher, gpio_cb, fd, EV_READ);
+
+      ptr = hl_list_push(rf_publishers, &publisher,
+              sizeof(struct rf_publisher));
+      publisher.watcher.data = ptr;
     }
   }
 

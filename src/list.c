@@ -18,26 +18,19 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "mem.h"
 #include "list.h"
 
 LIST *hl_list_alloc()
 {
-  LIST *list;
-
-  if ((list = calloc(1, sizeof(LIST))) == NULL) {
-    return NULL;
-  }
-
-  return list;
+  return xcalloc(1, sizeof(LIST));
 }
 
-int hl_list_unshift(LIST *list, void *value, unsigned int size)
+void *hl_list_unshift(LIST *list, void *value, unsigned int size)
 {
   LIST_NODE *node_ptr;
 
-  if ((node_ptr = malloc(sizeof(LIST_NODE) + size)) == NULL) {
-    return -1;
-  }
+  node_ptr = xmalloc(sizeof(LIST_NODE) + size);
   node_ptr->prev = NULL;
 
   if (list->nodes != NULL) {
@@ -52,16 +45,14 @@ int hl_list_unshift(LIST *list, void *value, unsigned int size)
 
   memcpy((char *) node_ptr + sizeof(LIST_NODE), value, size);
 
-  return 0;
+  return (char *) node_ptr + sizeof(LIST_NODE);
 }
 
-int hl_list_push(LIST *list, void *value, unsigned int size)
+void *hl_list_push(LIST *list, void *value, unsigned int size)
 {
   LIST_NODE *node_ptr;
 
-  if ((node_ptr = malloc(sizeof(LIST_NODE) + size)) == NULL) {
-    return -1;
-  }
+  node_ptr = xmalloc(sizeof(LIST_NODE) + size);
   node_ptr->next = NULL;
 
   if (list->nodes == NULL) {
@@ -75,7 +66,7 @@ int hl_list_push(LIST *list, void *value, unsigned int size)
 
   memcpy((char *) node_ptr + sizeof(LIST_NODE), value, size);
 
-  return 0;
+  return (char *) node_ptr + sizeof(LIST_NODE);
 }
 
 static void hl_list_remove(LIST *list, LIST_NODE *node_ptr)

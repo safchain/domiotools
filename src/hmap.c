@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mem.h"
 #include "hmap.h"
 #include "list.h"
 
@@ -37,14 +38,8 @@ HMAP *hl_hmap_alloc(unsigned int size)
     size = HSIZE;
   }
 
-  if ((hmap = malloc(sizeof(HMAP))) == NULL) {
-    return NULL;
-  }
-
-  if ((hmap->nodes = calloc(size, sizeof(HNODE))) == NULL) {
-    free(hmap);
-    return NULL;
-  }
+  hmap = xmalloc(sizeof(HMAP));
+  hmap->nodes = xcalloc(size, sizeof(HNODE));
   hmap->hsize = size;
 
   return hmap;
@@ -81,12 +76,10 @@ HNODE *hl_hmap_put(HMAP *hmap, const char *key, const void *value,
     /* new key / value */
     if (hnode_ptr->key == NULL) {
       if ((hnode_ptr->key = strdup(key)) == NULL) {
-        return NULL;
+        alloc_error();
       }
 
-      if ((hnode_ptr->value = malloc(size)) == NULL) {
-        goto error;
-      }
+      hnode_ptr->value = xmalloc(size);
       memcpy(hnode_ptr->value, value, size);
 
       break;
@@ -95,9 +88,7 @@ HNODE *hl_hmap_put(HMAP *hmap, const char *key, const void *value,
     /* old key / new value ? */
     if (strcmp(key, hnode_ptr->key) == 0) {
       free(hnode_ptr->value);
-      if ((hnode_ptr->value = malloc(size)) == NULL) {
-        goto error;
-      }
+      hnode_ptr->value = xmalloc(size);
       memcpy(hnode_ptr->value, value, size);
 
       break;
@@ -105,18 +96,11 @@ HNODE *hl_hmap_put(HMAP *hmap, const char *key, const void *value,
 
     /* new node ? */
     if (hnode_ptr->next == NULL) {
-      if ((hnode_ptr->next = calloc(1, sizeof(HNODE))) == NULL) {
-        goto error;
-      }
+      hnode_ptr->next = xcalloc(1, sizeof(HNODE));
     }
 
     hnode_ptr = hnode_ptr->next;
   } while (hnode_ptr != NULL);
-
-  return hnode_ptr;
-
-error:
-  _free0((void *) &hnode_ptr->key);
 
   return hnode_ptr;
 }
@@ -159,9 +143,7 @@ LIST *hl_hmap_keys(HMAP *hmap)
   LIST *list;
   unsigned int i;
 
-  if ((list = hl_list_alloc()) == NULL) {
-    return NULL;
-  }
+  list = hl_list_alloc();
 
   for (i = 0; i != hmap->hsize; i++) {
     hnode_ptr = (HNODE *) (hmap->nodes + i);
@@ -183,9 +165,7 @@ LIST *hl_hmap_values(HMAP *hmap)
   LIST *list;
   unsigned int i;
 
-  if ((list = hl_list_alloc()) == NULL) {
-    return NULL;
-  }
+  list = hl_list_alloc();
 
   for (i = 0; i != hmap->hsize; i++) {
     hnode_ptr = (HNODE *) (hmap->nodes + i);

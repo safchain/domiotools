@@ -69,6 +69,11 @@ unsigned long gpio_time()
   return now;
 }
 
+char gpio_read_fd(unsigned int fd)
+{
+  return GPIO_HIGH;
+}
+
 int gpio_open(unsigned int gpio, const char *direction)
 {
   gpio_direction(gpio, direction);

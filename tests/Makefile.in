@@ -56,7 +56,8 @@ check_gpio_DEPENDENCIES =
 check_gpio_LINK = $(CCLD) $(check_gpio_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am_check_hl_OBJECTS = check_hl-check_hl.$(OBJEXT) \
-	check_hl-list.$(OBJEXT) check_hl-hmap.$(OBJEXT)
+	check_hl-list.$(OBJEXT) check_hl-mem.$(OBJEXT) \
+	check_hl-hmap.$(OBJEXT)
 check_hl_OBJECTS = $(am_check_hl_OBJECTS)
 check_hl_DEPENDENCIES =
 check_hl_LINK = $(CCLD) $(check_hl_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -232,6 +233,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
+				   $(top_builddir)/src/mem.c \
 				   $(top_builddir)/src/hmap.c
 
 check_hl_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
@@ -372,6 +374,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-check_hl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-check_homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-logging.Po@am__quote@
@@ -487,6 +490,20 @@ check_hl-list.obj: $(top_builddir)/src/list.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/list.c' object='check_hl-list.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -c -o check_hl-list.obj `if test -f '$(top_builddir)/src/list.c'; then $(CYGPATH_W) '$(top_builddir)/src/list.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/list.c'; fi`
+
+check_hl-mem.o: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -MT check_hl-mem.o -MD -MP -MF $(DEPDIR)/check_hl-mem.Tpo -c -o check_hl-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_hl-mem.Tpo $(DEPDIR)/check_hl-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_hl-mem.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -c -o check_hl-mem.o `test -f '$(top_builddir)/src/mem.c' || echo '$(srcdir)/'`$(top_builddir)/src/mem.c
+
+check_hl-mem.obj: $(top_builddir)/src/mem.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -MT check_hl-mem.obj -MD -MP -MF $(DEPDIR)/check_hl-mem.Tpo -c -o check_hl-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_hl-mem.Tpo $(DEPDIR)/check_hl-mem.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_hl-mem.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -c -o check_hl-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
 
 check_hl-hmap.o: $(top_builddir)/src/hmap.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -MT check_hl-hmap.o -MD -MP -MF $(DEPDIR)/check_hl-hmap.Tpo -c -o check_hl-hmap.o `test -f '$(top_builddir)/src/hmap.c' || echo '$(srcdir)/'`$(top_builddir)/src/hmap.c
