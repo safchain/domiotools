@@ -142,8 +142,12 @@ char gpio_read(unsigned int gpio)
 {
   char value;
 
+  lseek(fds[gpio], 0, SEEK_SET);
   if (read(fds[gpio], &value, sizeof(unsigned char)) > 0) {
-    return value;
+    if (value == '1') {
+      return GPIO_HIGH;
+    }
+    return GPIO_LOW;
   }
 
   return -1;
