@@ -184,7 +184,7 @@ void gpio_usleep(unsigned int usec)
   struct timespec ttime, curtime;
   unsigned int nsec = usec * 1000;
 
-  if (nsec > 500) {
+  if (usec > 500) {
     ttime.tv_sec = 0;
     ttime.tv_nsec = nsec;
     nanosleep(&ttime, NULL);
