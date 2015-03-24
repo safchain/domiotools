@@ -70,9 +70,7 @@ static struct mqtt_broker *mqtt_broker_alloc(struct mosquitto *mosq,
   broker = (struct mqtt_broker *)xcalloc(1, sizeof(struct mqtt_broker));
 
   broker->queue = hl_list_alloc();
-  if (broker->queue == NULL) {
-    alloc_error();
-  }
+
   broker->hostname = strdup(url->hostname);
   if (broker->hostname == NULL) {
     alloc_error();
@@ -331,10 +329,8 @@ static struct mqtt_broker *mqtt_broker_connect(struct url *url, int *rc)
       return NULL;
     }
     broker_ptr = &broker;
-    if (hl_hmap_put(mqtt_brokers, url->hostname, broker_ptr,
-                sizeof(struct mqtt_broker *)) == NULL) {
-      alloc_error();
-    }
+    hl_hmap_put(mqtt_brokers, url->hostname, broker_ptr,
+                sizeof(struct mqtt_broker *));
   } else {
     broker = *broker_ptr;
   }
@@ -397,10 +393,7 @@ int mqtt_publish(const char *output, const char *value)
     rc = MQTT_MESSAGE_ERROR;
     goto clean;
   }
-  if (hl_list_unshift(broker->queue, &message,
-              sizeof(struct mqtt_message)) == -1) {
-    alloc_error();
-  }
+  hl_list_unshift(broker->queue, &message, sizeof(struct mqtt_message));
   pthread_mutex_unlock(&(broker->queue_mutex));
 
   free_url(url);
@@ -456,23 +449,15 @@ int mqtt_subscribe(const char *input, void *obj,
     }
 
     s = hl_list_alloc();
-    if (s == NULL) {
-      alloc_error();
-    }
-    if (hl_hmap_put(mqtt_subscribers, subscribers_key, &s,
-                sizeof(LIST *)) == NULL) {
-      alloc_error();
-    }
+    hl_hmap_put(mqtt_subscribers, subscribers_key, &s, sizeof(LIST *));
     subscribers = &s;
   }
 
   subscriber.obj = obj;
   subscriber.callback = callback;
 
-  if (hl_list_push(*subscribers, &subscriber,
-              sizeof(struct mqtt_subscriber)) == -1) {
-    alloc_error();
-  }
+  hl_list_push(*subscribers, &subscriber, sizeof(struct mqtt_subscriber));
+
   free(subscribers_key);
   free_url(url);
 
@@ -490,13 +475,7 @@ clean:
 
 int mqtt_init() {
   mqtt_brokers = hl_hmap_alloc(32);
-  if (mqtt_brokers == NULL) {
-    alloc_error();
-  }
   mqtt_subscribers = hl_hmap_alloc(32);
-  if (mqtt_subscribers == NULL) {
-    alloc_error();
-  }
 
   mosquitto_lib_init();
 

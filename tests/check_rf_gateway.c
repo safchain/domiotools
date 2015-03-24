@@ -24,6 +24,8 @@
 #include <stdarg.h>
 #include <cmocker.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "mem.h"
 #include "rf_gateway.h"
@@ -36,60 +38,6 @@
 int debug;
 int verbose;
 struct dlog *DLOG;
-
-int gpio_export(unsigned int gpio)
-{
-  mock_called("gpio_export");
-
-  return 1;
-}
-
-int gpio_direction(unsigned int gpio, const char *direction)
-{
-  mock_called("gpio_direction");
-
-  return 1;
-}
-
-int gpio_edge_detection(unsigned int gpio, const char *edge)
-{
-  mock_called("gpio_edge_detection");
-
-  return 1;
-}
-
-unsigned long gpio_time()
-{
-  struct timeval tv;
-  unsigned long now;
-
-  gettimeofday(&tv, NULL);
-  now = tv.tv_sec * 1000000 + tv.tv_usec;
-
-  return now;
-}
-
-char gpio_read_fd(unsigned int fd)
-{
-  return GPIO_HIGH;
-}
-
-int gpio_open(unsigned int gpio, const char *direction)
-{
-  gpio_direction(gpio, direction);
-
-  return 2;
-}
-
-struct ev_loop *ev_default_loop(int value)
-{
-  return NULL;
-}
-
-int ev_run(struct ev_loop *loop, int flags)
-{
-  return 1;
-}
 
 int mqtt_publish(const char *output, const char *value)
 {
@@ -229,7 +177,7 @@ START_TEST(test_config_syntax_error)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -244,7 +192,7 @@ START_TEST(test_config_publishers_no_type_error)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -259,7 +207,7 @@ START_TEST(test_config_publishers_no_output_error)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -274,7 +222,7 @@ START_TEST(test_config_publishers_no_address_error)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(0, rc);
 }
 END_TEST
@@ -290,11 +238,11 @@ START_TEST(test_config_publishers_success)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
-  ck_assert_int_eq(1, mock_calls("gpio_export"));
-  ck_assert_int_eq(1, mock_calls("gpio_direction"));
-  ck_assert_int_eq(1, mock_calls("gpio_edge_detection"));
 }
 END_TEST
 
@@ -308,7 +256,7 @@ START_TEST(test_config_subscribers_no_type_error)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(0, rc);
   ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
@@ -324,7 +272,7 @@ START_TEST(test_config_subscribers_no_output_error)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(0, rc);
   ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
@@ -340,7 +288,7 @@ START_TEST(test_config_subscribers_no_address_error)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(0, rc);
   ck_assert_int_eq(0, mock_calls("mqtt_subscribe"));
 }
@@ -357,7 +305,10 @@ START_TEST(test_config_subscribers_success)
     "}";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 }
@@ -380,7 +331,10 @@ START_TEST(test_config_subscribers_srts_callback)
   char *payload = "UP", *path;
   int rc, *value;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -423,7 +377,10 @@ START_TEST(test_config_subscribers_srts_callback_unknow_ctrl)
   char *payload = "AAA";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -452,7 +409,10 @@ START_TEST(test_config_subscribers_homeasy_callback)
   char *payload = "ON";
   int rc, *value;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -492,7 +452,10 @@ START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
   char *payload = "BBB";
   int rc;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 
@@ -501,6 +464,48 @@ START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
   callback(obj, payload, strlen(payload));
 
   ck_assert_int_eq(0, mock_calls("homeasy_transmit"));
+}
+END_TEST
+
+START_TEST(test_publish_gpio)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "gpio: 2;"
+        "type: \"srts\";"
+        "address: 3333;"
+        "output: \"mqtt://localhost:1883/3333\";})"
+    "}";
+  int rc, key, address;
+
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = gpio_open(2, GPIO_IN);
+  ck_assert_int_ne(-1, rc);
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(1, rc);
+
+  key = 88768;
+  address = 3333;
+  mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
+  mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
+
+  gpio_write(2, GPIO_HIGH);
+
+  /* a first loop in order to initialize some static */
+  rf_gw_loop(1);
+  gpio_usleep(50);
+
+  rf_gw_loop(1);
+
+  rc = mock_calls("srts_receive");
+  ck_assert_int_eq(1, rc);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(1, rc);
+  ck_assert_str_eq("UP", mock_call("mqtt_publish", 0));
 }
 END_TEST
 
@@ -515,7 +520,10 @@ START_TEST(test_srts_publish)
     "}";
   int rc, key, address;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   key = 88768;
@@ -559,7 +567,10 @@ START_TEST(test_srts_publish_same_twice)
     "}";
   int rc, key, address;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   key = 3454;
@@ -605,7 +616,10 @@ START_TEST(test_srts_publish_translations)
     "}";
   int rc, key, address;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   key = 88768;
@@ -649,7 +663,10 @@ START_TEST(test_homeasy_publish)
     "}";
   int rc, address;
 
-  rc = rf_gw_start(conf, 0);
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   address = 1111;
@@ -704,6 +721,7 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
   tcase_add_test(tc_rf, test_srts_publish_translations);
   tcase_add_test(tc_rf, test_homeasy_publish);
+  tcase_add_test(tc_rf, test_publish_gpio);
   suite_add_tcase(s, tc_rf);
 
   return s;

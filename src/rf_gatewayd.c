@@ -33,6 +33,7 @@
 #include "mqtt.h"
 #include "rf_gateway.h"
 #include "logging.h"
+#include "gpio.h"
 
 extern int verbose;
 extern int debug;
@@ -64,6 +65,7 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  gpio_set_syspath("/tmp");
   srand(time(NULL));
 
   DLOG = dlog_init(DLOG_SYSLOG, DLOG_DEBUG, "rf_gateway");
@@ -71,7 +73,7 @@ int main(int argc, char **argv)
 
   mqtt_init();
 
-  if (!rf_gw_start("rules.cfg", 1)) {
+  if (!rf_gw_init("rules.cfg", 1)) {
     return -1;
   }
 
@@ -83,7 +85,7 @@ int main(int argc, char **argv)
   verbose = 1;
   debug = 1;
 
-  rf_gw_wait();
+  rf_gw_loop(-1);
 
   return 0;
 }

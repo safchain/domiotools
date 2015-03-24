@@ -95,6 +95,7 @@ am_check_rf_gateway_OBJECTS =  \
 	check_rf_gateway-mem.$(OBJEXT) check_rf_gateway-list.$(OBJEXT) \
 	check_rf_gateway-hmap.$(OBJEXT) \
 	check_rf_gateway-logging.$(OBJEXT) \
+	check_rf_gateway-gpio.$(OBJEXT) \
 	check_rf_gateway-rf_gateway.$(OBJEXT)
 check_rf_gateway_OBJECTS = $(am_check_rf_gateway_OBJECTS)
 check_rf_gateway_DEPENDENCIES =
@@ -292,10 +293,11 @@ check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/list.c \
 						   $(top_builddir)/src/hmap.c \
 						   $(top_builddir)/src/logging.c \
+						   $(top_builddir)/src/gpio.c \
 						   $(top_builddir)/src/rf_gateway.c
 
 check_rf_gateway_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
-check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker @GCOV_LIBS@
+check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker -lev @GCOV_LIBS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
 all: all-am
 
@@ -392,6 +394,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-mqtt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-check_rf_gateway.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-gpio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-logging.Po@am__quote@
@@ -826,6 +829,20 @@ check_rf_gateway-logging.obj: $(top_builddir)/src/logging.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/logging.c' object='check_rf_gateway-logging.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-logging.obj `if test -f '$(top_builddir)/src/logging.c'; then $(CYGPATH_W) '$(top_builddir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/logging.c'; fi`
+
+check_rf_gateway-gpio.o: $(top_builddir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-gpio.o -MD -MP -MF $(DEPDIR)/check_rf_gateway-gpio.Tpo -c -o check_rf_gateway-gpio.o `test -f '$(top_builddir)/src/gpio.c' || echo '$(srcdir)/'`$(top_builddir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_rf_gateway-gpio.Tpo $(DEPDIR)/check_rf_gateway-gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/gpio.c' object='check_rf_gateway-gpio.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-gpio.o `test -f '$(top_builddir)/src/gpio.c' || echo '$(srcdir)/'`$(top_builddir)/src/gpio.c
+
+check_rf_gateway-gpio.obj: $(top_builddir)/src/gpio.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-gpio.obj -MD -MP -MF $(DEPDIR)/check_rf_gateway-gpio.Tpo -c -o check_rf_gateway-gpio.obj `if test -f '$(top_builddir)/src/gpio.c'; then $(CYGPATH_W) '$(top_builddir)/src/gpio.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/gpio.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_rf_gateway-gpio.Tpo $(DEPDIR)/check_rf_gateway-gpio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/gpio.c' object='check_rf_gateway-gpio.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-gpio.obj `if test -f '$(top_builddir)/src/gpio.c'; then $(CYGPATH_W) '$(top_builddir)/src/gpio.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/gpio.c'; fi`
 
 check_rf_gateway-rf_gateway.o: $(top_builddir)/src/rf_gateway.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-rf_gateway.o -MD -MP -MF $(DEPDIR)/check_rf_gateway-rf_gateway.Tpo -c -o check_rf_gateway-rf_gateway.o `test -f '$(top_builddir)/src/rf_gateway.c' || echo '$(srcdir)/'`$(top_builddir)/src/rf_gateway.c

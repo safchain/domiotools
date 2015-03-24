@@ -187,7 +187,6 @@ START_TEST(test_hmap_collision)
   LIST *list;
   char *string1 = "string1";
   char *string2 = "string2";
-  char *value;
 
   hmap = hl_hmap_alloc(1);
   ck_assert(hmap != NULL);

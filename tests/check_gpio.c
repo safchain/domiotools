@@ -133,6 +133,8 @@ START_TEST(test_read_write)
   gpio_close(2);
 
   fd = gpio_open(2, GPIO_IN);
+  ck_assert_int_ne(-1, fd);
+
   value = gpio_read(2);
   ck_assert_int_eq(GPIO_HIGH, value);
   gpio_close(2);

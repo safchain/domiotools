@@ -44,6 +44,8 @@ int gpio_write(unsigned int gpio, char value)
   pulse->value = value;
 
   mock_called_with("gpio_write", pulse);
+
+  return 1;
 }
 
 void gpio_usleep(unsigned int usec)

@@ -403,7 +403,6 @@ END_TEST
 
 START_TEST(test_mqtt_broker_connect_before_init)
 {
-  struct mqtt_broker *broker;
   int rc;
 
   mqtt_destroy();

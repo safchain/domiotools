@@ -63,6 +63,7 @@ static char *rf_persistence_path = "/var/lib/";
 static LIST *rf_subscribers = NULL;
 static LIST *rf_publishers = NULL;
 static struct ev_loop *rf_loop = NULL;
+static int rf_running_loop = 0;
 
 static const char *translate_value(config_setting_t *config, const char *value)
 {
@@ -341,7 +342,7 @@ static void gpio_cb(EV_P_ struct ev_io *io, int revents)
 }
 
 /* MQTT -> RF */
-static int start_subscribes()
+static int start_subscribers()
 {
   config_setting_t *hs, *h;
   struct rf_device *device = NULL;
@@ -504,20 +505,21 @@ static int start_publishers()
                 "Unable to open GPIO pin: %d, %s", gpio, strerror(errno));
         return 0;
       }
-      publisher.gpio = gpio;
-
-      watcher = &(publisher.watcher);
-      ev_io_init (watcher, gpio_cb, fd, EV_READ);
-
       ptr = hl_list_push(rf_publishers, &publisher,
               sizeof(struct rf_publisher));
-      publisher.watcher.data = ptr;
+
+      ptr->gpio = gpio;
+
+      watcher = &(ptr->watcher);
+      ev_io_init(watcher, gpio_cb, fd, EV_READ);
+      ev_io_start(rf_loop, watcher);
+
+      ptr->watcher.data = ptr;
     }
   }
 
   return 1;
 }
-
 
 static int config_read_globals()
 {
@@ -533,7 +535,7 @@ static int config_read_globals()
   return 1;
 }
 
-int rf_gw_start(char *in, int file)
+int rf_gw_init(char *in, int file)
 {
   int rc;
 
@@ -558,7 +560,12 @@ int rf_gw_start(char *in, int file)
     return 0;
   }
 
-  rf_loop = ev_default_loop(0);
+  rf_loop = ev_loop_new(EVFLAG_AUTO);
+  if (rf_loop == NULL) {
+    dlog(DLOG, DLOG_CRIT, "could not initialise libev !");
+    config_destroy(&rf_cfg);
+    return 0;
+  }
 
   if (!config_read_globals()) {
     return 0;
@@ -568,7 +575,7 @@ int rf_gw_start(char *in, int file)
     return 0;
   }
 
-  if (!start_subscribes()) {
+  if (!start_subscribers()) {
     return 0;
   }
 
@@ -579,13 +586,20 @@ int rf_gw_start(char *in, int file)
   return 1;
 }
 
-void rf_gw_wait()
+void rf_gw_loop(int loop)
 {
-  ev_loop(rf_loop, 0);
-
-  while (1) {
-    sleep(1);
+  rf_running_loop = loop;
+  while (rf_running_loop) {
+    ev_run (rf_loop, EVRUN_ONCE);
+    if (rf_running_loop > 0) {
+      rf_running_loop--;
+    }
   }
+}
+
+void rf_gw_stop()
+{
+  rf_running_loop = 0;
 }
 
 void rf_gw_destroy() {
