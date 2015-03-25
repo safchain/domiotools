@@ -37,6 +37,7 @@ END_TEST
 
 START_TEST(test_export_success)
 {
+  mkdir("/tmp/gpio2", 0755);
   gpio_set_syspath("/tmp");
   ck_assert_int_eq(1, gpio_export(2));
 }

@@ -26,6 +26,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #include "mem.h"
 #include "rf_gateway.h"
@@ -158,11 +159,25 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
 
 void test_rf_setup()
 {
+  int rc;
+
   mock_init();
+
+  mkdir("/tmp/gpio2", 0755);
+  gpio_set_syspath("/tmp");
+
+  rc = open("/tmp/gpio2/value", O_WRONLY | O_CREAT, 0655);
+  ck_assert_int_ne(-1, rc);
+  close(rc);
+
+  rc = gpio_open(2, GPIO_IN);
+  ck_assert_int_ne(-1, rc);
 }
 
 void test_rf_teardown()
 {
+  gpio_close(2);
+
   rf_gw_destroy();
   mock_destroy();
 }
@@ -238,9 +253,6 @@ START_TEST(test_config_publishers_success)
     "}";
   int rc;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
 }
@@ -305,16 +317,13 @@ START_TEST(test_config_subscribers_success)
     "}";
   int rc;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
 }
 END_TEST
 
-START_TEST(test_config_subscribers_srts_callback)
+START_TEST(test_subscribe_srts_callback)
 {
   char *conf = "config:{"
     "globals:{"
@@ -330,9 +339,6 @@ START_TEST(test_config_subscribers_srts_callback)
   void (*callback)(void *data, const void *payload, int payloadlen);
   char *payload = "UP", *path;
   int rc, *value;
-
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
 
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
@@ -360,7 +366,7 @@ START_TEST(test_config_subscribers_srts_callback)
 }
 END_TEST
 
-START_TEST(test_config_subscribers_srts_callback_unknow_ctrl)
+START_TEST(test_subscribe_srts_callback_unknow_ctrl)
 {
   char *conf = "config:{"
     "globals:{"
@@ -377,9 +383,6 @@ START_TEST(test_config_subscribers_srts_callback_unknow_ctrl)
   char *payload = "AAA";
   int rc;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
@@ -392,7 +395,7 @@ START_TEST(test_config_subscribers_srts_callback_unknow_ctrl)
 }
 END_TEST
 
-START_TEST(test_config_subscribers_homeasy_callback)
+START_TEST(test_subscribe_homeasy_callback)
 {
   char *conf = "config:{"
     "globals:{"
@@ -408,9 +411,6 @@ START_TEST(test_config_subscribers_homeasy_callback)
   void (*callback)(void *data, const void *payload, int payloadlen);
   char *payload = "ON";
   int rc, *value;
-
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
 
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
@@ -435,7 +435,7 @@ START_TEST(test_config_subscribers_homeasy_callback)
 }
 END_TEST
 
-START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
+START_TEST(test_subscribe_homeasy_callback_unknow_ctrl)
 {
   char *conf = "config:{"
     "globals:{"
@@ -452,9 +452,6 @@ START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
   char *payload = "BBB";
   int rc;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
@@ -464,6 +461,50 @@ START_TEST(test_config_subscribers_homeasy_callback_unknow_ctrl)
   callback(obj, payload, strlen(payload));
 
   ck_assert_int_eq(0, mock_calls("homeasy_transmit"));
+}
+END_TEST
+
+START_TEST(test_subscribe_homeasy_translations)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "persistence_path: \"/tmp/persist\";"
+    "};"
+    "subscribers:({"
+        "gpio: 2;"
+        "type: \"homeasy\";"
+        "address: 4444;"
+        "input: \"mqtt://localhost:1883/4444\";"
+        "translations: {"
+                "UP: \"ON\";"
+                "DOWN: \"OFF\";"
+        "}})"
+    "}";
+  void *obj;
+  void (*callback)(void *data, const void *payload, int payloadlen);
+  char *payload = "UP";
+  int rc, *value;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+
+  obj = mock_call("mqtt_subscribe:obj", 0);
+  callback = mock_call("mqtt_subscribe:callback", 0);
+  callback(obj, payload, strlen(payload));
+
+  ck_assert_int_eq(1, mock_calls("homeasy_transmit"));
+  value = (int *) mock_call("homeasy_transmit:gpio", 0);
+  ck_assert_int_eq(2, *value);
+  free(value);
+
+  value = (int *) mock_call("homeasy_transmit:address", 0);
+  ck_assert_int_eq(4444, *value);
+  free(value);
+
+  value = (int *) mock_call("homeasy_transmit:ctrl", 0);
+  ck_assert_int_eq(HOMEASY_ON, *value);
+  free(value);
 }
 END_TEST
 
@@ -478,12 +519,6 @@ START_TEST(test_publish_gpio)
     "}";
   int rc, key, address;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
-  rc = gpio_open(2, GPIO_IN);
-  ck_assert_int_ne(-1, rc);
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
 
@@ -492,13 +527,12 @@ START_TEST(test_publish_gpio)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  gpio_write(2, GPIO_HIGH);
-
   /* a first loop in order to initialize some static */
   rf_gw_loop(1);
-  gpio_usleep(50);
+  gpio_usleep(60);
 
   rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(1, rc);
@@ -520,9 +554,6 @@ START_TEST(test_srts_publish)
     "}";
   int rc, key, address;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
@@ -531,8 +562,12 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 0, 50);
-  rf_gw_handle_interrupt(2, 1, 1500);
+  /* a first loop in order to initialize some static */
+  rf_gw_loop(1);
+  gpio_usleep(60);
+
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -545,7 +580,8 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 1, 2000);
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -567,9 +603,6 @@ START_TEST(test_srts_publish_same_twice)
     "}";
   int rc, key, address;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
@@ -578,8 +611,12 @@ START_TEST(test_srts_publish_same_twice)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ALWAYS);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 0, 50);
-  rf_gw_handle_interrupt(2, 1, 1500);
+  /* a first loop in order to initialize some static */
+  rf_gw_loop(1);
+  gpio_usleep(60);
+
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -591,7 +628,8 @@ START_TEST(test_srts_publish_same_twice)
   address = 3333;
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 1, 2000);
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -616,9 +654,6 @@ START_TEST(test_srts_publish_translations)
     "}";
   int rc, key, address;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
@@ -627,8 +662,12 @@ START_TEST(test_srts_publish_translations)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 0, 50);
-  rf_gw_handle_interrupt(2, 1, 1500);
+  /* a first loop in order to initialize some static */
+  rf_gw_loop(1);
+  gpio_usleep(60);
+
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -641,7 +680,8 @@ START_TEST(test_srts_publish_translations)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 1, 2000);
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -663,17 +703,18 @@ START_TEST(test_homeasy_publish)
     "}";
   int rc, address;
 
-  mkdir("/tmp/gpio2", 0755);
-  gpio_set_syspath("/tmp");
-
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(rc, 1);
 
   address = 1111;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 0, 50);
-  rf_gw_handle_interrupt(2, 1, 1500);
+  /* a first loop in order to initialize some static */
+  rf_gw_loop(1);
+  gpio_usleep(60);
+
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 1);
@@ -684,7 +725,8 @@ START_TEST(test_homeasy_publish)
   address = 5555;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
-  rf_gw_handle_interrupt(2, 1, 2000);
+  rf_gw_loop(1);
+  gpio_usleep(60);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 2);
@@ -713,10 +755,11 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_config_subscribers_no_output_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_address_error);
   tcase_add_test(tc_rf, test_config_subscribers_success);
-  tcase_add_test(tc_rf, test_config_subscribers_srts_callback);
-  tcase_add_test(tc_rf, test_config_subscribers_srts_callback_unknow_ctrl);
-  tcase_add_test(tc_rf, test_config_subscribers_homeasy_callback);
-  tcase_add_test(tc_rf, test_config_subscribers_homeasy_callback_unknow_ctrl);
+  tcase_add_test(tc_rf, test_subscribe_srts_callback);
+  tcase_add_test(tc_rf, test_subscribe_srts_callback_unknow_ctrl);
+  tcase_add_test(tc_rf, test_subscribe_homeasy_callback);
+  tcase_add_test(tc_rf, test_subscribe_homeasy_callback_unknow_ctrl);
+  tcase_add_test(tc_rf, test_subscribe_homeasy_translations);
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
   tcase_add_test(tc_rf, test_srts_publish_translations);
@@ -732,7 +775,7 @@ int main(void)
   SRunner *sr;
   int number_failed;
 
-  DLOG = dlog_init(DLOG_STDERR, DLOG_INFO, NULL);
+  DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
   assert(DLOG != NULL);
 
   sr = srunner_create(rf_suite ());

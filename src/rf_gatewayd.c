@@ -40,22 +40,6 @@ extern int debug;
 
 struct dlog *DLOG;
 
-void handle_interrupt()
-{
-  long time;
-  int type;
-
-  type = digitalRead(2);
-  if (type == LOW) {
-    type = HIGH;
-  } else {
-    type = LOW;
-  }
-
-  time = micros();
-  rf_gw_handle_interrupt(2, type, time);
-}
-
 int main(int argc, char **argv)
 {
   int gpio = 2;
@@ -76,11 +60,6 @@ int main(int argc, char **argv)
   if (!rf_gw_init("rules.cfg", 1)) {
     return -1;
   }
-
-  /*if (wiringPiSetup() == -1) {
-    fprintf(stderr, "Wiring Pi not installed");
-    return -1;
-  }*/
 
   verbose = 1;
   debug = 1;

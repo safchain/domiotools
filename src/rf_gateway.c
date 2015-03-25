@@ -239,7 +239,7 @@ static int srts_handler(unsigned int gpio, unsigned int type, int duration)
   return rc;
 }
 
-void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time)
+static void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time)
 {
   static unsigned int last_change = 0;
   static unsigned int total_duration = 0;
@@ -300,7 +300,7 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
 
   switch(device->type) {
     case SRTS:
-      ctrl = srts_get_ctrl_int(value);
+      ctrl = srts_get_ctrl_int(translate_value(device->config_h, value));
       if (ctrl == SRTS_UNKNOWN) {
         goto clean;
       }
@@ -309,7 +309,7 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
               device->repeat, rf_persistence_path);
       break;
     case HOMEASY:
-      ctrl = homeasy_get_ctrl_int(value);
+      ctrl = homeasy_get_ctrl_int(translate_value(device->config_h, value));
       if (ctrl == HOMEASY_UNKNOWN) {
         goto clean;
       }
