@@ -67,6 +67,6 @@ check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/gpio.c \
 						   $(top_builddir)/src/rf_gateway.c
 check_rf_gateway_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
-check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker -lev @GCOV_LIBS@
+check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker -lev -lrt @GCOV_LIBS@
 
 CLEANFILES = *~ *.gcno *.gcda *.gcov

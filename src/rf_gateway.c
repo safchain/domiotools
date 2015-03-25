@@ -562,16 +562,12 @@ int rf_gw_init(char *in, int file)
 
   rf_loop = ev_loop_new(EVFLAG_AUTO);
   if (rf_loop == NULL) {
-    dlog(DLOG, DLOG_CRIT, "could not initialise libev !");
+    dlog(DLOG, DLOG_CRIT, "Could not initialise libev !");
     config_destroy(&rf_cfg);
     return 0;
   }
 
   if (!config_read_globals()) {
-    return 0;
-  }
-
-  if (!config_read_publishers()) {
     return 0;
   }
 

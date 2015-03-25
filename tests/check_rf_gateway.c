@@ -732,7 +732,7 @@ int main(void)
   SRunner *sr;
   int number_failed;
 
-  DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
+  DLOG = dlog_init(DLOG_STDERR, DLOG_INFO, NULL);
   assert(DLOG != NULL);
 
   sr = srunner_create(rf_suite ());
