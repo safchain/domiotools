@@ -91,7 +91,10 @@ START_TEST(test_open_success)
   ck_assert_int_ne(-1, fd);
   close(fd);
 
+  ck_assert_int_eq(0, gpio_is_opened(2));
+
   ck_assert_int_ne(-1, gpio_open(2, GPIO_OUT));
+  ck_assert_int_eq(1, gpio_is_opened(2));
   gpio_close(2);
 }
 END_TEST

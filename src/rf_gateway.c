@@ -64,6 +64,7 @@ static LIST *rf_subscribers = NULL;
 static LIST *rf_publishers = NULL;
 static struct ev_loop *rf_loop = NULL;
 static int rf_running_loop = 0;
+static pthread_mutex_t gpio_mutexes[MAX_GPIO + 1];
 
 static const char *translate_value(config_setting_t *config, const char *value)
 {
@@ -239,7 +240,8 @@ static int srts_handler(unsigned int gpio, unsigned int type, int duration)
   return rc;
 }
 
-static void rf_gw_handle_interrupt(unsigned int gpio, unsigned int type, long time)
+static void rf_gw_handle_interrupt(unsigned int gpio,
+        unsigned int type, long time)
 {
   static unsigned int last_change = 0;
   static unsigned int total_duration = 0;
@@ -291,12 +293,18 @@ static int add_publisher_type(unsigned int gpio, const char *type)
 
 static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
 {
-  int ctrl;
+  int ctrl, rc;
   struct rf_device *device = (struct rf_device *) obj;
   char *value = xmalloc(payloadlen + 1);
 
   memset(value, 0, payloadlen + 1);
   memcpy(value, payload, payloadlen);
+
+  rc = pthread_mutex_lock(&gpio_mutexes[device->gpio]);
+  if (rc != 0) {
+    dlog(DLOG, DLOG_ERR, "Unable to acquire a gpio lock when tranmisting");
+    return;
+  }
 
   switch(device->type) {
     case SRTS:
@@ -320,6 +328,8 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
   }
 
 clean:
+  pthread_mutex_unlock(&gpio_mutexes[device->gpio]);
+
   free(value);
 }
 
@@ -395,9 +405,12 @@ static int start_subscribers()
       device->repeat = repeat;
       device->config_h = h;
 
-      if (gpio_open(gpio, GPIO_OUT) == -1) {
-        dlog(DLOG, DLOG_ERR, "Unable to open the GPIO: %d", gpio);
-        goto clean;
+      if (!gpio_is_opened(gpio)) {
+        if (gpio_open(gpio, GPIO_OUT) == -1) {
+            dlog(DLOG, DLOG_ERR, "Unable to open the GPIO: %d", gpio);
+            goto clean;
+        }
+        pthread_mutex_init(&gpio_mutexes[gpio], NULL);
       }
 
       if (!mqtt_subscribe(input, device, rf_mqtt_callback)) {

@@ -105,6 +105,11 @@ int gpio_edge_detection(unsigned int gpio, const char *edge)
   return gpio_write_setting(gpio, "edge", edge);
 }
 
+int gpio_is_opened(unsigned int gpio)
+{
+  return (fds[gpio] > 0);
+}
+
 int gpio_open(unsigned int gpio, const char *direction)
 {
   char *filename;

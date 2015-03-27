@@ -42,5 +42,6 @@ unsigned long gpio_time();
 void gpio_usleep(unsigned int usec);
 int gpio_sched_priority(int priority);
 void gpio_close(unsigned int gpio);
+int gpio_is_opened(unsigned int gpio);
 
 #endif

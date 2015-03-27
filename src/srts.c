@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include <pthread.h>
 
 #include "common.h"
 #include "srts.h"
