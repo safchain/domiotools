@@ -410,6 +410,11 @@ static int start_subscribers()
             dlog(DLOG, DLOG_ERR, "Unable to open the GPIO: %d", gpio);
             goto clean;
         }
+        if (!gpio_edge_detection(gpio, GPIO_EDGE_BOTH)) {
+          dlog(DLOG, DLOG_ERR, "Unable to define edge detection "
+                  "for the GPIO: %d", gpio);
+          goto clean;
+        }
         pthread_mutex_init(&gpio_mutexes[gpio], NULL);
       }
 
