@@ -42,17 +42,14 @@ struct dlog *DLOG;
 
 int main(int argc, char **argv)
 {
-  int gpio = 2;
-
   if (setuid(0)) {
     perror("setuid");
     return -1;
   }
 
-  gpio_set_syspath("/tmp");
   srand(time(NULL));
 
-  DLOG = dlog_init(DLOG_SYSLOG, DLOG_DEBUG, "rf_gateway");
+  DLOG = dlog_init(DLOG_STDERR, DLOG_DEBUG, "rf_gateway");
   assert(DLOG != NULL);
 
   mqtt_init();
