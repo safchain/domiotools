@@ -14,7 +14,6 @@
  * 02110-1301, USA.
  */
 
-#include <wiringPi.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <sys/types.h>
