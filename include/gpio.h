@@ -43,5 +43,10 @@ void gpio_usleep(unsigned int usec);
 int gpio_sched_priority(int priority);
 void gpio_close(unsigned int gpio);
 int gpio_is_opened(unsigned int gpio);
+void gpio_event_stop();
+int gpio_event_loop(int loop);
+int gpio_event_add(unsigned int gpio,
+        void (*callback)(unsigned int gpio, void *data), void *data);
+int gpio_event_init();
 
 #endif

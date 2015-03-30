@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "mem.h"
 #include "rf_gateway.h"
@@ -166,9 +167,9 @@ void test_rf_setup()
   mkdir("/tmp/gpio2", 0755);
   gpio_set_syspath("/tmp");
 
-  rc = open("/tmp/gpio2/value", O_WRONLY | O_CREAT, 0655);
+  unlink("/tmp/gpio2/value");
+  rc = mknod("/tmp/gpio2/value", S_IFIFO | 0655, 0);
   ck_assert_int_ne(-1, rc);
-  close(rc);
 
   rc = gpio_open(2, GPIO_IN);
   ck_assert_int_ne(-1, rc);
@@ -177,6 +178,7 @@ void test_rf_setup()
 void test_rf_teardown()
 {
   gpio_close(2);
+  unlink("/tmp/gpio2/value");
 
   rf_gw_destroy();
   mock_destroy();
@@ -528,9 +530,11 @@ START_TEST(test_publish_gpio)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -563,9 +567,11 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -580,6 +586,7 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -612,9 +619,11 @@ START_TEST(test_srts_publish_same_twice)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -628,6 +637,7 @@ START_TEST(test_srts_publish_same_twice)
   address = 3333;
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -663,9 +673,11 @@ START_TEST(test_srts_publish_translations)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -680,6 +692,7 @@ START_TEST(test_srts_publish_translations)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -710,9 +723,11 @@ START_TEST(test_homeasy_publish)
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 
@@ -725,6 +740,7 @@ START_TEST(test_homeasy_publish)
   address = 5555;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
+  gpio_write(2, GPIO_HIGH);
   rf_gw_loop(1);
   gpio_usleep(60);
 

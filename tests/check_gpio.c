@@ -82,20 +82,21 @@ END_TEST
 
 START_TEST(test_open_success)
 {
-  int fd;
+  int rc;
 
   mkdir("/tmp/gpio2", 0755);
   gpio_set_syspath("/tmp");
 
-  fd = open("/tmp/gpio2/value", O_WRONLY | O_CREAT, 0655);
-  ck_assert_int_ne(-1, fd);
-  close(fd);
+  unlink("/tmp/gpio2/value");
+  rc = mknod("/tmp/gpio2/value", S_IFIFO | 0655, 0);
+  ck_assert_int_ne(-1, rc);
 
   ck_assert_int_eq(0, gpio_is_opened(2));
 
   ck_assert_int_ne(-1, gpio_open(2, GPIO_OUT));
   ck_assert_int_eq(1, gpio_is_opened(2));
   gpio_close(2);
+  unlink("/tmp/gpio2/value");
 }
 END_TEST
 

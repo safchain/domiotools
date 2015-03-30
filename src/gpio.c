@@ -24,12 +24,24 @@
 #include <time.h>
 #include <sched.h>
 #include <string.h>
+#include <sys/epoll.h>
 
 #include "gpio.h"
 #include "mem.h"
+#include "hl.h"
+
+struct edge_callback {
+  int fd;
+  int gpio;
+  void (*func)(unsigned int gpio, void *data);
+  void *data;
+};
 
 static const char *syspath = "/sys/class/gpio";
 static int fds[MAX_GPIO + 1] = { 0 };
+static int epfd;
+static LIST* edge_callbacks;
+static int event_loop = -1;
 
 void gpio_set_syspath(const char *path)
 {
@@ -235,4 +247,85 @@ int gpio_sched_priority(int priority)
   }
 
   return sched_setscheduler(0, SCHED_RR, &sched);
+}
+
+int gpio_event_init()
+{
+  edge_callbacks = hl_list_alloc();
+
+  epfd = epoll_create(1);
+  if (epfd == -1) {
+    return 0;
+  }
+
+  return 1;
+}
+
+int gpio_event_add(unsigned int gpio,
+        void (*callback)(unsigned int gpio, void *data), void *data)
+{
+  struct epoll_event ev = { 0 };
+  struct edge_callback cb;
+  int rc;
+
+  if (fds[gpio] <= 0) {
+    return 0;
+  }
+
+  ev.events = EPOLLIN | EPOLLET | EPOLLPRI;
+  ev.data.fd = fds[gpio];
+
+  rc = epoll_ctl(epfd, EPOLL_CTL_ADD, fds[gpio], &ev);
+  if (rc == -1) {
+    return 0;
+  }
+
+  cb.fd = fds[gpio];
+  cb.gpio = gpio;
+  cb.func = callback;
+  cb.data = data;
+  hl_list_push(edge_callbacks, &cb, sizeof(struct edge_callback));
+
+  return 1;
+}
+
+static void gpio_event_run_callbacks(int fd)
+{
+  struct edge_callback *cb;
+  LIST_ITERATOR iterator;
+
+  hl_list_init_iterator(edge_callbacks, &iterator);
+  while((cb = hl_list_iterate(&iterator)) != NULL) {
+    if (cb->fd == fd) {
+      cb->func(cb->gpio, cb->data);
+      return;
+    }
+  }
+}
+
+int gpio_event_loop(int loop)
+{
+  struct epoll_event events;
+  int rc;
+
+  event_loop = loop;
+  while(event_loop) {
+    rc = epoll_wait(epfd, &events, 1, -1);
+    if (rc == -1) {
+      return 0;
+    }
+
+    gpio_event_run_callbacks(events.data.fd);
+
+    if (event_loop > 0) {
+      event_loop--;
+    }
+  }
+
+  return 1;
+}
+
+void gpio_event_stop()
+{
+  event_loop = 0;
 }

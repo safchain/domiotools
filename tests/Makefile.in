@@ -50,7 +50,8 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am_check_gpio_OBJECTS = check_gpio-check_gpio.$(OBJEXT) \
-	check_gpio-mem.$(OBJEXT) check_gpio-gpio.$(OBJEXT)
+	check_gpio-mem.$(OBJEXT) check_gpio-list.$(OBJEXT) \
+	check_gpio-gpio.$(OBJEXT)
 check_gpio_OBJECTS = $(am_check_gpio_OBJECTS)
 check_gpio_DEPENDENCIES =
 check_gpio_LINK = $(CCLD) $(check_gpio_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -252,6 +253,7 @@ check_logging_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -W
 check_logging_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 check_gpio_SOURCES = check_gpio.c \
 					 $(top_builddir)/src/mem.c \
+					 $(top_builddir)/src/list.c \
 					 $(top_builddir)/src/gpio.c
 
 check_gpio_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
@@ -297,7 +299,7 @@ check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/rf_gateway.c
 
 check_rf_gateway_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
-check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker -lev -lrt @GCOV_LIBS@
+check_rf_gateway_LDADD = @CHECK_LIBS@ -lconfig -lcmocker -lrt @GCOV_LIBS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
 all: all-am
 
@@ -372,6 +374,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_gpio-check_gpio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_gpio-gpio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_gpio-list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_gpio-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-check_hl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-hmap.Po@am__quote@
@@ -451,6 +454,20 @@ check_gpio-mem.obj: $(top_builddir)/src/mem.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_gpio-mem.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+
+check_gpio-list.o: $(top_builddir)/src/list.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-list.o -MD -MP -MF $(DEPDIR)/check_gpio-list.Tpo -c -o check_gpio-list.o `test -f '$(top_builddir)/src/list.c' || echo '$(srcdir)/'`$(top_builddir)/src/list.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-list.Tpo $(DEPDIR)/check_gpio-list.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/list.c' object='check_gpio-list.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-list.o `test -f '$(top_builddir)/src/list.c' || echo '$(srcdir)/'`$(top_builddir)/src/list.c
+
+check_gpio-list.obj: $(top_builddir)/src/list.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-list.obj -MD -MP -MF $(DEPDIR)/check_gpio-list.Tpo -c -o check_gpio-list.obj `if test -f '$(top_builddir)/src/list.c'; then $(CYGPATH_W) '$(top_builddir)/src/list.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/list.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_gpio-list.Tpo $(DEPDIR)/check_gpio-list.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/list.c' object='check_gpio-list.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -c -o check_gpio-list.obj `if test -f '$(top_builddir)/src/list.c'; then $(CYGPATH_W) '$(top_builddir)/src/list.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/list.c'; fi`
 
 check_gpio-gpio.o: $(top_builddir)/src/gpio.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_gpio_CFLAGS) $(CFLAGS) -MT check_gpio-gpio.o -MD -MP -MF $(DEPDIR)/check_gpio-gpio.Tpo -c -o check_gpio-gpio.o `test -f '$(top_builddir)/src/gpio.c' || echo '$(srcdir)/'`$(top_builddir)/src/gpio.c

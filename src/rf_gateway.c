@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
-#include <ev.h>
 
 #include "common.h"
 #include "mem.h"
@@ -50,18 +49,12 @@ struct rf_device {
   config_setting_t *config_h;
 };
 
-struct rf_publisher {
-  unsigned int gpio;
-  ev_io watcher;
-};
-
 extern struct dlog *DLOG;
 
 static config_t rf_cfg;
 static int rf_publisher_types[MAX_GPIO + 1];
 static char *rf_persistence_path = "/var/lib/";
 static LIST *rf_subscribers = NULL;
-static LIST *rf_publishers = NULL;
 static struct ev_loop *rf_loop = NULL;
 static int rf_running_loop = 0;
 static pthread_mutex_t gpio_mutexes[MAX_GPIO + 1];
@@ -333,13 +326,13 @@ clean:
   free(value);
 }
 
-static void gpio_cb(EV_P_ struct ev_io *io, int revents)
+static void gpio_cb(unsigned int gpio, void *data)
 {
   struct rf_publisher *publisher;
   long time;
   int type;
 
-  type = gpio_read_fd(io->fd);
+  type = gpio_read(gpio);
   if (type == GPIO_LOW) {
     type = GPIO_HIGH;
   } else {
@@ -347,8 +340,7 @@ static void gpio_cb(EV_P_ struct ev_io *io, int revents)
   }
 
   time = gpio_time();
-  publisher = (struct rf_publisher *) io->data;
-  rf_gw_handle_interrupt(publisher->gpio, type, time);
+  rf_gw_handle_interrupt(gpio, type, time);
 }
 
 /* MQTT -> RF */
@@ -493,11 +485,7 @@ static int config_read_publishers()
 /* RF -> MQTT */
 static int start_publishers()
 {
-  struct rf_publisher publisher, *ptr;
-  unsigned int gpio, fd;
-  ev_io *watcher;
-
-  rf_publishers = hl_list_alloc();
+  unsigned int gpio, rc;
 
   if (!config_read_publishers()) {
     return 0;
@@ -517,22 +505,20 @@ static int start_publishers()
         return 0;
       }
 
-      fd = gpio_open(gpio, GPIO_IN);
-      if (fd == -1) {
+      rc = gpio_open(gpio, GPIO_IN);
+      if (rc == -1) {
         dlog(DLOG, DLOG_ERR,
                 "Unable to open GPIO pin: %d, %s", gpio, strerror(errno));
         return 0;
       }
-      ptr = hl_list_push(rf_publishers, &publisher,
-              sizeof(struct rf_publisher));
 
-      ptr->gpio = gpio;
-
-      watcher = &(ptr->watcher);
-      ev_io_init(watcher, gpio_cb, fd, EV_READ);
-      ev_io_start(rf_loop, watcher);
-
-      ptr->watcher.data = ptr;
+      rc = gpio_event_add(gpio, gpio_cb, NULL);
+      if (!rc) {
+        dlog(DLOG, DLOG_ERR,
+                "Unable to register a gpio event hanlder: %d, %s", gpio,
+                strerror(errno));
+        return 0;
+      }
     }
   }
 
@@ -578,9 +564,9 @@ int rf_gw_init(char *in, int file)
     return 0;
   }
 
-  rf_loop = ev_loop_new(EVFLAG_AUTO);
-  if (rf_loop == NULL) {
-    dlog(DLOG, DLOG_CRIT, "Could not initialise libev !");
+  rc = gpio_event_init();
+  if (!rc) {
+    dlog(DLOG, DLOG_CRIT, "Could not initialise gpio_events !");
     config_destroy(&rf_cfg);
     return 0;
   }
@@ -604,7 +590,7 @@ void rf_gw_loop(int loop)
 {
   rf_running_loop = loop;
   while (rf_running_loop) {
-    ev_run (rf_loop, EVRUN_ONCE);
+    gpio_event_loop(1);
     if (rf_running_loop > 0) {
       rf_running_loop--;
     }

@@ -19,7 +19,6 @@ AC_CHECK_LIB([pthread], [pthread_create], [have_pthread=yes], [have_pthread=no])
 AC_CHECK_LIB([config], [config_init], [have_config=yes], [have_config=no])
 AC_CHECK_LIB([mosquitto], [mosquitto_lib_init], [have_mosquitto=yes], [have_mosquitto=no])
 AC_CHECK_LIB([cmocker], [cmocker_init], [have_cmocker=yes], [have_cmocker=no])
-AC_CHECK_LIB([ev], [ev_default_loop], [have_ev=yes], [have_ev=no])
 
 # Check for check !
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.8])

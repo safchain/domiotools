@@ -3782,48 +3782,6 @@ else
   have_config=no
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for wiringPiSetup in -lwiringPi" >&5
-$as_echo_n "checking for wiringPiSetup in -lwiringPi... " >&6; }
-if ${ac_cv_lib_wiringPi_wiringPiSetup+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lwiringPi  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char wiringPiSetup ();
-int
-main ()
-{
-return wiringPiSetup ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_wiringPi_wiringPiSetup=yes
-else
-  ac_cv_lib_wiringPi_wiringPiSetup=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_wiringPi_wiringPiSetup" >&5
-$as_echo "$ac_cv_lib_wiringPi_wiringPiSetup" >&6; }
-if test "x$ac_cv_lib_wiringPi_wiringPiSetup" = xyes; then :
-  have_wiringpi=yes
-else
-  have_wiringpi=no
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mosquitto_lib_init in -lmosquitto" >&5
 $as_echo_n "checking for mosquitto_lib_init in -lmosquitto... " >&6; }
 if ${ac_cv_lib_mosquitto_mosquitto_lib_init+:} false; then :
@@ -3906,48 +3864,6 @@ if test "x$ac_cv_lib_cmocker_cmocker_init" = xyes; then :
   have_cmocker=yes
 else
   have_cmocker=no
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ev_default_loop in -lev" >&5
-$as_echo_n "checking for ev_default_loop in -lev... " >&6; }
-if ${ac_cv_lib_ev_ev_default_loop+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lev  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char ev_default_loop ();
-int
-main ()
-{
-return ev_default_loop ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_ev_ev_default_loop=yes
-else
-  ac_cv_lib_ev_ev_default_loop=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ev_ev_default_loop" >&5
-$as_echo "$ac_cv_lib_ev_ev_default_loop" >&6; }
-if test "x$ac_cv_lib_ev_ev_default_loop" = xyes; then :
-  have_ev=yes
-else
-  have_ev=no
 fi
 
 
