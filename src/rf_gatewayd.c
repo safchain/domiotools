@@ -53,6 +53,10 @@ int main(int argc, char **argv)
 
   mqtt_init();
 
+  if (gpio_sched_priority(55) != 0) {
+    return -1;
+  }
+
   if (!rf_gw_init("rules.cfg", 1)) {
     return -1;
   }

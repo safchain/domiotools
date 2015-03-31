@@ -162,7 +162,7 @@ START_TEST(test_usleep)
   end = gpio_time();
 
   diff = end - start;
-  ck_assert(diff > 2500 && diff < 2600);
+  ck_assert(diff > 2400 && diff < 2600);
 }
 END_TEST
 

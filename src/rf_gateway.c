@@ -55,7 +55,6 @@ static config_t rf_cfg;
 static int rf_publisher_types[MAX_GPIO + 1];
 static char *rf_persistence_path = "/var/lib/";
 static LIST *rf_subscribers = NULL;
-static struct ev_loop *rf_loop = NULL;
 static int rf_running_loop = 0;
 static pthread_mutex_t gpio_mutexes[MAX_GPIO + 1];
 
@@ -154,7 +153,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
     i++;
   } while (h != NULL);
 
-  return 1;
+  return 0;
 }
 
 static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
@@ -196,7 +195,7 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
     i++;
   } while (h != NULL);
 
-  return 1;
+  return 0;
 }
 
 static int homeasy_handler(unsigned int gpio, unsigned int type, int duration)
@@ -209,6 +208,9 @@ static int homeasy_handler(unsigned int gpio, unsigned int type, int duration)
     dlog(DLOG, DLOG_INFO, "Homeasy, Message received correctly");
 
     rc = homeasy_lookup_for_publisher(&payload);
+    if (!rc) {
+      dlog(DLOG, DLOG_DEBUG, "Homeasy, No publisher found");
+    }
   }
   return rc;
 }
@@ -328,7 +330,6 @@ clean:
 
 static void gpio_cb(unsigned int gpio, void *data)
 {
-  struct rf_publisher *publisher;
   long time;
   int type;
 

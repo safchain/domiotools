@@ -110,7 +110,7 @@ void homeasy_transmit(unsigned int gpio, unsigned int address,
 
 static int is_on_time(unsigned int duration, unsigned int expected)
 {
-  unsigned int v = expected * 10 / 100;
+  unsigned int v = expected * 20 / 100;
 
   return duration > (expected - v) && duration < (expected + v);
 }
@@ -152,16 +152,17 @@ static int _read_bit(unsigned int type, unsigned int duration,
 
   if (pass) {
     pass = 0;
-    if (is_on_time(duration, 1300)) {
+
+    if (duration > 800 && duration < 2000) {
       *bit = 1;
 
       return 1;
-    } else if (is_on_time(duration, 300)) {
+    } else if (duration < 800) {
       *bit = 0;
 
       return 1;
     }
-  } else if (is_on_time(duration, 300)) {
+  } else if (duration < 800) {
     pass++;
 
     return 0;
