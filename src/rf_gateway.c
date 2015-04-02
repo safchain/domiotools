@@ -140,7 +140,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
         continue;
       }
       address = srts_get_address(payload);
-      if (address == value) {
+      if (!value || address == value) {
         ctrl = srts_get_ctrl_str(payload);
         if (ctrl == NULL) {
           dlog(DLOG, DLOG_ERR, "Somfy RTS, ctrl unknown: %d", payload->ctrl);
@@ -185,7 +185,7 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
         continue;
       }
 
-      if (payload->address == address) {
+      if (!address || payload->address == address) {
         ctrl = homeasy_get_ctrl_str(payload);
         if (ctrl == NULL) {
           dlog(DLOG, DLOG_ERR, "Homeasy, ctrl unknown: %d", payload->ctrl);

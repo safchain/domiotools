@@ -656,6 +656,42 @@ START_TEST(test_srts_publish_translations)
   ck_assert_int_eq(rc, 1);
 
   key = 88768;
+  address = 3333;
+  mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
+  mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
+
+  /* a first loop in order to initialize some static */
+  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, GPIO_HIGH);
+
+  rc = mock_calls("srts_receive");
+  ck_assert_int_eq(rc, 1);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 1);
+  ck_assert_str_eq("ON", mock_call("mqtt_publish", 0));
+}
+END_TEST
+
+START_TEST(test_srts_publish_wildcard)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "gpio: 2;"
+        "type: \"srts\";"
+        "address: 0;"
+        "output: \"mqtt://localhost:1883/3333\";"
+        "translations: {"
+                "UP: \"ON\";"
+                "DOWN: \"OFF\";"
+        "}})"
+    "}";
+  int rc, key, address;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(rc, 1);
+
+  key = 88768;
   address = 1111;
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
@@ -668,21 +704,7 @@ START_TEST(test_srts_publish_translations)
   ck_assert_int_eq(rc, 1);
 
   rc = mock_calls("mqtt_publish");
-  ck_assert_int_eq(rc, 0);
-
-  key = 9432;
-  address = 3333;
-  mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
-  mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
-
-  gpio_write_and_loop(2, GPIO_HIGH);
-
-  rc = mock_calls("srts_receive");
-  ck_assert_int_eq(rc, 2);
-
-  rc = mock_calls("mqtt_publish");
   ck_assert_int_eq(rc, 1);
-  ck_assert_str_eq("ON", mock_call("mqtt_publish", 0));
 }
 END_TEST
 
@@ -724,6 +746,35 @@ START_TEST(test_homeasy_publish)
   rc = mock_calls("mqtt_publish");
   ck_assert_int_eq(rc, 1);
   ck_assert_str_eq("ON", mock_call("mqtt_publish", 0));
+}
+END_TEST
+
+START_TEST(test_homeasy_publish_wildcard)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "gpio: 2;"
+        "type: \"homeasy\";"
+        "address: 0;"
+        "output: \"mqtt://localhost:1883/5555\";})"
+    "}";
+  int rc, address;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(rc, 1);
+
+  address = 1111;
+  mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
+
+  /* a first loop in order to initialize some static */
+  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, GPIO_LOW);
+
+  rc = mock_calls("homeasy_receive");
+  ck_assert_int_eq(rc, 1);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 1);
 }
 END_TEST
 
@@ -810,8 +861,10 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
   tcase_add_test(tc_rf, test_srts_publish_translations);
+  tcase_add_test(tc_rf, test_srts_publish_wildcard);
   tcase_add_test(tc_rf, test_homeasy_publish);
   tcase_add_test(tc_rf, test_homeasy_publish_same_twice);
+  tcase_add_test(tc_rf, test_homeasy_publish_wildcard);
   tcase_add_test(tc_rf, test_publish_gpio);
   suite_add_tcase(s, tc_rf);
 
