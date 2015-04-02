@@ -49,7 +49,7 @@ am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) common.$(OBJEXT) \
 	srts.$(OBJEXT) hmap.$(OBJEXT) list.$(OBJEXT) \
 	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT) \
 	mem.$(OBJEXT) logging.$(OBJEXT) homeasy.$(OBJEXT) \
-	gpio.$(OBJEXT)
+	gpio.$(OBJEXT) tree.$(OBJEXT)
 rf_gatewayd_OBJECTS = $(am_rf_gatewayd_OBJECTS)
 rf_gatewayd_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -161,7 +161,8 @@ top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
 rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c \
-					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c gpio.c
+					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c gpio.c \
+					  tree.c
 
 rf_gatewayd_LDADD = -lmosquitto -lconfig -lpthread \
 					-lrt @GCOV_LIBS@
@@ -258,6 +259,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gatewayd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/urlparser.Po@am__quote@
 
 .c.o:

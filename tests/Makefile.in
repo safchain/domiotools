@@ -58,7 +58,7 @@ check_gpio_LINK = $(CCLD) $(check_gpio_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 am_check_hl_OBJECTS = check_hl-check_hl.$(OBJEXT) \
 	check_hl-list.$(OBJEXT) check_hl-mem.$(OBJEXT) \
-	check_hl-hmap.$(OBJEXT)
+	check_hl-tree.$(OBJEXT) check_hl-hmap.$(OBJEXT)
 check_hl_OBJECTS = $(am_check_hl_OBJECTS)
 check_hl_DEPENDENCIES =
 check_hl_LINK = $(CCLD) $(check_hl_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -95,6 +95,7 @@ am_check_rf_gateway_OBJECTS =  \
 	check_rf_gateway-urlparser.$(OBJEXT) \
 	check_rf_gateway-mem.$(OBJEXT) check_rf_gateway-list.$(OBJEXT) \
 	check_rf_gateway-hmap.$(OBJEXT) \
+	check_rf_gateway-tree.$(OBJEXT) \
 	check_rf_gateway-logging.$(OBJEXT) \
 	check_rf_gateway-gpio.$(OBJEXT) \
 	check_rf_gateway-rf_gateway.$(OBJEXT)
@@ -236,6 +237,7 @@ top_srcdir = @top_srcdir@
 check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
 				   $(top_builddir)/src/mem.c \
+				   $(top_builddir)/src/tree.c \
 				   $(top_builddir)/src/hmap.c
 
 check_hl_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
@@ -294,6 +296,7 @@ check_rf_gateway_SOURCES = check_rf_gateway.c \
 						   $(top_builddir)/src/mem.c \
 						   $(top_builddir)/src/list.c \
 						   $(top_builddir)/src/hmap.c \
+						   $(top_builddir)/src/tree.c \
 						   $(top_builddir)/src/logging.c \
 						   $(top_builddir)/src/gpio.c \
 						   $(top_builddir)/src/rf_gateway.c
@@ -380,6 +383,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-mem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_hl-tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-check_homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_homeasy-logging.Po@am__quote@
@@ -403,6 +407,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-rf_gateway.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-check_srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_srts-common.Po@am__quote@
@@ -524,6 +529,20 @@ check_hl-mem.obj: $(top_builddir)/src/mem.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/mem.c' object='check_hl-mem.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -c -o check_hl-mem.obj `if test -f '$(top_builddir)/src/mem.c'; then $(CYGPATH_W) '$(top_builddir)/src/mem.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/mem.c'; fi`
+
+check_hl-tree.o: $(top_builddir)/src/tree.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -MT check_hl-tree.o -MD -MP -MF $(DEPDIR)/check_hl-tree.Tpo -c -o check_hl-tree.o `test -f '$(top_builddir)/src/tree.c' || echo '$(srcdir)/'`$(top_builddir)/src/tree.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_hl-tree.Tpo $(DEPDIR)/check_hl-tree.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/tree.c' object='check_hl-tree.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -c -o check_hl-tree.o `test -f '$(top_builddir)/src/tree.c' || echo '$(srcdir)/'`$(top_builddir)/src/tree.c
+
+check_hl-tree.obj: $(top_builddir)/src/tree.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -MT check_hl-tree.obj -MD -MP -MF $(DEPDIR)/check_hl-tree.Tpo -c -o check_hl-tree.obj `if test -f '$(top_builddir)/src/tree.c'; then $(CYGPATH_W) '$(top_builddir)/src/tree.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/tree.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_hl-tree.Tpo $(DEPDIR)/check_hl-tree.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/tree.c' object='check_hl-tree.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -c -o check_hl-tree.obj `if test -f '$(top_builddir)/src/tree.c'; then $(CYGPATH_W) '$(top_builddir)/src/tree.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/tree.c'; fi`
 
 check_hl-hmap.o: $(top_builddir)/src/hmap.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_hl_CFLAGS) $(CFLAGS) -MT check_hl-hmap.o -MD -MP -MF $(DEPDIR)/check_hl-hmap.Tpo -c -o check_hl-hmap.o `test -f '$(top_builddir)/src/hmap.c' || echo '$(srcdir)/'`$(top_builddir)/src/hmap.c
@@ -832,6 +851,20 @@ check_rf_gateway-hmap.obj: $(top_builddir)/src/hmap.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/hmap.c' object='check_rf_gateway-hmap.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-hmap.obj `if test -f '$(top_builddir)/src/hmap.c'; then $(CYGPATH_W) '$(top_builddir)/src/hmap.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/hmap.c'; fi`
+
+check_rf_gateway-tree.o: $(top_builddir)/src/tree.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-tree.o -MD -MP -MF $(DEPDIR)/check_rf_gateway-tree.Tpo -c -o check_rf_gateway-tree.o `test -f '$(top_builddir)/src/tree.c' || echo '$(srcdir)/'`$(top_builddir)/src/tree.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_rf_gateway-tree.Tpo $(DEPDIR)/check_rf_gateway-tree.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/tree.c' object='check_rf_gateway-tree.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-tree.o `test -f '$(top_builddir)/src/tree.c' || echo '$(srcdir)/'`$(top_builddir)/src/tree.c
+
+check_rf_gateway-tree.obj: $(top_builddir)/src/tree.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-tree.obj -MD -MP -MF $(DEPDIR)/check_rf_gateway-tree.Tpo -c -o check_rf_gateway-tree.obj `if test -f '$(top_builddir)/src/tree.c'; then $(CYGPATH_W) '$(top_builddir)/src/tree.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/tree.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_rf_gateway-tree.Tpo $(DEPDIR)/check_rf_gateway-tree.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/tree.c' object='check_rf_gateway-tree.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -c -o check_rf_gateway-tree.obj `if test -f '$(top_builddir)/src/tree.c'; then $(CYGPATH_W) '$(top_builddir)/src/tree.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/tree.c'; fi`
 
 check_rf_gateway-logging.o: $(top_builddir)/src/logging.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_rf_gateway_CFLAGS) $(CFLAGS) -MT check_rf_gateway-logging.o -MD -MP -MF $(DEPDIR)/check_rf_gateway-logging.Tpo -c -o check_rf_gateway-logging.o `test -f '$(top_builddir)/src/logging.c' || echo '$(srcdir)/'`$(top_builddir)/src/logging.c

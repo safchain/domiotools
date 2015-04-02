@@ -23,5 +23,6 @@
 
 #include "list.h"
 #include "hmap.h"
+#include "tree.h"
 
 #endif

@@ -206,6 +206,40 @@ START_TEST(test_hmap_collision)
 }
 END_TEST
 
+START_TEST(test_tree_ii_insert)
+{
+  TREE_II *tree;
+  int value, err;
+
+  tree = tree_ii_alloc();
+  ck_assert(tree != NULL);
+
+  tree_ii_insert(tree, 122, 9);
+  tree_ii_insert(tree, 123, 10);
+  tree_ii_insert(tree, 124, 11);
+
+  value = tree_ii_lookup(tree, 122, &err);
+  ck_assert_int_eq(0, err);
+  ck_assert_int_eq(9, value);
+
+  value = tree_ii_lookup(tree, 123, &err);
+  ck_assert_int_eq(0, err);
+  ck_assert_int_eq(10, value);
+
+  value = tree_ii_lookup(tree, 124, &err);
+  ck_assert_int_eq(0, err);
+  ck_assert_int_eq(11, value);
+
+  tree_ii_insert(tree, 124, 12);
+  value = tree_ii_lookup(tree, 124, &err);
+  ck_assert_int_eq(0, err);
+  ck_assert_int_eq(12, value);
+
+  tree_ii_lookup(tree, 125, &err);
+  ck_assert_int_eq(1, err);
+}
+END_TEST
+
 Suite *hl_suite(void)
 {
   Suite *s;
@@ -222,6 +256,8 @@ Suite *hl_suite(void)
   tcase_add_test(tc_hl, test_hmap_override);
   tcase_add_test(tc_hl, test_hmap_delete);
   tcase_add_test(tc_hl, test_hmap_collision);
+
+  tcase_add_test(tc_hl, test_tree_ii_insert);
   suite_add_tcase(s, tc_hl);
 
   return s;

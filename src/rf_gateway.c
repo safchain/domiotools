@@ -159,8 +159,11 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
 static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
 {
   config_setting_t *hs, *h;
-  unsigned int value, i = 0;
+  unsigned int address, delay = 0, i = 0;
   const char *ctrl;
+  time_t now, last;
+  static TREE_II *last_success = NULL;
+  int err;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
@@ -176,17 +179,36 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
       }
 
       if (config_setting_lookup_int(h, "address",
-                  (int *) &value) != CONFIG_TRUE) {
+                  (int *) &address) != CONFIG_TRUE) {
         dlog(DLOG, DLOG_ERR, "No address defined for the publisher line: %d",
                 config_setting_source_line(h));
         continue;
       }
 
-      if (payload->address == value) {
+      if (payload->address == address) {
         ctrl = homeasy_get_ctrl_str(payload);
         if (ctrl == NULL) {
           dlog(DLOG, DLOG_ERR, "Homeasy, ctrl unknown: %d", payload->ctrl);
           return 0;
+        }
+
+        /* keep a space between two publish for the same address, according
+         * to the config
+         */
+        config_setting_lookup_int(h, "delay", (int *) &delay);
+        if (delay) {
+
+          if (last_success == NULL) {
+            last_success = tree_ii_alloc();
+          }
+          last = tree_ii_lookup(last_success, address, &err);
+
+          now = time(NULL);
+          if (last && last + delay > now) {
+            tree_ii_insert(last_success, address, now);
+            break;
+          }
+          tree_ii_insert(last_success, address, now);
         }
 
         return publish(h, ctrl);
@@ -231,6 +253,9 @@ static int srts_handler(unsigned int gpio, unsigned int type, int duration)
     dlog(DLOG, DLOG_INFO, "Somfy RTS, Message received correctly");
 
     rc = srts_lookup_for_publisher(&payload);
+    if (!rc) {
+      dlog(DLOG, DLOG_DEBUG, "Somfy RTS, No publisher found");
+    }
   }
   return rc;
 }
