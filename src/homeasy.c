@@ -24,23 +24,22 @@
 #include <stdlib.h>
 
 #include "homeasy.h"
-#include "logging.h"
 #include "gpio.h"
 
-extern struct dlog *DLOG;
+#define IS_ON_TIME(X, I, A) X >= I && X <= A
 
 static void _write_bit(unsigned int gpio, unsigned char bit)
 {
   if (bit) {
-    gpio_write(gpio, GPIO_HIGH);
-    gpio_usleep(300);
-    gpio_write(gpio, GPIO_LOW);
-    gpio_usleep(1300);
+    digitalWrite(gpio, HIGH);
+    delayMicroseconds(300);
+    digitalWrite(gpio, LOW);
+    delayMicroseconds(1300);
   } else {
-    gpio_write(gpio, GPIO_HIGH);
-    gpio_usleep(300);
-    gpio_write(gpio, GPIO_LOW);
-    gpio_usleep(300);
+    digitalWrite(gpio, HIGH);
+    delayMicroseconds(300);
+    digitalWrite(gpio, LOW);
+    delayMicroseconds(300);
   }
 }
 
@@ -57,22 +56,22 @@ static void write_bit(unsigned int gpio, unsigned char bit)
 
 static void sync_transmit(unsigned int gpio)
 {
-  gpio_write(gpio, GPIO_HIGH);
-  gpio_usleep(275);
-  gpio_write(gpio, GPIO_LOW);
-  gpio_usleep(9900);
-  gpio_write(gpio, GPIO_HIGH);
-  gpio_usleep(275);
-  gpio_write(gpio, GPIO_LOW);
-  gpio_usleep(2600);
+  digitalWrite(gpio, HIGH);
+  delayMicroseconds(275);
+  digitalWrite(gpio, LOW);
+  delayMicroseconds(10000);
+  digitalWrite(gpio, HIGH);
+  delayMicroseconds(275);
+  digitalWrite(gpio, LOW);
+  delayMicroseconds(2600);
 }
 
 static void write_interval_gap(unsigned int gpio)
 {
-  gpio_write(gpio, GPIO_HIGH);
-  gpio_usleep(275);
-  gpio_write(gpio, GPIO_LOW);
-  gpio_usleep(10000);
+  digitalWrite(gpio, HIGH);
+  delayMicroseconds(275);
+  digitalWrite(gpio, LOW);
+  delayMicroseconds(10000);
 }
 
 void homeasy_transmit(unsigned int gpio, unsigned int address,
@@ -108,13 +107,6 @@ void homeasy_transmit(unsigned int gpio, unsigned int address,
   }
 }
 
-static int is_on_time(unsigned int duration, unsigned int expected)
-{
-  unsigned int v = expected * 20 / 100;
-
-  return duration > (expected - v) && duration < (expected + v);
-}
-
 static int detect_sync(unsigned int gpio, unsigned int type,
         unsigned int *duration)
 {
@@ -126,17 +118,15 @@ static int detect_sync(unsigned int gpio, unsigned int type,
     init = 1;
   }
 
-  if (!type && sync[gpio] == 1 && is_on_time(*duration, 9900)) {
+  if (!type && sync[gpio] == 1 && IS_ON_TIME(*duration, 10400, 10800)) {
     sync[gpio] = 2;
-  } else if (type && sync[gpio] == 2 && is_on_time(*duration, 275)) {
+  } else if (type && sync[gpio] == 2 && IS_ON_TIME(*duration, 150, 350)) {
     sync[gpio] = 3;
-  } else if (!type && sync[gpio] == 3 && is_on_time(*duration, 2600)) {
+  } else if (!type && sync[gpio] == 3 && IS_ON_TIME(*duration, 2500, 2900)) {
     sync[gpio] = 0;
 
-    dlog(DLOG, DLOG_DEBUG, "Homeasy, found the sync part of a message");
-
     return 1;
-  } else if (type && is_on_time(*duration, 275)) {
+  } else if (type && IS_ON_TIME(*duration, 150, 350)) {
     sync[gpio] = 1;
   } else {
     sync[gpio] = 0;
@@ -153,7 +143,7 @@ static int _read_bit(unsigned int type, unsigned int duration,
   if (pass) {
     pass = 0;
 
-    if (duration > 800 && duration < 2000) {
+    if (IS_ON_TIME(duration, 1000, 1900)) {
       *bit = 1;
 
       return 1;
@@ -234,8 +224,7 @@ static int read_byte(unsigned int gpio, unsigned char bit, unsigned char *byte)
 }
 
 int homeasy_receive(unsigned int gpio, unsigned int type,
-        unsigned int duration, struct homeasy_payload *payload)
-{
+        unsigned int duration, struct homeasy_payload *payload){
   static unsigned char sync[MAX_GPIO + 1];
   static unsigned char index[MAX_GPIO + 1];
   static unsigned char bytes[MAX_GPIO + 1][4];
@@ -245,7 +234,6 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
 
   if (!init) {
     memset(sync, 0, sizeof(sync));
-    memset(sync, 3, sizeof(sync));
     init = 1;
   }
 

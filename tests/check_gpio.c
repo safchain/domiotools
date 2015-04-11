@@ -134,14 +134,14 @@ START_TEST(test_read_write)
   fd = gpio_open(2, GPIO_OUT);
   ck_assert_int_ne(-1, fd);
 
-  ck_assert_int_ne(-1, gpio_write(2, GPIO_HIGH));
+  ck_assert_int_ne(-1, gpio_write(2, HIGH));
   gpio_close(2);
 
   fd = gpio_open(2, GPIO_IN);
   ck_assert_int_ne(-1, fd);
 
   value = gpio_read(2);
-  ck_assert_int_eq(GPIO_HIGH, value);
+  ck_assert_int_eq(HIGH, value);
   gpio_close(2);
 }
 END_TEST

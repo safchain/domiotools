@@ -19,8 +19,14 @@
 
 #define MAX_GPIO    64
 
-#define GPIO_LOW    0
-#define GPIO_HIGH   1
+#define LOW    0
+#define HIGH   1
+
+/* helper functions in order to keep libs arduino compatible */
+#define digitalRead         gpio_read
+#define digitalWrite        gpio_write
+#define delayMicroseconds   gpio_usleep
+#define micros              gpio_time
 
 #define GPIO_OUT    "out"
 #define GPIO_IN     "in"

@@ -176,9 +176,9 @@ char gpio_read_fd(unsigned int fd)
   lseek(fd, 0, SEEK_SET);
   if (read(fd, &value, sizeof(unsigned char)) > 0) {
     if (value == '1') {
-      return GPIO_HIGH;
+      return HIGH;
     }
-    return GPIO_LOW;
+    return LOW;
   }
 
   return -1;

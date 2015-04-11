@@ -537,8 +537,8 @@ START_TEST(test_publish_gpio)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(1, rc);
@@ -569,8 +569,8 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -583,7 +583,7 @@ START_TEST(test_srts_publish)
   mock_will_return("srts_receive_key", &key, MOCK_RETURNED_ONCE);
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -614,8 +614,8 @@ START_TEST(test_srts_publish_same_twice)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -627,7 +627,7 @@ START_TEST(test_srts_publish_same_twice)
   address = 3333;
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 2);
@@ -661,8 +661,8 @@ START_TEST(test_srts_publish_translations)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -697,8 +697,8 @@ START_TEST(test_srts_publish_wildcard)
   mock_will_return("srts_get_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("srts_receive");
   ck_assert_int_eq(rc, 1);
@@ -726,8 +726,8 @@ START_TEST(test_homeasy_publish)
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_LOW);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, LOW);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 1);
@@ -738,7 +738,7 @@ START_TEST(test_homeasy_publish)
   address = 5555;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 2);
@@ -767,8 +767,8 @@ START_TEST(test_homeasy_publish_wildcard)
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_LOW);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, LOW);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 1);
@@ -802,8 +802,8 @@ START_TEST(test_homeasy_publish_same_twice)
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
   /* a first loop in order to initialize some static */
-  gpio_write_and_loop(2, GPIO_HIGH);
-  gpio_write_and_loop(2, GPIO_LOW);
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, LOW);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 1);
@@ -814,7 +814,7 @@ START_TEST(test_homeasy_publish_same_twice)
   address = 5555;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 2);
@@ -825,7 +825,7 @@ START_TEST(test_homeasy_publish_same_twice)
   address = 6666;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
-  gpio_write_and_loop(2, GPIO_HIGH);
+  gpio_write_and_loop(2, HIGH);
 
   rc = mock_calls("homeasy_receive");
   ck_assert_int_eq(rc, 3);

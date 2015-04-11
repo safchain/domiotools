@@ -128,6 +128,8 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
 
   do {
     h = config_setting_get_elem(hs, i);
+    i++;
+
     if (h != NULL) {
       if (!config_lookup_type(h, "srts")) {
         continue;
@@ -150,7 +152,6 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
         return publish(h, ctrl);
       }
     }
-    i++;
   } while (h != NULL);
 
   return 0;
@@ -173,6 +174,8 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
 
   do {
     h = config_setting_get_elem(hs, i);
+    i++;
+
     if (h != NULL) {
       if (!config_lookup_type(h, "homeasy")) {
         continue;
@@ -214,7 +217,6 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
         return publish(h, ctrl);
       }
     }
-    i++;
   } while (h != NULL);
 
   return 0;
@@ -359,10 +361,10 @@ static void gpio_cb(unsigned int gpio, void *data)
   int type;
 
   type = gpio_read(gpio);
-  if (type == GPIO_LOW) {
-    type = GPIO_HIGH;
+  if (type == LOW) {
+    type = HIGH;
   } else {
-    type = GPIO_LOW;
+    type = LOW;
   }
 
   time = gpio_time();
