@@ -73,5 +73,6 @@ fi
 AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  tools/Makefile
+                 arduino/Makefile
                  src/Makefile])
 AC_OUTPUT
