@@ -65,7 +65,7 @@ static unsigned int tree_ii_lookup_node(struct tree_ii_node_s *node,
     return node->value;
   }
 
-  if (node->key < key && node->left != NULL) {
+  if (node->key > key && node->left != NULL) {
     return tree_ii_lookup_node(node->left, key, err);
   } else if (node->right != NULL) {
     return tree_ii_lookup_node(node->right, key, err);

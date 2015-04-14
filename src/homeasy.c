@@ -14,6 +14,7 @@
  * 02110-1301, USA.
  */
 
+#if !defined(__AVR__) && !defined(__avr__)
 #include <stdio.h>
 #include <sys/types.h>
 #include <limits.h>
@@ -23,8 +24,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "homeasy.h"
 #include "gpio.h"
+#endif
+
+#include "homeasy.h"
 
 #define IS_ON_TIME(X, I, A) X >= I && X <= A
 
@@ -59,7 +62,7 @@ static void sync_transmit(unsigned int gpio)
   digitalWrite(gpio, HIGH);
   delayMicroseconds(275);
   digitalWrite(gpio, LOW);
-  delayMicroseconds(10000);
+  delayMicroseconds(10200);
   digitalWrite(gpio, HIGH);
   delayMicroseconds(275);
   digitalWrite(gpio, LOW);
@@ -118,7 +121,7 @@ static int detect_sync(unsigned int gpio, unsigned int type,
     init = 1;
   }
 
-  if (!type && sync[gpio] == 1 && IS_ON_TIME(*duration, 10400, 10800)) {
+  if (!type && sync[gpio] == 1 && IS_ON_TIME(*duration, 10200, 10800)) {
     sync[gpio] = 2;
   } else if (type && sync[gpio] == 2 && IS_ON_TIME(*duration, 150, 350)) {
     sync[gpio] = 3;
@@ -234,6 +237,7 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
 
   if (!init) {
     memset(sync, 0, sizeof(sync));
+    memset(index, 3, sizeof(index));
     init = 1;
   }
 

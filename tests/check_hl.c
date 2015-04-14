@@ -215,8 +215,8 @@ START_TEST(test_tree_ii_insert)
   ck_assert(tree != NULL);
 
   tree_ii_insert(tree, 122, 9);
-  tree_ii_insert(tree, 123, 10);
   tree_ii_insert(tree, 124, 11);
+  tree_ii_insert(tree, 123, 10);
 
   value = tree_ii_lookup(tree, 122, &err);
   ck_assert_int_eq(0, err);
