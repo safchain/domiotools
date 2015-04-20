@@ -14,6 +14,7 @@
  * 02110-1301, USA.
  */
 
+#if !defined(__AVR__) && !defined(__avr__)
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -23,11 +24,16 @@
 #include <pthread.h>
 
 #include "common.h"
-#include "srts.h"
 #include "mem.h"
 #include "logging.h"
 #include "gpio.h"
+#endif
 
+#include "srts.h"
+
+#define IS_ON_TIME(X, I, A) X >= I && X <= A
+
+#if !defined(__AVR__) && !defined(__avr__)
 extern struct dlog *DLOG;
 
 static char *get_code_file_path(const char *persistence_path,
@@ -124,6 +130,50 @@ clean:
   return -1;
 }
 
+void srts_print_payload(FILE *fp, struct srts_payload *payload)
+{
+  fprintf(fp, "key: %d\n", payload->key);
+  fprintf(fp, "checksum: %d\n", payload->checksum);
+  fprintf(fp, "ctrl: %d\n", payload->ctrl);
+  fprintf(fp, "code: %d\n", payload->code);
+  fprintf(fp, "address 1: %d\n", payload->address.byte1);
+  fprintf(fp, "address 2: %d\n", payload->address.byte2);
+  fprintf(fp, "address 3: %d\n", payload->address.byte3);
+  fprintf(fp, "address: %d\n", srts_get_address(payload));
+}
+
+void srts_transmit_persist(unsigned int gpio, unsigned char key,
+        unsigned int address, unsigned char ctrl, unsigned int repeat,
+        const char *persistence_path)
+{
+  int i, code = srts_get_code(persistence_path, address);
+
+  if (code == -1) {
+    /* reading code error, defaulting to 1 */
+    srts_transmit(gpio, key, address, ctrl, 1, 0);
+    for (i = 0; i < repeat; i++) {
+      srts_transmit(gpio, key, address, ctrl, 1, 1);
+    }
+
+    return;
+  }
+
+  code += 1;
+
+  srts_transmit(gpio, key, address, ctrl, code, 0);
+  for (i = 0; i < repeat; i++) {
+    srts_transmit(gpio, key, address, ctrl, code, 1);
+  }
+
+  store_code(persistence_path, address, code);
+}
+#else
+static unsigned short htons(unsigned short value)
+{
+  return (value << 8) | ((value >> 8) & 0xFF);
+}
+#endif
+
 static void obfuscate_payload(struct srts_payload *payload)
 {
   unsigned char *p = (unsigned char *) payload;
@@ -201,7 +251,7 @@ static void sync_transmit(unsigned int gpio, unsigned int repeated)
     digitalWrite(gpio, HIGH);
     delayMicroseconds(12400);
     digitalWrite(gpio, LOW);
-    delayMicroseconds(80600);
+    delayMicroseconds(14000);
     count = 2;
   }
   for (i = 0; i != count; i++) {
@@ -243,32 +293,6 @@ void srts_transmit(unsigned int gpio, unsigned char key,
   write_interval_gap(gpio);
 }
 
-void srts_transmit_persist(unsigned int gpio, unsigned char key,
-        unsigned int address, unsigned char ctrl, unsigned int repeat,
-        const char *persistence_path)
-{
-  int i, code = srts_get_code(persistence_path, address);
-
-  if (code == -1) {
-    /* reading code error, defaulting to 1 */
-    srts_transmit(gpio, key, address, ctrl, 1, 0);
-    for (i = 0; i < repeat; i++) {
-      srts_transmit(gpio, key, address, ctrl, 1, 1);
-    }
-
-    return;
-  }
-
-  code += 1;
-
-  srts_transmit(gpio, key, address, ctrl, code, 0);
-  for (i = 0; i < repeat; i++) {
-    srts_transmit(gpio, key, address, ctrl, code, 1);
-  }
-
-  store_code(persistence_path, address, code);
-}
-
 static void unfuscate_payload(unsigned char *bytes,
         struct srts_payload *payload)
 {
@@ -299,13 +323,6 @@ static int validate_checksum(struct srts_payload *payload)
   return 0;
 }
 
-static int is_on_time(unsigned int duration, unsigned int expected)
-{
-  unsigned int v = expected * 10 / 100;
-
-  return duration > (expected - v) && duration < (expected + v);
-}
-
 static int detect_sync(unsigned int gpio, unsigned int type,
         unsigned int *duration)
 {
@@ -313,6 +330,7 @@ static int detect_sync(unsigned int gpio, unsigned int type,
   static unsigned char hard_sync[MAX_GPIO + 1];
   static unsigned char soft_sync[MAX_GPIO + 1];
   static char init = 0;
+  int rc;
 
   if (!init) {
     memset(init_sync, 0, sizeof(init_sync));
@@ -321,16 +339,20 @@ static int detect_sync(unsigned int gpio, unsigned int type,
     init = 1;
   }
 
-  if (type && is_on_time(*duration, 12400)) {
+  if (!init_sync[gpio] && type && IS_ON_TIME(*duration, 11800, 16800)) {
     init_sync[gpio] = 1;
-  } else if (!type && init_sync[gpio] == 1 && is_on_time(*duration, 80600)) {
+  } else if (!type && init_sync[gpio] == 1 &&
+          IS_ON_TIME(*duration, 11800, 16800)) {
     init_sync[gpio] = 2;
     hard_sync[gpio] = 10;
+  } else if (!type && IS_ON_TIME(*duration, 26000, 34000)) {
+    init_sync[gpio] = 2;
+    hard_sync[gpio] = 0;
   } else if (init_sync[gpio] == 2 && hard_sync[gpio] != 14 &&
-          is_on_time(*duration, 2560)) {
+          IS_ON_TIME(*duration, 2000, 3600)) {
     hard_sync[gpio]++;
   } else if (hard_sync[gpio] == 14 && soft_sync[gpio] == 0 &&
-          is_on_time(*duration, 4800)) {
+          IS_ON_TIME(*duration, 4200, 5200)) {
     soft_sync[gpio] = 1;
   } else if (soft_sync[gpio] == 1 && *duration >= 660) {
     if (*duration >= 800) {
@@ -338,17 +360,23 @@ static int detect_sync(unsigned int gpio, unsigned int type,
     } else {
       *duration = 0;
     }
-    soft_sync[gpio] = 2;
+    rc = 1;
 
-    dlog(DLOG, DLOG_DEBUG, "Somfy RTS, Found the sync part of a message");
-
-    return 1;
+    goto clean;
   } else {
-    hard_sync[gpio] = 0;
-    soft_sync[gpio] = 0;
+    rc = 0;
+
+    goto clean;
   }
 
   return 0;
+
+clean:
+  init_sync[gpio] = 0;
+  hard_sync[gpio] = 0;
+  soft_sync[gpio] = 0;
+
+  return rc;
 }
 
 static int read_bit(unsigned int gpio, unsigned int type,
@@ -363,10 +391,10 @@ static int read_bit(unsigned int gpio, unsigned int type,
   }
 
   /* maximum transmit length for a bit is around 1600 */
-  if (!last && *duration > 2000) {
+  if (!last && *duration > 1800) {
     pass[gpio] = 0;
 
-    return -1;
+    return -*duration;
   }
 
   /* duration too long to be a part of only one bit, so split into two parts */
@@ -473,18 +501,6 @@ int srts_get_address(struct srts_payload *payload)
   return address;
 }
 
-void srts_print_payload(FILE *fp, struct srts_payload *payload)
-{
-  fprintf(fp, "key: %d\n", payload->key);
-  fprintf(fp, "checksum: %d\n", payload->checksum);
-  fprintf(fp, "ctrl: %d\n", payload->ctrl);
-  fprintf(fp, "code: %d\n", payload->code);
-  fprintf(fp, "address 1: %d\n", payload->address.byte1);
-  fprintf(fp, "address 2: %d\n", payload->address.byte2);
-  fprintf(fp, "address 3: %d\n", payload->address.byte3);
-  fprintf(fp, "address: %d\n", srts_get_address(payload));
-}
-
 int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
         struct srts_payload *payload)
 {
@@ -492,7 +508,7 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
   static unsigned char index[MAX_GPIO + 1];
   static unsigned char bytes[MAX_GPIO + 1][7];
   static char init = 0;
-  unsigned char bit;
+  unsigned char bit = 0;
   int rc;
 
   if (!init) {
@@ -502,7 +518,6 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
   }
 
   if (gpio > MAX_GPIO) {
-    dlog(DLOG, DLOG_ERR, "Somfy RST, Max gpio number allowed is %d", MAX_GPIO);
     return SRTS_BAD_GPIO;
   }
 
@@ -512,7 +527,7 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
       return 0;
     }
 
-    /* to short, ignore trailling signal */
+    /* too short, ignore trailling signal */
     if (duration < 400) {
       return 0;
     }
@@ -535,7 +550,6 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
           unfuscate_payload(bytes[gpio], payload);
           rc = validate_checksum(payload);
           if (rc == 0) {
-            dlog(DLOG, DLOG_DEBUG, "Somfy RST, Checksum error");
             return SRTS_BAD_CHECKSUM;
           }
           payload->code = htons(payload->code);
