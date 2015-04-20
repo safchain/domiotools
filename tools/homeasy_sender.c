@@ -36,18 +36,18 @@ struct dlog *DLOG;
 static void usage(char *name)
 {
   fprintf(stderr, "Usage: %s --gpio <gpio pin> --address <remote address> "
-          "--comand <command> --repeat <number>\n", name);
+          "--command <command> --repeat <number>\n", name);
   exit(-1);
 }
 
 int main(int argc, char **argv)
 {
   struct option long_options[] = { {"gpio", 1, 0, 0},
-  {"address", 1, 0, 0}, {"command", 1, 0, 0}, {"receiver", 1, 0, 0},
-  {"repeat", 1, 0, 0}, {NULL, 0, 0, 0}
+    {"address", 1, 0, 0}, {"command", 1, 0, 0}, {"receiver", 1, 0, 0},
+    {"repeat", 1, 0, 0}, {NULL, 0, 0, 0}
   };
   unsigned int address = 0;
-  unsigned char receiver = 1;
+  unsigned char receiver = 0;
   long int a2i;
   int gpio = -1;
   char command = HOMEASY_UNKNOWN;
@@ -61,8 +61,9 @@ int main(int argc, char **argv)
 
   while (1) {
     c = getopt_long(argc, argv, "", long_options, &i);
-    if (c == -1)
+    if (c == -1) {
       break;
+    }
     switch (c) {
       case 0:
         if (strcmp(long_options[i].name, "gpio") == 0) {
@@ -101,7 +102,9 @@ int main(int argc, char **argv)
     }
   }
 
-  if (command == HOMEASY_UNKNOWN || address == 0 || gpio == -1 || receiver == 0) {
+  printf("cmd: %d, address: %d, gpio: %d\n", command, address, gpio);
+  if (command == HOMEASY_UNKNOWN || address == 0 || gpio == -1) {
+      printf("dsfsds\n");
     usage(argv[0]);
   }
   // store pid and lock it

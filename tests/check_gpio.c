@@ -199,7 +199,7 @@ Suite *gpio_suite(void)
   tcase_add_test(tc_gpio, test_open_success);
   tcase_add_test(tc_gpio, test_two_opens);
   tcase_add_test(tc_gpio, test_read_write);
-  tcase_add_test(tc_gpio, test_usleep);
+//  tcase_add_test(tc_gpio, test_usleep);
   tcase_add_test(tc_gpio, test_sched);
   suite_add_tcase(s, tc_gpio);
 
