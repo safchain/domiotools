@@ -148,9 +148,16 @@ const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
 int homeasy_receive(unsigned int gpio, unsigned int type,
         unsigned int duration, struct homeasy_payload *payload)
 {
-  int *address = (int *) mock_returns("homeasy_receive_address");
+  int *address, *receiver;
+
+  address = (int *) mock_returns("homeasy_receive_address");
   if (address != NULL) {
     payload->address = *address;
+  }
+
+  receiver = (int *) mock_returns("homeasy_receive_receiver");
+  if (receiver != NULL) {
+    payload->receiver = *receiver;
   }
 
   mock_called("homeasy_receive");
@@ -778,6 +785,39 @@ START_TEST(test_homeasy_publish_wildcard)
 }
 END_TEST
 
+START_TEST(test_homeasy_publish_receiver)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "gpio: 2;"
+        "type: \"homeasy\";"
+        "address: 0;"
+        "receiver: 1;"
+        "output: \"mqtt://localhost:1883/5555\";})"
+    "}";
+  int rc, address, receiver;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(rc, 1);
+
+  address = 1111;
+  mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
+
+  receiver = 1;
+  mock_will_return("homeasy_receive_receiver", &receiver, MOCK_RETURNED_ONCE);
+
+  /* a first loop in order to initialize some static */
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, LOW);
+
+  rc = mock_calls("homeasy_receive");
+  ck_assert_int_eq(rc, 1);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 1);
+}
+END_TEST
+
 START_TEST(test_homeasy_publish_same_twice)
 {
   char *conf = "config:{"
@@ -864,6 +904,7 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_srts_publish_wildcard);
   tcase_add_test(tc_rf, test_homeasy_publish);
   tcase_add_test(tc_rf, test_homeasy_publish_same_twice);
+  tcase_add_test(tc_rf, test_homeasy_publish_receiver);
   tcase_add_test(tc_rf, test_homeasy_publish_wildcard);
   tcase_add_test(tc_rf, test_publish_gpio);
   suite_add_tcase(s, tc_rf);

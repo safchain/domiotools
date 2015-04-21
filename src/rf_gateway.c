@@ -164,7 +164,7 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
   const char *ctrl;
   time_t now, last;
   static TREE_II *last_success = NULL;
-  int err;
+  int err, receiver = -1;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
@@ -188,7 +188,10 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
         continue;
       }
 
-      if (!address || payload->address == address) {
+      config_setting_lookup_int(h, "receiver", (int *) &receiver);
+
+      if ((!address || payload->address == address) &&
+              (receiver == -1 || payload->receiver == receiver)) {
         ctrl = homeasy_get_ctrl_str(payload);
         if (ctrl == NULL) {
           dlog(DLOG, DLOG_ERR, "Homeasy, ctrl unknown: %d", payload->ctrl);
