@@ -45,12 +45,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_homeasy_sender_OBJECTS = common.$(OBJEXT) mem.$(OBJEXT) \
+am_homeasy_sender_OBJECTS = utils.$(OBJEXT) mem.$(OBJEXT) \
 	homeasy.$(OBJEXT) logging.$(OBJEXT) gpio.$(OBJEXT) \
 	list.$(OBJEXT) homeasy_sender.$(OBJEXT)
 homeasy_sender_OBJECTS = $(am_homeasy_sender_OBJECTS)
 homeasy_sender_DEPENDENCIES =
-am_srts_sender_OBJECTS = srts.$(OBJEXT) common.$(OBJEXT) \
+am_srts_sender_OBJECTS = srts.$(OBJEXT) utils.$(OBJEXT) \
 	logging.$(OBJEXT) mem.$(OBJEXT) gpio.$(OBJEXT) list.$(OBJEXT) \
 	srts_sender.$(OBJEXT)
 srts_sender_OBJECTS = $(am_srts_sender_OBJECTS)
@@ -164,7 +164,7 @@ top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
 srts_sender_SOURCES = $(top_srcdir)/src/srts.c \
-                      $(top_srcdir)/src/common.c \
+                      $(top_srcdir)/src/utils.c \
                       $(top_srcdir)/src/logging.c \
                       $(top_srcdir)/src/mem.c \
                       $(top_srcdir)/src/gpio.c \
@@ -172,7 +172,7 @@ srts_sender_SOURCES = $(top_srcdir)/src/srts.c \
                       srts_sender.c
 
 srts_sender_LDADD = -lpthread -lrt @GCOV_LIBS@
-homeasy_sender_SOURCES = $(top_srcdir)/src/common.c \
+homeasy_sender_SOURCES = $(top_srcdir)/src/utils.c \
                          $(top_srcdir)/src/mem.c \
                          $(top_srcdir)/src/homeasy.c \
                          $(top_srcdir)/src/logging.c \
@@ -265,7 +265,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gpio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy_sender.Po@am__quote@
@@ -274,6 +273,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts_sender.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -289,19 +289,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-common.o: $(top_srcdir)/src/common.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.o -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.o `test -f '$(top_srcdir)/src/common.c' || echo '$(srcdir)/'`$(top_srcdir)/src/common.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/common.c' object='common.o' libtool=no @AMDEPBACKSLASH@
+utils.o: $(top_srcdir)/src/utils.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT utils.o -MD -MP -MF $(DEPDIR)/utils.Tpo -c -o utils.o `test -f '$(top_srcdir)/src/utils.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/utils.Tpo $(DEPDIR)/utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/utils.c' object='utils.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.o `test -f '$(top_srcdir)/src/common.c' || echo '$(srcdir)/'`$(top_srcdir)/src/common.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o utils.o `test -f '$(top_srcdir)/src/utils.c' || echo '$(srcdir)/'`$(top_srcdir)/src/utils.c
 
-common.obj: $(top_srcdir)/src/common.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.obj -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.obj `if test -f '$(top_srcdir)/src/common.c'; then $(CYGPATH_W) '$(top_srcdir)/src/common.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/common.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/common.c' object='common.obj' libtool=no @AMDEPBACKSLASH@
+utils.obj: $(top_srcdir)/src/utils.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT utils.obj -MD -MP -MF $(DEPDIR)/utils.Tpo -c -o utils.obj `if test -f '$(top_srcdir)/src/utils.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/utils.Tpo $(DEPDIR)/utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_srcdir)/src/utils.c' object='utils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.obj `if test -f '$(top_srcdir)/src/common.c'; then $(CYGPATH_W) '$(top_srcdir)/src/common.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/common.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o utils.obj `if test -f '$(top_srcdir)/src/utils.c'; then $(CYGPATH_W) '$(top_srcdir)/src/utils.c'; else $(CYGPATH_W) '$(srcdir)/$(top_srcdir)/src/utils.c'; fi`
 
 mem.o: $(top_srcdir)/src/mem.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mem.o -MD -MP -MF $(DEPDIR)/mem.Tpo -c -o mem.o `test -f '$(top_srcdir)/src/mem.c' || echo '$(srcdir)/'`$(top_srcdir)/src/mem.c

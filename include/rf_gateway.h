@@ -17,6 +17,8 @@
 #ifndef __RF_GATEWAY_H
 #define __RF_GATEWAY_H
 
+#define PROGNAME    "rf_gateway"
+
 int rf_gw_init(char *in, int file);
 void rf_gw_loop(int loop);
 void rf_gw_stop();

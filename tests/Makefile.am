@@ -1,7 +1,8 @@
 TESTS = check_hl check_urlparser check_mqtt check_rf_gateway check_srts \
-		check_logging check_mem check_homeasy check_gpio
+		check_logging check_mem check_homeasy check_gpio check_utils
 check_PROGRAMS = check_hl check_urlparser check_mqtt check_rf_gateway \
-				 check_srts check_logging check_mem check_homeasy check_gpio
+				 check_srts check_logging check_mem check_homeasy check_gpio \
+				 check_utils
 
 check_hl_SOURCES = check_hl.c \
 				   $(top_builddir)/src/list.c \
@@ -15,6 +16,11 @@ check_mem_SOURCES = check_mem.c \
 				   $(top_builddir)/src/mem.c
 check_mem_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_mem_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
+
+check_utils_SOURCES = check_utils.c \
+				   $(top_builddir)/src/utils.c
+check_utils_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
+check_utils_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 
 check_logging_SOURCES = check_logging.c \
 				        $(top_builddir)/src/mem.c \
@@ -37,7 +43,7 @@ check_urlparser_LDADD = @CHECK_LIBS@ @GCOV_LIBS@
 
 check_srts_SOURCES = check_srts.c \
 					 $(top_builddir)/src/mem.c \
-					 $(top_builddir)/src/common.c \
+					 $(top_builddir)/src/utils.c \
 					 $(top_builddir)/src/logging.c \
 					 $(top_builddir)/src/srts.c
 check_srts_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall

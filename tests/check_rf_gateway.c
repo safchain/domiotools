@@ -332,6 +332,48 @@ START_TEST(test_config_subscribers_success)
 }
 END_TEST
 
+START_TEST(test_config_log)
+{
+  char *tmpl = "config:{"
+    "globals:{"
+        "log:{"
+            "type: \"%s\";"
+            "priority: \"%s\";"
+        "}}"
+    "}";
+  char *type[] = {"stderr", "stdout", "syslog", NULL};
+  char *prio[] = {"emerg", "alert", "crit", "err", "warning",
+      "notice", "info", "debug", NULL};
+  char *gen;
+  int t, p, rc;
+
+  t = 0;
+  while(type[t] != NULL) {
+    p = 0;
+    while(prio[p] != NULL) {
+      rc = snprintf(NULL, 0, tmpl, type[t], prio[p]);
+      gen = xmalloc(rc + 1);
+      sprintf(gen, tmpl, type[t], prio[p]);
+
+      rc = rf_gw_init(gen, 0);
+      if (rc == 0) {
+        printf(">>>>>>>>>> %s\n", gen);
+      }
+      ck_assert_int_eq(1, rc);
+
+      dlog_destroy(DLOG);
+
+      DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
+      assert(DLOG != NULL);
+
+      free(gen);
+      p++;
+    }
+    t++;
+  }
+}
+END_TEST
+
 START_TEST(test_subscribe_srts_callback)
 {
   char *conf = "config:{"
@@ -889,6 +931,7 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_config_publishers_no_output_error);
   tcase_add_test(tc_rf, test_config_publishers_no_address_error);
   tcase_add_test(tc_rf, test_config_publishers_success);
+  tcase_add_test(tc_rf, test_config_log);
   tcase_add_test(tc_rf, test_config_subscribers_no_type_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_output_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_address_error);

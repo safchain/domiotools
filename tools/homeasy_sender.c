@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "common.h"
 #include "homeasy.h"
 #include "logging.h"
 #include "gpio.h"
@@ -107,8 +106,6 @@ int main(int argc, char **argv)
       printf("dsfsds\n");
     usage(argv[0]);
   }
-  // store pid and lock it
-  store_pid();
 
   DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
   assert(DLOG != NULL);

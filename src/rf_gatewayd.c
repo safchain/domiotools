@@ -25,7 +25,6 @@
 #include <time.h>
 #include <assert.h>
 
-#include "common.h"
 #include "srts.h"
 #include "hl.h"
 #include "urlparser.h"
@@ -33,9 +32,6 @@
 #include "rf_gateway.h"
 #include "logging.h"
 #include "gpio.h"
-
-extern int verbose;
-extern int debug;
 
 struct dlog *DLOG;
 
@@ -60,9 +56,6 @@ int main(int argc, char **argv)
   if (!rf_gw_init("rules.cfg", 1)) {
     return -1;
   }
-
-  verbose = 1;
-  debug = 1;
 
   rf_gw_loop(-1);
 

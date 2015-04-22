@@ -26,7 +26,6 @@
 #include <limits.h>
 #include <stdio.h>
 
-#include "common.h"
 #include "mem.h"
 #include "srts.h"
 #include "hl.h"
@@ -35,6 +34,7 @@
 #include "logging.h"
 #include "homeasy.h"
 #include "gpio.h"
+#include "rf_gateway.h"
 
 enum {
   SRTS = 1,
@@ -561,10 +561,72 @@ static int config_read_globals()
   int rc;
 
   rc = config_lookup_string(&rf_cfg, "config.globals.persistence_path",
-                            (const char **) &rf_persistence_path);
+          (const char **) &rf_persistence_path);
   if (rc == CONFIG_FALSE) {
     dlog(DLOG, DLOG_WARNING, "No persistence path defined, using the "
          "default value: %s", rf_persistence_path);
+  }
+
+  return 1;
+}
+
+static int config_read_log()
+{
+  char *s_type = NULL, *s_prio = NULL, *path = PROGNAME;
+  int type = DLOG_NULL, prio = DLOG_INFO, rc;
+
+  config_lookup_string(&rf_cfg, "config.globals.log.type",
+          (const char **) &s_type);
+  if (s_type != NULL) {
+    if (strcasecmp(s_type, "STDERR") == 0) {
+      type = DLOG_STDERR;
+    } else if (strcasecmp(s_type, "STDOUT") == 0) {
+      type = DLOG_STDOUT;
+    } else if (strcasecmp(s_type, "SYSLOG") == 0) {
+      type = DLOG_SYSLOG;
+    } else if (strcasecmp(s_type, "FILE") == 0) {
+      type = DLOG_FILE;
+    } else if (strcasecmp(s_type, "NULL") == 0) {
+      type = DLOG_NULL;
+    }
+  }
+
+  config_lookup_string(&rf_cfg, "config.globals.log.priority",
+          (const char **) &s_prio);
+  if (s_prio != NULL) {
+    if (strcasecmp(s_prio, "EMERG") == 0) {
+      prio = DLOG_EMERG;
+    } else if (strcasecmp(s_prio, "ALERT") == 0) {
+      prio = DLOG_ALERT;
+    } else if (strcasecmp(s_prio, "CRIT") == 0) {
+      prio = DLOG_CRIT;
+    } else if (strcasecmp(s_prio, "ERR") == 0) {
+      prio = DLOG_ERR;
+    } else if (strcasecmp(s_prio, "WARNING") == 0) {
+      prio = DLOG_WARNING;
+    } else if (strcasecmp(s_prio, "NOTICE") == 0) {
+      prio = DLOG_NOTICE;
+    } else if (strcasecmp(s_prio, "INFO") == 0) {
+      prio = DLOG_INFO;
+    } else if (strcasecmp(s_prio, "DEBUG") == 0) {
+      prio = DLOG_DEBUG;
+    }
+  }
+
+  if (type == DLOG_FILE) {
+    rc = config_lookup_string(&rf_cfg, "config.globals.log.path",
+            (const char **) &path);
+    if (rc == CONFIG_FALSE) {
+      dlog(DLOG, DLOG_ERR, "No path defined for the log file");
+      return 0;
+    }
+  }
+
+  dlog_destroy(DLOG);
+
+  DLOG = dlog_init(type, prio, path);
+  if (DLOG == NULL) {
+    return 0;
   }
 
   return 1;
@@ -603,6 +665,10 @@ int rf_gw_init(char *in, int file)
   }
 
   if (!config_read_globals()) {
+    return 0;
+  }
+
+  if (!config_read_log()) {
     return 0;
   }
 

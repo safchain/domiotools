@@ -23,7 +23,7 @@
 #include <limits.h>
 #include <pthread.h>
 
-#include "common.h"
+#include "utils.h"
 #include "mem.h"
 #include "logging.h"
 #include "gpio.h"

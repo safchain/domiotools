@@ -23,9 +23,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int verbose = 0;
-int debug = 0;
-
 static int do_mkdir(const char *path, mode_t mode)
 {
   struct stat st;
@@ -65,40 +62,4 @@ int mkpath(const char *path, mode_t mode)
   free(copypath);
 
   return status;
-}
-
-void store_pid()
-{
-  char *path;
-  FILE *fp;
-  int size;
-
-  size = snprintf(NULL, 0, "/var/run/domiotools.pid");
-  if ((path = (char *) malloc(size + 1)) == NULL) {
-    fprintf(stderr, "Memory allocation error\n");
-    exit(-1);
-  }
-  sprintf(path, "/var/run/");
-  if (mkpath(path, 0755) == -1) {
-    fprintf(stderr, "Unable to create the pid path: %s\n", path);
-    exit(-1);
-  }
-  sprintf(path, "/var/run/domiotools.pid");
-
-  if ((fp = fopen(path, "w+")) == NULL) {
-    fprintf(stderr, "Unable to open the pid file: %s", path);
-    exit(-1);
-  }
-
-  if (flock(fileno(fp), LOCK_EX) == -1) {
-    fprintf(stderr, "Unable to lock the pid file: %s", path);
-    exit(-1);
-  }
-
-  if (fprintf(fp, "%d\n", getpid()) < 0) {
-    fclose(fp);
-    exit(-1);
-  }
-
-  fclose(fp);
 }

@@ -14,10 +14,9 @@
  * 02110-1301, USA.
  */
 
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef UTILS_H_
+#define UTILS_H_
 
 int mkpath(const char *path, mode_t mode);
-void store_pid();
 
 #endif
