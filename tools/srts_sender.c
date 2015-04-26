@@ -57,7 +57,8 @@ int main(int argc, char **argv)
   char *persistence_path = "/var/lib/", *end;
 
   if (setuid(0)) {
-    perror("setuid");
+    fprintf(stderr, "Has to be started as root: %s\n",
+      strerror(errno));
     return -1;
   }
 

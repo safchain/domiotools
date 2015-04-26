@@ -54,7 +54,8 @@ int main(int argc, char **argv)
   int repeat = 5, i, c;
 
   if (setuid(0)) {
-    perror("setuid");
+    fprintf(stderr, "Has to be started as root: %s\n",
+      strerror(errno));
     return -1;
   }
 

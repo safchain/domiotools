@@ -573,7 +573,7 @@ static int config_read_globals()
 static int config_read_log()
 {
   char *s_type = NULL, *s_prio = NULL, *path = PROGNAME;
-  int type = DLOG_NULL, prio = DLOG_INFO, rc;
+  int type = DLOG_STDERR, prio = DLOG_INFO, rc;
 
   config_lookup_string(&rf_cfg, "config.globals.log.type",
           (const char **) &s_type);
@@ -624,6 +624,8 @@ static int config_read_log()
 
   dlog_destroy(DLOG);
 
+
+
   DLOG = dlog_init(type, prio, path);
   if (DLOG == NULL) {
     return 0;
@@ -657,6 +659,10 @@ int rf_gw_init(char *in, int file)
     return 0;
   }
 
+  if (!config_read_log()) {
+    return 0;
+  }
+
   rc = gpio_event_init();
   if (!rc) {
     dlog(DLOG, DLOG_CRIT, "Could not initialise gpio_events !");
@@ -665,10 +671,6 @@ int rf_gw_init(char *in, int file)
   }
 
   if (!config_read_globals()) {
-    return 0;
-  }
-
-  if (!config_read_log()) {
     return 0;
   }
 
