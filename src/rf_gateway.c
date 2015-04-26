@@ -400,8 +400,14 @@ static int start_subscribers()
         return 0;
       }
       if (!config_setting_lookup_int(h, "gpio", (int *) &gpio)) {
-        dlog(DLOG, DLOG_ERR, "No GPIO defined for the publisher line: %d",
+        dlog(DLOG, DLOG_ERR, "No GPIO defined for the subscriber line: %d",
                 config_setting_source_line(h));
+        return 0;
+      }
+      if (gpio > MAX_GPIO) {
+        dlog(DLOG, DLOG_ERR, "Unsupported GPIO for the subscriber line: %d,"
+                "maximum supported %d", config_setting_source_line(h),
+                MAX_GPIO);
         return 0;
       }
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
@@ -524,11 +530,6 @@ static int start_publishers()
 
   for (gpio = 0; gpio != MAX_GPIO; gpio++) {
     if (rf_publisher_types[gpio]) {
-      if (!gpio_export(gpio)) {
-          dlog(DLOG, DLOG_ERR, "Unable to export the GPIO: %d", gpio);
-          return 0;
-      }
-
       if (!gpio_edge_detection(gpio, GPIO_EDGE_BOTH)) {
         dlog(DLOG, DLOG_ERR,
                 "Unable to set the edge detection mode for the GPIO: %d",
@@ -623,8 +624,6 @@ static int config_read_log()
   }
 
   dlog_destroy(DLOG);
-
-
 
   DLOG = dlog_init(type, prio, path);
   if (DLOG == NULL) {

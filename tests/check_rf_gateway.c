@@ -180,6 +180,8 @@ void test_rf_setup()
 
   rc = gpio_open(2, GPIO_IN);
   ck_assert_int_ne(-1, rc);
+
+  gpio_close(2);
 }
 
 void test_rf_teardown()
@@ -187,9 +189,19 @@ void test_rf_teardown()
   gpio_close(2);
   unlink("/tmp/gpio2/value");
 
+  rf_gw_stop();
   rf_gw_destroy();
   mock_destroy();
 }
+
+START_TEST(test_config_file_not_found)
+{
+  int rc;
+
+  rc = rf_gw_init("/tmp/xxx", 1);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
 
 START_TEST(test_config_syntax_error)
 {
@@ -226,6 +238,64 @@ START_TEST(test_config_publishers_no_output_error)
   char *conf = "config:{"
     "publishers:({"
         "gpio: 2;"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_publishers_no_gpio_error)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_subscribers_no_gpio_error)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_publishers_max_gpio_error)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "gpio: 2000;"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_subscribers_max_gpio_error)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "gpio: 2000;"
         "type: \"srts\";"
         "address: 3333;})"
     "}";
@@ -356,9 +426,6 @@ START_TEST(test_config_log)
       sprintf(gen, tmpl, type[t], prio[p]);
 
       rc = rf_gw_init(gen, 0);
-      if (rc == 0) {
-        printf(">>>>>>>>>> %s\n", gen);
-      }
       ck_assert_int_eq(1, rc);
 
       dlog_destroy(DLOG);
@@ -371,6 +438,43 @@ START_TEST(test_config_log)
     }
     t++;
   }
+}
+END_TEST
+
+START_TEST(test_config_log_file)
+{
+  char *config = "config:{"
+    "globals:{"
+        "log:{"
+            "type: \"file\";"
+            "priority: \"info\";"
+            "path: \"/tmp/xxxxx\""
+        "}}"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(config, 0);
+  ck_assert_int_eq(1, rc);
+
+  dlog_destroy(DLOG);
+}
+END_TEST
+
+START_TEST(test_config_log_file_no_path_error)
+{
+  char *config = "config:{"
+    "globals:{"
+        "log:{"
+            "type: \"file\";"
+            "priority: \"info\";"
+        "}}"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(config, 0);
+  ck_assert_int_eq(0, rc);
+
+  dlog_destroy(DLOG);
 }
 END_TEST
 
@@ -950,6 +1054,13 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_homeasy_publish_receiver);
   tcase_add_test(tc_rf, test_homeasy_publish_wildcard);
   tcase_add_test(tc_rf, test_publish_gpio);
+  tcase_add_test(tc_rf, test_config_publishers_no_gpio_error);
+  tcase_add_test(tc_rf, test_config_publishers_max_gpio_error);
+  tcase_add_test(tc_rf, test_config_subscribers_no_gpio_error);
+  tcase_add_test(tc_rf, test_config_subscribers_max_gpio_error);
+  tcase_add_test(tc_rf, test_config_file_not_found);
+  tcase_add_test(tc_rf, test_config_log_file);
+  tcase_add_test(tc_rf, test_config_log_file_no_path_error);
   suite_add_tcase(s, tc_rf);
 
   return s;
