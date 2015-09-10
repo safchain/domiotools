@@ -39,7 +39,7 @@ struct dlog *DLOG;
 static void usage(char *name)
 {
   fprintf(stderr, "Usage: %s --gpio <gpio pin> --address <remote address> "
-          "--comand <command> --repeat <number> --persistence_path <path>\n",
+          "--command <command> --repeat <number> --persistence_path <path>\n",
           name);
   exit(-1);
 }
@@ -47,8 +47,8 @@ static void usage(char *name)
 int main(int argc, char **argv)
 {
   struct option long_options[] = { {"gpio", 1, 0, 0},
-  {"address", 1, 0, 0}, {"command", 1, 0, 0}, {"repeat", 1, 0, 0},
-  {"persistence_path", 1, 0, 0}, {NULL, 0, 0, 0}
+    {"address", 1, 0, 0}, {"command", 1, 0, 0}, {"repeat", 1, 0, 0},
+    {"persistence_path", 1, 0, 0}, {NULL, 0, 0, 0}
   };
   unsigned short address = 0;
   unsigned short code = 0;
