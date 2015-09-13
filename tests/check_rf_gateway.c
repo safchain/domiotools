@@ -510,6 +510,48 @@ START_TEST(test_subscribe_homeasy_translations)
 }
 END_TEST
 
+START_TEST(test_subscribe_homeasy_fixed_value)
+{
+  char *conf = "config:{"
+    "globals:{"
+        "persistence_path: \"/tmp/persist\";"
+    "};"
+    "subscribers:({"
+        "gpio: 2;"
+        "type: \"homeasy\";"
+        "address: 4444;"
+        "input: \"mqtt://localhost:1883/4444\";"
+        "value: \"ON\";"
+        "})"
+    "}";
+  void *obj;
+  void (*callback)(void *data, const void *payload, int payloadlen);
+  char *payload = "UP";
+  int rc, *value;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(1, rc);
+  ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+
+  obj = mock_call("mqtt_subscribe:obj", 0);
+  callback = mock_call("mqtt_subscribe:callback", 0);
+  callback(obj, payload, strlen(payload));
+
+  ck_assert_int_eq(1, mock_calls("homeasy_transmit"));
+  value = (int *) mock_call("homeasy_transmit:gpio", 0);
+  ck_assert_int_eq(2, *value);
+  free(value);
+
+  value = (int *) mock_call("homeasy_transmit:address", 0);
+  ck_assert_int_eq(4444, *value);
+  free(value);
+
+  value = (int *) mock_call("homeasy_transmit:ctrl", 0);
+  ck_assert_int_eq(HOMEASY_ON, *value);
+  free(value);
+}
+END_TEST
+
 static void gpio_write_and_loop(unsigned int gpio, char value)
 {
   gpio_write(gpio, value);
@@ -858,6 +900,7 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_subscribe_homeasy_callback);
   tcase_add_test(tc_rf, test_subscribe_homeasy_callback_unknow_ctrl);
   tcase_add_test(tc_rf, test_subscribe_homeasy_translations);
+  tcase_add_test(tc_rf, test_subscribe_homeasy_fixed_value);
   tcase_add_test(tc_rf, test_srts_publish);
   tcase_add_test(tc_rf, test_srts_publish_same_twice);
   tcase_add_test(tc_rf, test_srts_publish_translations);

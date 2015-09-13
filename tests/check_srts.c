@@ -335,13 +335,13 @@ Suite *srts_suite(void)
   tc_srts = tcase_create("srts");
 
   tcase_add_checked_fixture(tc_srts, test_srts_setup, test_srts_teardown);
-/*  tcase_add_test(tc_srts, test_srts_transmit_receive);
+  tcase_add_test(tc_srts, test_srts_transmit_receive);
   tcase_add_test(tc_srts, test_srts_transmit_two_receives);
-  tcase_add_test(tc_srts, test_srts_transmit_two_parallel_receives);*/
+  tcase_add_test(tc_srts, test_srts_transmit_two_parallel_receives);
   tcase_add_test(tc_srts, test_srts_transmit_receive_repeated);
-/*  tcase_add_test(tc_srts, test_srts_transmit_persist);
+  tcase_add_test(tc_srts, test_srts_transmit_persist);
   tcase_add_test(tc_srts, test_srts_receive_bad_gpio);
-  tcase_add_test(tc_srts, test_srts_transmit_print_receive);*/
+  tcase_add_test(tc_srts, test_srts_transmit_print_receive);
 
   suite_add_tcase(s, tc_srts);
 

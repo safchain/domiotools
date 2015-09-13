@@ -73,6 +73,11 @@ static const char *translate_value(config_setting_t *config, const char *value)
     return translation;
   }
 
+  if (config_setting_lookup_string (translations, "*",
+              (const char **) &translation) == CONFIG_TRUE) {
+    return translation;
+  }
+
   return value;
 }
 
@@ -315,12 +320,18 @@ static int add_publisher_type(unsigned int gpio, const char *type)
 
 static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
 {
+  char *value, *ptr = NULL;
   int ctrl, rc;
   struct rf_device *device = (struct rf_device *) obj;
-  char *value = xmalloc(payloadlen + 1);
 
-  memset(value, 0, payloadlen + 1);
-  memcpy(value, payload, payloadlen);
+  if (!config_setting_lookup_string(device->config_h, "value",
+              (const char **) &value) == CONFIG_TRUE) {
+    ptr = xmalloc(payloadlen + 1);
+    memset(ptr, 0, payloadlen + 1);
+    memcpy(ptr, payload, payloadlen);
+
+    value = ptr;
+  }
 
   rc = pthread_mutex_lock(&gpio_mutexes[device->gpio]);
   if (rc != 0) {
@@ -352,7 +363,9 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
 clean:
   pthread_mutex_unlock(&gpio_mutexes[device->gpio]);
 
-  free(value);
+  if (ptr != NULL) {
+    free(ptr);
+  }
 }
 
 static void gpio_cb(unsigned int gpio, void *data)
