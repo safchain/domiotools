@@ -23,9 +23,9 @@
 #include <limits.h>
 #include <stdio.h>
 #include <time.h>
+#include <getopt.h>
 #include <assert.h>
 
-#include "common.h"
 #include "srts.h"
 #include "hl.h"
 #include "urlparser.h"
@@ -34,22 +34,54 @@
 #include "logging.h"
 #include "gpio.h"
 
-extern int verbose;
-extern int debug;
-
 struct dlog *DLOG;
+
+static void usage(char *name)
+{
+  fprintf(stderr, "Usage: %s --conf <config file>\n",
+          name);
+  exit(-1);
+}
 
 int main(int argc, char **argv)
 {
+  struct option long_options[] = { {"conf", 1, 0, 0}, {NULL, 0, 0, 0} };
+  char *config = NULL;
+  int i, c;
+
   if (setuid(0)) {
-    perror("setuid");
+    fprintf(stderr, "RF Gateway has to be started as root: %s\n",
+      strerror(errno));
     return -1;
   }
 
   srand(time(NULL));
 
+  while (1) {
+    c = getopt_long(argc, argv, "", long_options, &i);
+    if (c == -1)
+      break;
+    switch (c) {
+      case 0:
+        if (strcmp(long_options[i].name, "conf") == 0) {
+          config = strdup(optarg);
+        }
+        break;
+      default:
+        usage(argv[0]);
+    }
+  }
+
+  if (config == NULL || strlen(config) == 0) {
+    usage(argv[0]);
+  }
+
   DLOG = dlog_init(DLOG_STDERR, DLOG_DEBUG, "rf_gateway");
   assert(DLOG != NULL);
+
+  if (!rf_gw_init(config, 1)) {
+    return -1;
+  }
 
   mqtt_init();
 
@@ -57,14 +89,9 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  if (!rf_gw_init("rules.cfg", 1)) {
-    return -1;
-  }
-
-  verbose = 1;
-  debug = 1;
-
   rf_gw_loop(-1);
+
+  free(config);
 
   return 0;
 }

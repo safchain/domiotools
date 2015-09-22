@@ -4,7 +4,7 @@
 AC_PREREQ([2.59])
 AC_INIT([domiotools], [0.1], [safchain@gmail.com])
 AM_INIT_AUTOMAKE
-AC_CONFIG_SRCDIR([include/common.h])
+AC_CONFIG_SRCDIR([include/rf_gateway.h])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.

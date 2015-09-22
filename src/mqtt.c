@@ -358,10 +358,8 @@ int mqtt_publish(const char *output, const char *value)
   struct url *url;
   int rc = MQTT_SUCCESS;
 
-  if (verbose) {
-    dlog(DLOG, DLOG_INFO, "Sending mqtt notification to %s with %s as value",
-            output, value);
-  }
+  dlog(DLOG, DLOG_INFO, "Sending mqtt notification to %s with %s as value",
+          output, value);
 
   url = parse_url(output);
   if (url == NULL) {

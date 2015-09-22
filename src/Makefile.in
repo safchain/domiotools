@@ -62,7 +62,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) common.$(OBJEXT) \
+am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) utils.$(OBJEXT) \
 	srts.$(OBJEXT) hmap.$(OBJEXT) list.$(OBJEXT) \
 	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT) \
 	mem.$(OBJEXT) logging.$(OBJEXT) homeasy.$(OBJEXT) \
@@ -182,7 +182,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
-rf_gatewayd_SOURCES = rf_gatewayd.c common.c srts.c hmap.c list.c urlparser.c \
+rf_gatewayd_SOURCES = rf_gatewayd.c utils.c srts.c hmap.c list.c urlparser.c \
 					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c gpio.c \
 					  tree.c
 
@@ -273,7 +273,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gpio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy.Po@am__quote@
@@ -286,6 +285,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/urlparser.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

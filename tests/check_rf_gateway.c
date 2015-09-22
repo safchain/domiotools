@@ -148,9 +148,16 @@ const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
 int homeasy_receive(unsigned int gpio, unsigned int type,
         unsigned int duration, struct homeasy_payload *payload)
 {
-  int *address = (int *) mock_returns("homeasy_receive_address");
+  int *address, *receiver;
+
+  address = (int *) mock_returns("homeasy_receive_address");
   if (address != NULL) {
     payload->address = *address;
+  }
+
+  receiver = (int *) mock_returns("homeasy_receive_receiver");
+  if (receiver != NULL) {
+    payload->receiver = *receiver;
   }
 
   mock_called("homeasy_receive");
@@ -173,6 +180,8 @@ void test_rf_setup()
 
   rc = gpio_open(2, GPIO_IN);
   ck_assert_int_ne(-1, rc);
+
+  gpio_close(2);
 }
 
 void test_rf_teardown()
@@ -180,9 +189,19 @@ void test_rf_teardown()
   gpio_close(2);
   unlink("/tmp/gpio2/value");
 
+  rf_gw_stop();
   rf_gw_destroy();
   mock_destroy();
 }
+
+START_TEST(test_config_file_not_found)
+{
+  int rc;
+
+  rc = rf_gw_init("/tmp/xxx", 1);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
 
 START_TEST(test_config_syntax_error)
 {
@@ -219,6 +238,64 @@ START_TEST(test_config_publishers_no_output_error)
   char *conf = "config:{"
     "publishers:({"
         "gpio: 2;"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_publishers_no_gpio_error)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_subscribers_no_gpio_error)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_publishers_max_gpio_error)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "gpio: 2000;"
+        "type: \"srts\";"
+        "address: 3333;})"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(0, rc);
+}
+END_TEST
+
+START_TEST(test_config_subscribers_max_gpio_error)
+{
+  char *conf = "config:{"
+    "subscribers:({"
+        "gpio: 2000;"
         "type: \"srts\";"
         "address: 3333;})"
     "}";
@@ -322,6 +399,82 @@ START_TEST(test_config_subscribers_success)
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
   ck_assert_int_eq(1, mock_calls("mqtt_subscribe"));
+}
+END_TEST
+
+START_TEST(test_config_log)
+{
+  char *tmpl = "config:{"
+    "globals:{"
+        "log:{"
+            "type: \"%s\";"
+            "priority: \"%s\";"
+        "}}"
+    "}";
+  char *type[] = {"stderr", "stdout", "syslog", NULL};
+  char *prio[] = {"emerg", "alert", "crit", "err", "warning",
+      "notice", "info", "debug", NULL};
+  char *gen;
+  int t, p, rc;
+
+  t = 0;
+  while(type[t] != NULL) {
+    p = 0;
+    while(prio[p] != NULL) {
+      rc = snprintf(NULL, 0, tmpl, type[t], prio[p]);
+      gen = xmalloc(rc + 1);
+      sprintf(gen, tmpl, type[t], prio[p]);
+
+      rc = rf_gw_init(gen, 0);
+      ck_assert_int_eq(1, rc);
+
+      dlog_destroy(DLOG);
+
+      DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
+      assert(DLOG != NULL);
+
+      free(gen);
+      p++;
+    }
+    t++;
+  }
+}
+END_TEST
+
+START_TEST(test_config_log_file)
+{
+  char *config = "config:{"
+    "globals:{"
+        "log:{"
+            "type: \"file\";"
+            "priority: \"info\";"
+            "path: \"/tmp/xxxxx\""
+        "}}"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(config, 0);
+  ck_assert_int_eq(1, rc);
+
+  dlog_destroy(DLOG);
+}
+END_TEST
+
+START_TEST(test_config_log_file_no_path_error)
+{
+  char *config = "config:{"
+    "globals:{"
+        "log:{"
+            "type: \"file\";"
+            "priority: \"info\";"
+        "}}"
+    "}";
+  int rc;
+
+  rc = rf_gw_init(config, 0);
+  ck_assert_int_eq(0, rc);
+
+  dlog_destroy(DLOG);
 }
 END_TEST
 
@@ -820,6 +973,39 @@ START_TEST(test_homeasy_publish_wildcard)
 }
 END_TEST
 
+START_TEST(test_homeasy_publish_receiver)
+{
+  char *conf = "config:{"
+    "publishers:({"
+        "gpio: 2;"
+        "type: \"homeasy\";"
+        "address: 0;"
+        "receiver: 1;"
+        "output: \"mqtt://localhost:1883/5555\";})"
+    "}";
+  int rc, address, receiver;
+
+  rc = rf_gw_init(conf, 0);
+  ck_assert_int_eq(rc, 1);
+
+  address = 1111;
+  mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
+
+  receiver = 1;
+  mock_will_return("homeasy_receive_receiver", &receiver, MOCK_RETURNED_ONCE);
+
+  /* a first loop in order to initialize some static */
+  gpio_write_and_loop(2, HIGH);
+  gpio_write_and_loop(2, LOW);
+
+  rc = mock_calls("homeasy_receive");
+  ck_assert_int_eq(rc, 1);
+
+  rc = mock_calls("mqtt_publish");
+  ck_assert_int_eq(rc, 1);
+}
+END_TEST
+
 START_TEST(test_homeasy_publish_same_twice)
 {
   char *conf = "config:{"
@@ -891,6 +1077,7 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_config_publishers_no_output_error);
   tcase_add_test(tc_rf, test_config_publishers_no_address_error);
   tcase_add_test(tc_rf, test_config_publishers_success);
+  tcase_add_test(tc_rf, test_config_log);
   tcase_add_test(tc_rf, test_config_subscribers_no_type_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_output_error);
   tcase_add_test(tc_rf, test_config_subscribers_no_address_error);
@@ -907,8 +1094,16 @@ Suite *rf_suite(void)
   tcase_add_test(tc_rf, test_srts_publish_wildcard);
   tcase_add_test(tc_rf, test_homeasy_publish);
   tcase_add_test(tc_rf, test_homeasy_publish_same_twice);
+  tcase_add_test(tc_rf, test_homeasy_publish_receiver);
   tcase_add_test(tc_rf, test_homeasy_publish_wildcard);
   tcase_add_test(tc_rf, test_publish_gpio);
+  tcase_add_test(tc_rf, test_config_publishers_no_gpio_error);
+  tcase_add_test(tc_rf, test_config_publishers_max_gpio_error);
+  tcase_add_test(tc_rf, test_config_subscribers_no_gpio_error);
+  tcase_add_test(tc_rf, test_config_subscribers_max_gpio_error);
+  tcase_add_test(tc_rf, test_config_file_not_found);
+  tcase_add_test(tc_rf, test_config_log_file);
+  tcase_add_test(tc_rf, test_config_log_file_no_path_error);
   suite_add_tcase(s, tc_rf);
 
   return s;

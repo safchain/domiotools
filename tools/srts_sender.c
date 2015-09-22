@@ -29,7 +29,6 @@
 #include <libgen.h>
 #include <assert.h>
 
-#include "common.h"
 #include "srts.h"
 #include "logging.h"
 #include "gpio.h"
@@ -58,7 +57,8 @@ int main(int argc, char **argv)
   char *persistence_path = "/var/lib/", *end;
 
   if (setuid(0)) {
-    perror("setuid");
+    fprintf(stderr, "Has to be started as root: %s\n",
+      strerror(errno));
     return -1;
   }
 
@@ -102,8 +102,6 @@ int main(int argc, char **argv)
   if (command == SRTS_UNKNOWN || address == 0 || gpio == -1) {
     usage(argv[0]);
   }
-  // store pid and lock it
-  store_pid();
 
   DLOG = dlog_init(DLOG_NULL, DLOG_INFO, NULL);
   assert(DLOG != NULL);

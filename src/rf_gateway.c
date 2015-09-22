@@ -26,7 +26,6 @@
 #include <limits.h>
 #include <stdio.h>
 
-#include "common.h"
 #include "mem.h"
 #include "srts.h"
 #include "hl.h"
@@ -35,6 +34,7 @@
 #include "logging.h"
 #include "homeasy.h"
 #include "gpio.h"
+#include "rf_gateway.h"
 
 enum {
   SRTS = 1,
@@ -169,7 +169,7 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
   const char *ctrl;
   time_t now, last;
   static TREE_II *last_success = NULL;
-  int err;
+  int err, receiver = -1;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
   if (hs == NULL) {
@@ -193,7 +193,10 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
         continue;
       }
 
-      if (!address || payload->address == address) {
+      config_setting_lookup_int(h, "receiver", (int *) &receiver);
+
+      if ((!address || payload->address == address) &&
+              (receiver == -1 || payload->receiver == receiver)) {
         ctrl = homeasy_get_ctrl_str(payload);
         if (ctrl == NULL) {
           dlog(DLOG, DLOG_ERR, "Homeasy, ctrl unknown: %d", payload->ctrl);
@@ -410,8 +413,14 @@ static int start_subscribers()
         return 0;
       }
       if (!config_setting_lookup_int(h, "gpio", (int *) &gpio)) {
-        dlog(DLOG, DLOG_ERR, "No GPIO defined for the publisher line: %d",
+        dlog(DLOG, DLOG_ERR, "No GPIO defined for the subscriber line: %d",
                 config_setting_source_line(h));
+        return 0;
+      }
+      if (gpio > MAX_GPIO) {
+        dlog(DLOG, DLOG_ERR, "Unsupported GPIO for the subscriber line: %d,"
+                "maximum supported %d", config_setting_source_line(h),
+                MAX_GPIO);
         return 0;
       }
       if (!config_setting_lookup_string(h, "type", (const char **) &type)) {
@@ -534,11 +543,6 @@ static int start_publishers()
 
   for (gpio = 0; gpio != MAX_GPIO; gpio++) {
     if (rf_publisher_types[gpio]) {
-      if (!gpio_export(gpio)) {
-          dlog(DLOG, DLOG_ERR, "Unable to export the GPIO: %d", gpio);
-          return 0;
-      }
-
       if (!gpio_edge_detection(gpio, GPIO_EDGE_BOTH)) {
         dlog(DLOG, DLOG_ERR,
                 "Unable to set the edge detection mode for the GPIO: %d",
@@ -571,10 +575,72 @@ static int config_read_globals()
   int rc;
 
   rc = config_lookup_string(&rf_cfg, "config.globals.persistence_path",
-                            (const char **) &rf_persistence_path);
+          (const char **) &rf_persistence_path);
   if (rc == CONFIG_FALSE) {
     dlog(DLOG, DLOG_WARNING, "No persistence path defined, using the "
          "default value: %s", rf_persistence_path);
+  }
+
+  return 1;
+}
+
+static int config_read_log()
+{
+  char *s_type = NULL, *s_prio = NULL, *path = PROGNAME;
+  int type = DLOG_STDERR, prio = DLOG_INFO, rc;
+
+  config_lookup_string(&rf_cfg, "config.globals.log.type",
+          (const char **) &s_type);
+  if (s_type != NULL) {
+    if (strcasecmp(s_type, "STDERR") == 0) {
+      type = DLOG_STDERR;
+    } else if (strcasecmp(s_type, "STDOUT") == 0) {
+      type = DLOG_STDOUT;
+    } else if (strcasecmp(s_type, "SYSLOG") == 0) {
+      type = DLOG_SYSLOG;
+    } else if (strcasecmp(s_type, "FILE") == 0) {
+      type = DLOG_FILE;
+    } else if (strcasecmp(s_type, "NULL") == 0) {
+      type = DLOG_NULL;
+    }
+  }
+
+  config_lookup_string(&rf_cfg, "config.globals.log.priority",
+          (const char **) &s_prio);
+  if (s_prio != NULL) {
+    if (strcasecmp(s_prio, "EMERG") == 0) {
+      prio = DLOG_EMERG;
+    } else if (strcasecmp(s_prio, "ALERT") == 0) {
+      prio = DLOG_ALERT;
+    } else if (strcasecmp(s_prio, "CRIT") == 0) {
+      prio = DLOG_CRIT;
+    } else if (strcasecmp(s_prio, "ERR") == 0) {
+      prio = DLOG_ERR;
+    } else if (strcasecmp(s_prio, "WARNING") == 0) {
+      prio = DLOG_WARNING;
+    } else if (strcasecmp(s_prio, "NOTICE") == 0) {
+      prio = DLOG_NOTICE;
+    } else if (strcasecmp(s_prio, "INFO") == 0) {
+      prio = DLOG_INFO;
+    } else if (strcasecmp(s_prio, "DEBUG") == 0) {
+      prio = DLOG_DEBUG;
+    }
+  }
+
+  if (type == DLOG_FILE) {
+    rc = config_lookup_string(&rf_cfg, "config.globals.log.path",
+            (const char **) &path);
+    if (rc == CONFIG_FALSE) {
+      dlog(DLOG, DLOG_ERR, "No path defined for the log file");
+      return 0;
+    }
+  }
+
+  dlog_destroy(DLOG);
+
+  DLOG = dlog_init(type, prio, path);
+  if (DLOG == NULL) {
+    return 0;
   }
 
   return 1;
@@ -602,6 +668,10 @@ int rf_gw_init(char *in, int file)
          config_error_file(&rf_cfg), config_error_line(&rf_cfg),
          config_error_text(&rf_cfg));
     config_destroy(&rf_cfg);
+    return 0;
+  }
+
+  if (!config_read_log()) {
     return 0;
   }
 
