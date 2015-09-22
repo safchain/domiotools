@@ -394,7 +394,7 @@ static int read_bit(unsigned int gpio, unsigned int type,
   if (!last && *duration > 1800) {
     pass[gpio] = 0;
 
-    return -*duration;
+    return -1;
   }
 
   /* duration too long to be a part of only one bit, so split into two parts */
@@ -531,6 +531,7 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
     if (duration < 400) {
       return 0;
     }
+
   }
 
   while (duration > 0) {

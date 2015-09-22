@@ -233,7 +233,8 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
   static unsigned char bytes[MAX_GPIO + 1][4];
   static char init = 0;
   unsigned char bit;
-  int rc, *i;
+  unsigned int *i;
+  int rc;
 
   if (!init) {
     memset(sync, 0, sizeof(sync));
@@ -259,8 +260,8 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
         sync[gpio] = 0;
         index[gpio] = 3;
 
-        i = (int *) bytes[gpio];
-        payload->address = *i >> 6;
+        i = (unsigned int *) bytes[gpio];
+        payload->address = *i >> 6 & 0x3FFFFFF;
         payload->group = (*i >> 5) & 1;
         payload->ctrl = (*i >> 4) & 1;
         payload->receiver = *i & 0xF;
