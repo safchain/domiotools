@@ -339,22 +339,7 @@ static int detect_sync(unsigned int gpio, unsigned int type,
     init = 1;
   }
 
-  if (!init_sync[gpio] && type && IS_ON_TIME(*duration, 11800, 16800)) {
-    init_sync[gpio] = 1;
-  } else if (!type && init_sync[gpio] == 1 &&
-          IS_ON_TIME(*duration, 11800, 16800)) {
-    init_sync[gpio] = 2;
-    hard_sync[gpio] = 10;
-  } else if (!type && IS_ON_TIME(*duration, 26000, 34000)) {
-    init_sync[gpio] = 2;
-    hard_sync[gpio] = 0;
-  } else if (init_sync[gpio] == 2 && hard_sync[gpio] != 14 &&
-          IS_ON_TIME(*duration, 2000, 3600)) {
-    hard_sync[gpio]++;
-  } else if (hard_sync[gpio] == 14 && soft_sync[gpio] == 0 &&
-          IS_ON_TIME(*duration, 4200, 5200)) {
-    soft_sync[gpio] = 1;
-  } else if (soft_sync[gpio] == 1 && *duration >= 660) {
+  if (soft_sync[gpio] == 1 && *duration >= 660) {
     if (*duration >= 800) {
       *duration -= 800;
     } else {
@@ -363,6 +348,10 @@ static int detect_sync(unsigned int gpio, unsigned int type,
     rc = 1;
 
     goto clean;
+  } else if (type && hard_sync[gpio] >= 4 && IS_ON_TIME(*duration, 4200, 5200)) {
+      soft_sync[gpio] = 1;
+  } else if (IS_ON_TIME(*duration, 1800, 3200)) {
+    hard_sync[gpio]++;
   } else {
     rc = 0;
 
