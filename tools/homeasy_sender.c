@@ -118,7 +118,8 @@ int main(int argc, char **argv)
 
   gpio_open(gpio, GPIO_OUT);
 
-  homeasy_transmit(gpio, address, receiver, command, 0, repeat);
+  homeasy_transmit(gpio, (address >> 16) & 0xffff, address & 0xffff,
+          receiver, command, 0, repeat);
 
   return 0;
 }

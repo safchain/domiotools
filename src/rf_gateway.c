@@ -165,7 +165,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
 static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
 {
   config_setting_t *hs, *h;
-  unsigned int address, delay = 0, i = 0;
+  unsigned int address, pl_address, delay = 0, i = 0;
   const char *ctrl;
   time_t now, last;
   static TREE_II *last_success = NULL;
@@ -195,7 +195,8 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
 
       config_setting_lookup_int(h, "receiver", (int *) &receiver);
 
-      if ((!address || payload->address == address) &&
+      pl_address = (payload->address1 << 16) + payload->address2;
+      if ((!address || pl_address == address) &&
               (receiver == -1 || payload->receiver == receiver)) {
         ctrl = homeasy_get_ctrl_str(payload);
         if (ctrl == NULL) {
@@ -358,8 +359,8 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
         goto clean;
       }
 
-      homeasy_transmit(device->gpio, device->address, 0, ctrl, 0,
-              device->repeat);
+      homeasy_transmit(device->gpio, (device->address >> 16) & 0xffff,
+              device->address & 0xffff, 0, ctrl, 0, device->repeat);
       break;
   }
 

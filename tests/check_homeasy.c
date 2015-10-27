@@ -110,17 +110,21 @@ static void free_pulses()
 START_TEST(test_homeasy_transmit_receive)
 {
   struct homeasy_payload payload;
-  int rc;
+  int address, rc;
 
   memset(&payload, 0, sizeof(struct homeasy_payload));
 
   random_signal();
-  homeasy_transmit(2, 123, 6, HOMEASY_ON, 1, 0);
+
+  address = 123456;
+  homeasy_transmit(2, (address >> 16) & 0xffff, address & 0xffff,
+          6, HOMEASY_ON, 1, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
-  ck_assert_int_eq(123, payload.address);
+  ck_assert_int_eq((address >> 16) & 0xffff, payload.address1);
+  ck_assert_int_eq(address & 0xffff, payload.address2);
   ck_assert_int_eq(6, payload.receiver);
   ck_assert_int_eq(1, payload.group);
   ck_assert_str_eq("ON", homeasy_get_ctrl_str(&payload));
@@ -132,17 +136,21 @@ END_TEST
 START_TEST(test_homeasy_transmit_two_receives)
 {
   struct homeasy_payload payload;
-  int rc;
+  int address, rc;
 
   memset(&payload, 0, sizeof(struct homeasy_payload));
 
   random_signal();
-  homeasy_transmit(2, 123, 6, HOMEASY_ON, 1, 0);
+
+  address = 123;
+  homeasy_transmit(2, (address >> 16) & 0xffff, address & 0xffff,
+          6, HOMEASY_ON, 1, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
-  ck_assert_int_eq(123, payload.address);
+  ck_assert_int_eq((address >> 16) & 0xffff, payload.address1);
+  ck_assert_int_eq(address & 0xffff, payload.address2);
   ck_assert_int_eq(6, payload.receiver);
   ck_assert_int_eq(1, payload.group);
   ck_assert_str_eq("ON", homeasy_get_ctrl_str(&payload));
@@ -151,12 +159,16 @@ START_TEST(test_homeasy_transmit_two_receives)
   mock_reset_calls();
 
   random_signal();
-  homeasy_transmit(2, 125, 7, HOMEASY_OFF, 0, 0);
+
+  address = 125;
+  homeasy_transmit(2, (address >> 16) & 0xffff, address & 0xffff,
+          7, HOMEASY_OFF, 0, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
-  ck_assert_int_eq(125, payload.address);
+  ck_assert_int_eq((address >> 16) & 0xffff, payload.address1);
+  ck_assert_int_eq(address & 0xffff, payload.address2);
   ck_assert_int_eq(7, payload.receiver);
   ck_assert_int_eq(0, payload.group);
   ck_assert_str_eq("OFF", homeasy_get_ctrl_str(&payload));

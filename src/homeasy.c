@@ -77,9 +77,22 @@ static void write_interval_gap(unsigned int gpio)
   delayMicroseconds(10000);
 }
 
-void homeasy_transmit(unsigned int gpio, unsigned int address,
-        unsigned char receiver, unsigned char ctrl, unsigned char group,
-        unsigned int repeat)
+void write_address(unsigned int gpio, unsigned short address, int len) {
+  unsigned int mask;
+
+  for (mask = 1 << len; mask != 0x0; mask >>= 1) {
+    if (address & mask) {
+      write_bit(gpio, 1);
+    } else {
+      write_bit(gpio, 0);
+    }
+  }
+}
+
+/* address1 is 16 higher bits of address and address2 is 16 lower bits */
+void homeasy_transmit(unsigned int gpio, unsigned short address1,
+        unsigned short address2, unsigned char receiver, unsigned char ctrl,
+        unsigned char group, unsigned int repeat)
 {
   unsigned int mask;
   int i;
@@ -87,13 +100,8 @@ void homeasy_transmit(unsigned int gpio, unsigned int address,
   for (i = 0; i != repeat + 1; i++) {
     sync_transmit(gpio);
 
-    for (mask = 0x2000000; mask != 0x0; mask >>= 1) {
-      if (address & mask) {
-        write_bit(gpio, 1);
-      } else {
-        write_bit(gpio, 0);
-      }
-    }
+    write_address(gpio, address1, 9);
+    write_address(gpio, address2, 15);
 
     write_bit(gpio, group);
     write_bit(gpio, ctrl);
@@ -261,7 +269,8 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
         index[gpio] = 3;
 
         i = (unsigned int *) bytes[gpio];
-        payload->address = *i >> 6 & 0x3FFFFFF;
+        payload->address1 = *i >> 22 & 0x3FF;
+        payload->address2 = *i >> 6 & 0xFFFF;
         payload->group = (*i >> 5) & 1;
         payload->ctrl = (*i >> 4) & 1;
         payload->receiver = *i & 0xF;

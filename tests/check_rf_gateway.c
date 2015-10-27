@@ -113,21 +113,24 @@ unsigned char srts_get_ctrl_int(const char *ctrl)
   return SRTS_UNKNOWN;
 }
 
-void homeasy_transmit(unsigned int gpio, unsigned int address,
-        unsigned char receiver, unsigned char ctrl, unsigned char group,
-        unsigned int repeat)
+void homeasy_transmit(unsigned int gpio, unsigned short address1,
+        unsigned short address2, unsigned char receiver, unsigned char ctrl,
+        unsigned char group, unsigned int repeat)
 {
   int *g = xmalloc(sizeof(int));
-  int *a = xmalloc(sizeof(int));
+  int *a = xmalloc(sizeof(short));
+  int *b = xmalloc(sizeof(short));
   int *c = xmalloc(sizeof(int));
 
   *g = gpio;
-  *a = address;
+  *a = address1;
+  *b = address2;
   *c = ctrl;
 
   mock_called("homeasy_transmit");
   mock_called_with("homeasy_transmit:gpio", g);
-  mock_called_with("homeasy_transmit:address", a);
+  mock_called_with("homeasy_transmit:address1", a);
+  mock_called_with("homeasy_transmit:address2", b);
   mock_called_with("homeasy_transmit:ctrl", c);
 }
 
@@ -148,14 +151,16 @@ const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
 int homeasy_receive(unsigned int gpio, unsigned int type,
         unsigned int duration, struct homeasy_payload *payload)
 {
-  int *address, *receiver;
+  unsigned int *address;
+  unsigned char *receiver;
 
-  address = (int *) mock_returns("homeasy_receive_address");
+  address = (unsigned int *) mock_returns("homeasy_receive_address");
   if (address != NULL) {
-    payload->address = *address;
+    payload->address1 = (*address >> 16) & 0xffff;
+    payload->address2 = *address & 0xffff;
   }
 
-  receiver = (int *) mock_returns("homeasy_receive_receiver");
+  receiver = (unsigned char *) mock_returns("homeasy_receive_receiver");
   if (receiver != NULL) {
     payload->receiver = *receiver;
   }
@@ -580,8 +585,12 @@ START_TEST(test_subscribe_homeasy_callback)
   ck_assert_int_eq(2, *value);
   free(value);
 
-  value = (int *) mock_call("homeasy_transmit:address", 0);
-  ck_assert_int_eq(4444, *value);
+  value = (int *) mock_call("homeasy_transmit:address1", 0);
+  ck_assert_int_eq((4444 >> 16) & 0xffff, *value);
+  free(value);
+
+  value = (int *) mock_call("homeasy_transmit:address2", 0);
+  ck_assert_int_eq(4444 & 0xffff, *value);
   free(value);
 
   value = (int *) mock_call("homeasy_transmit:ctrl", 0);
@@ -638,7 +647,8 @@ START_TEST(test_subscribe_homeasy_translations)
   void *obj;
   void (*callback)(void *data, const void *payload, int payloadlen);
   char *payload = "UP";
-  int rc, *value;
+  int address, rc, *value;
+  short *addrpart;
 
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
@@ -653,9 +663,15 @@ START_TEST(test_subscribe_homeasy_translations)
   ck_assert_int_eq(2, *value);
   free(value);
 
-  value = (int *) mock_call("homeasy_transmit:address", 0);
-  ck_assert_int_eq(4444, *value);
-  free(value);
+  addrpart = (short *) mock_call("homeasy_transmit:address1", 0);
+  address = *addrpart << 16;
+  free(addrpart);
+
+  addrpart = (short *) mock_call("homeasy_transmit:address2", 0);
+  address += *addrpart;
+  free(addrpart);
+
+  ck_assert_int_eq(4444, address);
 
   value = (int *) mock_call("homeasy_transmit:ctrl", 0);
   ck_assert_int_eq(HOMEASY_ON, *value);
@@ -680,7 +696,8 @@ START_TEST(test_subscribe_homeasy_fixed_value)
   void *obj;
   void (*callback)(void *data, const void *payload, int payloadlen);
   char *payload = "UP";
-  int rc, *value;
+  int address, rc, *value;
+  short *addrpart;
 
   rc = rf_gw_init(conf, 0);
   ck_assert_int_eq(1, rc);
@@ -695,9 +712,13 @@ START_TEST(test_subscribe_homeasy_fixed_value)
   ck_assert_int_eq(2, *value);
   free(value);
 
-  value = (int *) mock_call("homeasy_transmit:address", 0);
-  ck_assert_int_eq(4444, *value);
-  free(value);
+  addrpart = (short *) mock_call("homeasy_transmit:address1", 0);
+  address = *addrpart << 16;
+  free(addrpart);
+
+  addrpart = (short *) mock_call("homeasy_transmit:address2", 0);
+  address += *addrpart;
+  free(addrpart);
 
   value = (int *) mock_call("homeasy_transmit:ctrl", 0);
   ck_assert_int_eq(HOMEASY_ON, *value);
@@ -909,7 +930,7 @@ START_TEST(test_homeasy_publish)
     "publishers:({"
         "gpio: 2;"
         "type: \"homeasy\";"
-        "address: 5555;"
+        "address: 155555;"
         "output: \"mqtt://localhost:1883/5555\";})"
     "}";
   int rc, address;
@@ -930,7 +951,7 @@ START_TEST(test_homeasy_publish)
   rc = mock_calls("mqtt_publish");
   ck_assert_int_eq(rc, 0);
 
-  address = 5555;
+  address = 155555;
   mock_will_return("homeasy_receive_address", &address, MOCK_RETURNED_ONCE);
 
   gpio_write_and_loop(2, HIGH);

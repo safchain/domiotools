@@ -34,15 +34,17 @@ enum COMMAND {
 };
 
 struct homeasy_payload {
-  unsigned int address;
+  /* use short since arduino is limit to 16bits */
+  unsigned short address1;
+  unsigned short address2;
   unsigned char receiver;
   unsigned char ctrl;
   unsigned char group;
 };
 
-void homeasy_transmit(unsigned int gpio, unsigned int address,
-        unsigned char receiver, unsigned char ctrl, unsigned char group,
-        unsigned int repeat);
+void homeasy_transmit(unsigned int gpio, unsigned short address1,
+        unsigned short address2, unsigned char receiver, unsigned char ctrl,
+        unsigned char group, unsigned int repeat);
 unsigned char homeasy_get_ctrl_int(const char *ctrl);
 const char *homeasy_get_ctrl_str(struct homeasy_payload *payload);
 int homeasy_receive(unsigned int gpio, unsigned int type,
