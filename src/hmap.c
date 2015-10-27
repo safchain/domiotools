@@ -24,7 +24,7 @@
 
 #define HSIZE 255
 
-static void _free0(void **ptr)
+static inline void _free0(void **ptr)
 {
   free(*ptr);
   *ptr = NULL;
