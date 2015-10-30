@@ -57,20 +57,22 @@ struct srts_payload {
   } address;
 };
 
-int srts_get_code(const char *persistence_path, unsigned int address);
+int srts_get_code(const char *persistence_path, unsigned short address1,
+        unsigned short address2);
 void srts_transmit(unsigned int gpio, unsigned char key,
-        unsigned int address, unsigned char ctrl, unsigned short code,
-        unsigned int repeated);
+        unsigned short address1, unsigned short address2, unsigned char ctrl,
+        unsigned short code, unsigned int repeated);
 int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
         struct srts_payload *payload);
-int srts_get_address(struct srts_payload *payload);
+void srts_get_address(struct srts_payload *payload, unsigned short *address1,
+        unsigned short *address2);
 const char *srts_get_ctrl_str(struct srts_payload *payload);
 unsigned char srts_get_ctrl_int(const char *ctrl);
 
 #if !defined(__AVR__) && !defined(__avr__)
 void srts_transmit_persist(unsigned int gpio, unsigned char key,
-        unsigned int address, unsigned char ctrl, unsigned int repeat,
-        const char *persistence_path);
+        unsigned short address1, unsigned short address2, unsigned char ctrl,
+        unsigned int repeat, const char *persistence_path);
 void srts_print_payload(FILE *fp, struct srts_payload *payload);
 #endif
 

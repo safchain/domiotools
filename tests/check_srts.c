@@ -138,18 +138,23 @@ static void free_pulses()
 START_TEST(test_srts_transmit_receive)
 {
   struct srts_payload payload;
-  int rc;
+  int address, rc;
+  unsigned short address1, address2;
 
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
+
+  address = 456;
+  srts_transmit(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 789, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
-  ck_assert_int_eq(456, srts_get_address(&payload));
+  srts_get_address(&payload, &address1, &address2);
+  ck_assert_int_eq(456, (address1 << 16) + address2);
   ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
@@ -160,18 +165,23 @@ END_TEST
 START_TEST(test_srts_transmit_two_receives)
 {
   struct srts_payload payload;
-  int rc;
+  int address, rc;
+  unsigned short address1, address2;
 
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
+
+  address = 456;
+  srts_transmit(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 789, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
-  ck_assert_int_eq(456, srts_get_address(&payload));
+  srts_get_address(&payload, &address1, &address2);
+  ck_assert_int_eq(456, (address1 << 16) + address2);
   ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
@@ -179,13 +189,16 @@ START_TEST(test_srts_transmit_two_receives)
   mock_reset_calls();
 
   random_signal();
-  srts_transmit(2, 123, 456, SRTS_DOWN, 790, 0);
+
+  srts_transmit(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_DOWN, 790, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
-  ck_assert_int_eq(456, srts_get_address(&payload));
+  srts_get_address(&payload, &address1, &address2);
+  ck_assert_int_eq(456, (address1 << 16) + address2);
   ck_assert_str_eq("DOWN", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(790, payload.code);
 
@@ -196,12 +209,15 @@ END_TEST
 START_TEST(test_srts_transmit_two_parallel_receives)
 {
   struct srts_payload payload;
-  int rc;
+  int address, rc;
 
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
+
+  address = 456;
+  srts_transmit(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 789, 0);
 
   rc = receive_parallel_pulses(&payload);
   ck_assert_int_eq(2, rc);
@@ -213,31 +229,38 @@ END_TEST
 START_TEST(test_srts_transmit_receive_repeated)
 {
   struct srts_payload payload;
-  int rc;
+  int address, rc;
+  unsigned short address1, address2;
 
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
+
+  address = 456;
+  srts_transmit(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 789, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
-  ck_assert_int_eq(456, srts_get_address(&payload));
+  srts_get_address(&payload, &address1, &address2);
+  ck_assert_int_eq(456, (address1 << 16) + address2);
   ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
   free_pulses();
   mock_reset_calls();
 
-  srts_transmit(2, 123, 456, SRTS_UP, 789, 1);
+  srts_transmit(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 789, 1);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
-  ck_assert_int_eq(456, srts_get_address(&payload));
+  srts_get_address(&payload, &address1, &address2);
+  ck_assert_int_eq(456, (address1 << 16) + address2);
   ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(789, payload.code);
 
@@ -249,12 +272,15 @@ START_TEST(test_srts_transmit_print_receive)
 {
   struct srts_payload payload;
   FILE *fp;
-  int rc;
+  int address, rc;
 
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit(2, 123, 456, SRTS_UP, 789, 0);
+
+  address = 456;
+  srts_transmit(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 789, 0);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
@@ -271,20 +297,25 @@ START_TEST(test_srts_transmit_persist)
 {
   struct srts_payload payload;;
   char *tmpname;
-  int rc;
+  int address, rc;
+  unsigned short address1, address2;
 
   tmpname = tmpnam(NULL);
 
   memset(&payload, 0, sizeof(struct srts_payload));
 
   random_signal();
-  srts_transmit_persist(2, 123, 456, SRTS_UP, 0, tmpname);
+
+  address = 456;
+  srts_transmit_persist(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 0, tmpname);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
-  ck_assert_int_eq(456, srts_get_address(&payload));
+  srts_get_address(&payload, &address1, &address2);
+  ck_assert_int_eq(456, (address1 << 16) + address2);
   ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(1, payload.code);
 
@@ -292,13 +323,16 @@ START_TEST(test_srts_transmit_persist)
   mock_reset_calls();
 
   random_signal();
-  srts_transmit_persist(2, 123, 456, SRTS_UP, 0, tmpname);
+
+  srts_transmit_persist(2, 123, (address >> 16) & 0xffff, address & 0xffff,
+          SRTS_UP, 0, tmpname);
 
   rc = receive_pulses(&payload);
   ck_assert_int_eq(1, rc);
 
   ck_assert_int_eq(123, payload.key);
-  ck_assert_int_eq(456, srts_get_address(&payload));
+  srts_get_address(&payload, &address1, &address2);
+  ck_assert_int_eq(456, (address1 << 16) + address2);
   ck_assert_str_eq("UP", srts_get_ctrl_str(&payload));
   ck_assert_int_eq(2, payload.code);
 

@@ -123,6 +123,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
 {
   config_setting_t *hs, *h;
   unsigned int address, value, i = 0;
+  unsigned short address1, address2;
   const char *ctrl;
 
   hs = config_lookup(&rf_cfg, "config.publishers");
@@ -146,7 +147,8 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
                 config_setting_source_line(h));
         continue;
       }
-      address = srts_get_address(payload);
+      srts_get_address(payload, &address1, &address2);
+      address = (address1 << 16) + address2;
       if (!value || address == value) {
         ctrl = srts_get_ctrl_str(payload);
         if (ctrl == NULL) {
@@ -350,8 +352,9 @@ static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
         goto clean;
       }
 
-      srts_transmit_persist(device->gpio, 0, device->address, ctrl,
-              device->repeat, rf_persistence_path);
+      srts_transmit_persist(device->gpio, 0, (device->address >> 16) & 0xffff,
+              device->address & 0xffff, ctrl, device->repeat,
+              rf_persistence_path);
       break;
     case HOMEASY:
       ctrl = homeasy_get_ctrl_int(translate_value(device->config_h, value));

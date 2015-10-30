@@ -112,9 +112,11 @@ int main(int argc, char **argv)
 
   gpio_open(gpio, GPIO_OUT);
 
-  srts_transmit_persist(gpio, 0, address, command, repeat, persistence_path);
+  srts_transmit_persist(gpio, 0, (address >> 16) & 0xffff, address & 0xffff,
+          command, repeat, persistence_path);
 
-  code = srts_get_code(persistence_path, address);
+  code = srts_get_code(persistence_path, (address >> 16) & 0xffff,
+          address & 0xffff);
   syslog(LOG_INFO, "Somfy RTS, remote: %d, command: %d, code: %d\n",
          address, command, code);
   closelog();

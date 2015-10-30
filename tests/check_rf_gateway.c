@@ -62,9 +62,13 @@ void srts_print_payload(FILE *fp, struct srts_payload *payload)
 {
 }
 
-int srts_get_address(struct srts_payload *payload)
+void srts_get_address(struct srts_payload *payload, unsigned short *address1,
+        unsigned short *address2)
 {
-  return *((int *) mock_returns("srts_get_address"));
+  int address = *((int *) mock_returns("srts_get_address"));
+
+  *address1 = (address >> 16) & 0xffff;
+  *address2 = address & 0xffff;
 }
 
 const char *srts_get_ctrl_str(struct srts_payload *payload)
@@ -86,20 +90,23 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
 }
 
 void srts_transmit_persist(unsigned int gpio, unsigned char key,
-        unsigned int address, unsigned char ctrl, unsigned int repeat,
-        const char *persistence_path)
+        unsigned short address1, unsigned short address2, unsigned char ctrl,
+        unsigned int repeat, const char *persistence_path)
 {
   int *g = xmalloc(sizeof(int));
-  int *a = xmalloc(sizeof(int));
+  int *a = xmalloc(sizeof(short));
+  int *b = xmalloc(sizeof(short));
   int *c = xmalloc(sizeof(int));
 
   *g = gpio;
-  *a = address;
+  *a = address1;
+  *b = address2;
   *c = ctrl;
 
   mock_called("srts_transmit_persist");
   mock_called_with("srts_transmit_persist:gpio", g);
-  mock_called_with("srts_transmit_persist:address", a);
+  mock_called_with("srts_transmit_persist:address1", a);
+  mock_called_with("srts_transmit_persist:address2", b);
   mock_called_with("srts_transmit_persist:ctrl", c);
   mock_called_with("srts_transmit_persist:path", (void *) persistence_path);
 }
@@ -513,8 +520,12 @@ START_TEST(test_subscribe_srts_callback)
   ck_assert_int_eq(2, *value);
   free(value);
 
-  value = (int *) mock_call("srts_transmit_persist:address", 0);
-  ck_assert_int_eq(3333, *value);
+  value = (int *) mock_call("srts_transmit_persist:address1", 0);
+  ck_assert_int_eq((3333 >> 16) & 0xffff, *value);
+  free(value);
+
+  value = (int *) mock_call("srts_transmit_persist:address2", 0);
+  ck_assert_int_eq(3333 & 0xffff, *value);
   free(value);
 
   value = (int *) mock_call("srts_transmit_persist:ctrl", 0);

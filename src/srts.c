@@ -37,10 +37,12 @@
 extern struct dlog *DLOG;
 
 static char *get_code_file_path(const char *persistence_path,
-        unsigned int address)
+        unsigned short address1, unsigned short address2)
 {
   char *path;
-  int size;
+  int size, address;
+
+  address = (address1 << 16) + address2;
 
   size = snprintf(NULL, 0, "%s/srts/%d", persistence_path, address);
   path = (char *) xmalloc(size + 1);
@@ -57,13 +59,14 @@ static char *get_code_file_path(const char *persistence_path,
   return path;
 }
 
-int srts_get_code(const char *persistence_path, unsigned int address)
+int srts_get_code(const char *persistence_path, unsigned short address1,
+        unsigned short address2)
 {
   char *path, code[10], *end;
   FILE *fp = NULL;
   int c, rc;
 
-  path = get_code_file_path(persistence_path, address);
+  path = get_code_file_path(persistence_path, address1, address2);
   if (path == NULL) {
     return 0;
   }
@@ -81,8 +84,8 @@ int srts_get_code(const char *persistence_path, unsigned int address)
 
   c = strtol(code, &end, 10);
   if (errno == ERANGE && (c == LONG_MAX || c == LONG_MIN)) {
-    dlog(DLOG, DLOG_ERR, "Unable to parse the srts code for the address %d",
-            address);
+    dlog(DLOG, DLOG_ERR, "Unable to parse the srts code for the address %d/%d",
+            address1, address2);
     rc = -1;
     goto clean;
   }
@@ -99,13 +102,13 @@ clean:
   return rc;
 }
 
-static int store_code(const char *persistence_path, unsigned int address,
-        unsigned short new_code)
+static int store_code(const char *persistence_path, unsigned short address1,
+        unsigned short address2, unsigned short new_code)
 {
   char *path, code[10];
   FILE *fp;
 
-  path = get_code_file_path(persistence_path, address);
+  path = get_code_file_path(persistence_path, address1, address2);
   if (path == NULL) {
     return -1;
   }
@@ -139,20 +142,19 @@ void srts_print_payload(FILE *fp, struct srts_payload *payload)
   fprintf(fp, "address 1: %d\n", payload->address.byte1);
   fprintf(fp, "address 2: %d\n", payload->address.byte2);
   fprintf(fp, "address 3: %d\n", payload->address.byte3);
-  fprintf(fp, "address: %d\n", srts_get_address(payload));
 }
 
 void srts_transmit_persist(unsigned int gpio, unsigned char key,
-        unsigned int address, unsigned char ctrl, unsigned int repeat,
-        const char *persistence_path)
+        unsigned short address1, unsigned short address2, unsigned char ctrl,
+        unsigned int repeat, const char *persistence_path)
 {
-  int i, code = srts_get_code(persistence_path, address);
+  int i, code = srts_get_code(persistence_path, address1, address2);
 
   if (code == -1) {
     /* reading code error, defaulting to 1 */
-    srts_transmit(gpio, key, address, ctrl, 1, 0);
+    srts_transmit(gpio, key, address1, address2, ctrl, 1, 0);
     for (i = 0; i < repeat; i++) {
-      srts_transmit(gpio, key, address, ctrl, 1, 1);
+      srts_transmit(gpio, key, address1, address2, ctrl, 1, 1);
     }
 
     return;
@@ -160,12 +162,12 @@ void srts_transmit_persist(unsigned int gpio, unsigned char key,
 
   code += 1;
 
-  srts_transmit(gpio, key, address, ctrl, code, 0);
+  srts_transmit(gpio, key, address1, address2, ctrl, code, 0);
   for (i = 0; i < repeat; i++) {
-    srts_transmit(gpio, key, address, ctrl, code, 1);
+    srts_transmit(gpio, key, address1, address2, ctrl, code, 1);
   }
 
-  store_code(persistence_path, address, code);
+  store_code(persistence_path, address1, address2, code);
 }
 #else
 static unsigned short htons(unsigned short value)
@@ -263,8 +265,8 @@ static void sync_transmit(unsigned int gpio, unsigned int repeated)
 }
 
 void srts_transmit(unsigned int gpio, unsigned char key,
-        unsigned int address, unsigned char ctrl, unsigned short code,
-        unsigned int repeated)
+        unsigned short address1, unsigned short address2, unsigned char ctrl,
+        unsigned short code, unsigned int repeated)
 {
   struct srts_payload payload;
 
@@ -282,9 +284,9 @@ void srts_transmit(unsigned int gpio, unsigned char key,
   payload.ctrl = ctrl;
   payload.checksum = 0;
   payload.code = htons(code);
-  payload.address.byte1 = address & 0xff;
-  payload.address.byte2 = (address >> 8) & 0xff;
-  payload.address.byte3 = (address >> 16) & 0xff;
+  payload.address.byte1 = address2 & 0xff;
+  payload.address.byte2 = (address2 >> 8) & 0xff;
+  payload.address.byte3 = address1 & 0xff;
 
   checksum_payload(&payload);
   obfuscate_payload(&payload);
@@ -479,15 +481,12 @@ unsigned char srts_get_ctrl_int(const char *ctrl)
   return SRTS_UNKNOWN;
 }
 
-int srts_get_address(struct srts_payload *payload)
+void srts_get_address(struct srts_payload *payload, unsigned short *address1,
+        unsigned short *address2)
 {
-  unsigned int address;
-
-  address = payload->address.byte1;
-  address += payload->address.byte2 << 8;
-  address += (payload->address.byte3 << 16);
-
-  return address;
+  *address2 = payload->address.byte1;
+  *address2 += payload->address.byte2 << 8;
+  *address1 = payload->address.byte3;
 }
 
 int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
