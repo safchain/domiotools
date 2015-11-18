@@ -104,7 +104,8 @@ check_mem_LINK = $(CCLD) $(check_mem_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 am_check_mqtt_OBJECTS = check_mqtt-check_mqtt.$(OBJEXT) \
 	check_mqtt-urlparser.$(OBJEXT) check_mqtt-mem.$(OBJEXT) \
 	check_mqtt-list.$(OBJEXT) check_mqtt-hmap.$(OBJEXT) \
-	check_mqtt-logging.$(OBJEXT) check_mqtt-mqtt.$(OBJEXT)
+	check_mqtt-logging.$(OBJEXT) check_mqtt-str.$(OBJEXT) \
+	check_mqtt-mqtt.$(OBJEXT)
 check_mqtt_OBJECTS = $(am_check_mqtt_OBJECTS)
 check_mqtt_DEPENDENCIES =
 check_mqtt_LINK = $(CCLD) $(check_mqtt_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -322,6 +323,7 @@ check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/list.c \
 					 $(top_builddir)/src/hmap.c \
 					 $(top_builddir)/src/logging.c \
+					 $(top_builddir)/src/str.c \
 					 $(top_builddir)/src/mqtt.c
 
 check_mqtt_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
@@ -352,9 +354,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu tests/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign tests/Makefile
+	  $(AUTOMAKE) --gnu tests/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -437,6 +439,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-mqtt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-str.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_mqtt-urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-check_rf_gateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_rf_gateway-gpio.Po@am__quote@
@@ -807,6 +810,20 @@ check_mqtt-logging.obj: $(top_builddir)/src/logging.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/logging.c' object='check_mqtt-logging.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -c -o check_mqtt-logging.obj `if test -f '$(top_builddir)/src/logging.c'; then $(CYGPATH_W) '$(top_builddir)/src/logging.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/logging.c'; fi`
+
+check_mqtt-str.o: $(top_builddir)/src/str.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -MT check_mqtt-str.o -MD -MP -MF $(DEPDIR)/check_mqtt-str.Tpo -c -o check_mqtt-str.o `test -f '$(top_builddir)/src/str.c' || echo '$(srcdir)/'`$(top_builddir)/src/str.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mqtt-str.Tpo $(DEPDIR)/check_mqtt-str.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/str.c' object='check_mqtt-str.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -c -o check_mqtt-str.o `test -f '$(top_builddir)/src/str.c' || echo '$(srcdir)/'`$(top_builddir)/src/str.c
+
+check_mqtt-str.obj: $(top_builddir)/src/str.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -MT check_mqtt-str.obj -MD -MP -MF $(DEPDIR)/check_mqtt-str.Tpo -c -o check_mqtt-str.obj `if test -f '$(top_builddir)/src/str.c'; then $(CYGPATH_W) '$(top_builddir)/src/str.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/str.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/check_mqtt-str.Tpo $(DEPDIR)/check_mqtt-str.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/str.c' object='check_mqtt-str.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -c -o check_mqtt-str.obj `if test -f '$(top_builddir)/src/str.c'; then $(CYGPATH_W) '$(top_builddir)/src/str.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/str.c'; fi`
 
 check_mqtt-mqtt.o: $(top_builddir)/src/mqtt.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_mqtt_CFLAGS) $(CFLAGS) -MT check_mqtt-mqtt.o -MD -MP -MF $(DEPDIR)/check_mqtt-mqtt.Tpo -c -o check_mqtt-mqtt.o `test -f '$(top_builddir)/src/mqtt.c' || echo '$(srcdir)/'`$(top_builddir)/src/mqtt.c

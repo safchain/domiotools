@@ -29,6 +29,7 @@ int mqtt_init();
 void mqtt_destroy();
 int mqtt_publish(const char *output, const char *value);
 int mqtt_subscribe(const char *input, void *obj,
-        void (*callback)(void *obj, const void *payload, int payloadlen));
+        void (*callback)(void *obj, const char *topic, const void *payload,
+            int payloadlen));
 
 #endif

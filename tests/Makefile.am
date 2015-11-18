@@ -62,6 +62,7 @@ check_mqtt_SOURCES = check_mqtt.c \
 					 $(top_builddir)/src/list.c \
 					 $(top_builddir)/src/hmap.c \
 					 $(top_builddir)/src/logging.c \
+					 $(top_builddir)/src/str.c \
 					 $(top_builddir)/src/mqtt.c
 check_mqtt_CFLAGS = @CHECK_CFLAGS@ -I$(top_builddir)/include @GCOV_CFLAGS@ -Wall
 check_mqtt_LDADD = @CHECK_LIBS@ -lcmocker -lpthread @GCOV_LIBS@

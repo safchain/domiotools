@@ -343,8 +343,8 @@ START_TEST(test_mqtt_subscribe)
 }
 END_TEST
 
-static void mqtt_message_callback(void *obj, const void *payload,
-        int payloadlen)
+static void mqtt_message_callback(void *obj, const char *topic,
+        const void *payload, int payloadlen)
 {
   mock_called_with("mqtt_message_callback_obj", obj);
   mock_called_with("mqtt_message_callback_payload", (void *)payload);

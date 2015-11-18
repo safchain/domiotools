@@ -324,7 +324,8 @@ static int add_publisher_type(unsigned int gpio, const char *type)
   return 1;
 }
 
-static void rf_mqtt_callback(void *obj, const void *payload, int payloadlen)
+static void rf_mqtt_callback(void *obj, const char *topic, const void *payload,
+        int payloadlen)
 {
   char *value, *ptr = NULL;
   int ctrl, rc;

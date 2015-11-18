@@ -49,7 +49,8 @@ int mqtt_publish(const char *output, const char *value)
 }
 
 int mqtt_subscribe(const char *input, void *obj,
-        void (*callback)(void *data, const void *payload, int payloadlen))
+        void (*callback)(void *data, const char *topic, const void *payload,
+            int payloadlen))
 {
   mock_called("mqtt_subscribe");
   mock_called_with("mqtt_subscribe:obj", obj);
@@ -503,7 +504,8 @@ START_TEST(test_subscribe_srts_callback)
         "input: \"mqtt://localhost:1883/3333\";})"
     "}";
   void *obj;
-  void (*callback)(void *data, const void *payload, int payloadlen);
+  void (*callback)(void *data, const char *topic, const void *payload,
+          int payloadlen);
   char *payload = "UP", *path;
   int rc, *value;
 
@@ -513,7 +515,7 @@ START_TEST(test_subscribe_srts_callback)
 
   obj = mock_call("mqtt_subscribe:obj", 0);
   callback = mock_call("mqtt_subscribe:callback", 0);
-  callback(obj, payload, strlen(payload));
+  callback(obj, "/3333", payload, strlen(payload));
 
   ck_assert_int_eq(1, mock_calls("srts_transmit_persist"));
   value = (int *) mock_call("srts_transmit_persist:gpio", 0);
@@ -550,7 +552,8 @@ START_TEST(test_subscribe_srts_callback_unknow_ctrl)
         "input: \"mqtt://localhost:1883/3333\";})"
     "}";
   void *obj;
-  void (*callback)(void *data, const void *payload, int payloadlen);
+  void (*callback)(void *data, const char *topic, const void *payload,
+          int payloadlen);
   char *payload = "AAA";
   int rc;
 
@@ -560,7 +563,7 @@ START_TEST(test_subscribe_srts_callback_unknow_ctrl)
 
   obj = mock_call("mqtt_subscribe:obj", 0);
   callback = mock_call("mqtt_subscribe:callback", 0);
-  callback(obj, payload, strlen(payload));
+  callback(obj, "/3333", payload, strlen(payload));
 
   ck_assert_int_eq(0, mock_calls("srts_transmit_persist"));
 }
@@ -579,7 +582,8 @@ START_TEST(test_subscribe_homeasy_callback)
         "input: \"mqtt://localhost:1883/4444\";})"
     "}";
   void *obj;
-  void (*callback)(void *data, const void *payload, int payloadlen);
+  void (*callback)(void *data, const char *topic, const void *payload,
+          int payloadlen);
   char *payload = "ON";
   int rc, *value;
 
@@ -589,7 +593,7 @@ START_TEST(test_subscribe_homeasy_callback)
 
   obj = mock_call("mqtt_subscribe:obj", 0);
   callback = mock_call("mqtt_subscribe:callback", 0);
-  callback(obj, payload, strlen(payload));
+  callback(obj, "/4444", payload, strlen(payload));
 
   ck_assert_int_eq(1, mock_calls("homeasy_transmit"));
   value = (int *) mock_call("homeasy_transmit:gpio", 0);
@@ -623,7 +627,8 @@ START_TEST(test_subscribe_homeasy_callback_unknow_ctrl)
         "input: \"mqtt://localhost:1883/4444\";})"
     "}";
   void *obj;
-  void (*callback)(void *data, const void *payload, int payloadlen);
+  void (*callback)(void *data, const char *topic, const void *payload,
+          int payloadlen);
   char *payload = "BBB";
   int rc;
 
@@ -633,7 +638,7 @@ START_TEST(test_subscribe_homeasy_callback_unknow_ctrl)
 
   obj = mock_call("mqtt_subscribe:obj", 0);
   callback = mock_call("mqtt_subscribe:callback", 0);
-  callback(obj, payload, strlen(payload));
+  callback(obj, "/4444", payload, strlen(payload));
 
   ck_assert_int_eq(0, mock_calls("homeasy_transmit"));
 }
@@ -656,7 +661,8 @@ START_TEST(test_subscribe_homeasy_translations)
         "}})"
     "}";
   void *obj;
-  void (*callback)(void *data, const void *payload, int payloadlen);
+  void (*callback)(void *data, const char *topic, const void *payload,
+          int payloadlen);
   char *payload = "UP";
   int address, rc, *value;
   short *addrpart;
@@ -667,7 +673,7 @@ START_TEST(test_subscribe_homeasy_translations)
 
   obj = mock_call("mqtt_subscribe:obj", 0);
   callback = mock_call("mqtt_subscribe:callback", 0);
-  callback(obj, payload, strlen(payload));
+  callback(obj, "/4444", payload, strlen(payload));
 
   ck_assert_int_eq(1, mock_calls("homeasy_transmit"));
   value = (int *) mock_call("homeasy_transmit:gpio", 0);
@@ -705,7 +711,8 @@ START_TEST(test_subscribe_homeasy_fixed_value)
         "})"
     "}";
   void *obj;
-  void (*callback)(void *data, const void *payload, int payloadlen);
+  void (*callback)(void *data, const char *topic, const void *payload,
+          int payloadlen);
   char *payload = "UP";
   int address, rc, *value;
   short *addrpart;
@@ -716,7 +723,7 @@ START_TEST(test_subscribe_homeasy_fixed_value)
 
   obj = mock_call("mqtt_subscribe:obj", 0);
   callback = mock_call("mqtt_subscribe:callback", 0);
-  callback(obj, payload, strlen(payload));
+  callback(obj, "/4444", payload, strlen(payload));
 
   ck_assert_int_eq(1, mock_calls("homeasy_transmit"));
   value = (int *) mock_call("homeasy_transmit:gpio", 0);

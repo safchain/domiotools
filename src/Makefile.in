@@ -49,7 +49,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = rf_gatewayd$(EXEEXT)
+bin_PROGRAMS = rf_gatewayd$(EXEEXT) i2c_gatewayd$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -62,11 +62,17 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am_i2c_gatewayd_OBJECTS = utils.$(OBJEXT) hmap.$(OBJEXT) \
+	list.$(OBJEXT) urlparser.$(OBJEXT) str.$(OBJEXT) \
+	mqtt.$(OBJEXT) i2c.$(OBJEXT) mem.$(OBJEXT) logging.$(OBJEXT) \
+	gpio.$(OBJEXT) tree.$(OBJEXT)
+i2c_gatewayd_OBJECTS = $(am_i2c_gatewayd_OBJECTS)
+i2c_gatewayd_DEPENDENCIES =
 am_rf_gatewayd_OBJECTS = rf_gatewayd.$(OBJEXT) utils.$(OBJEXT) \
 	srts.$(OBJEXT) hmap.$(OBJEXT) list.$(OBJEXT) \
 	urlparser.$(OBJEXT) mqtt.$(OBJEXT) rf_gateway.$(OBJEXT) \
 	mem.$(OBJEXT) logging.$(OBJEXT) homeasy.$(OBJEXT) \
-	gpio.$(OBJEXT) tree.$(OBJEXT)
+	gpio.$(OBJEXT) tree.$(OBJEXT) str.$(OBJEXT)
 rf_gatewayd_OBJECTS = $(am_rf_gatewayd_OBJECTS)
 rf_gatewayd_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -77,8 +83,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(rf_gatewayd_SOURCES)
-DIST_SOURCES = $(rf_gatewayd_SOURCES)
+SOURCES = $(i2c_gatewayd_SOURCES) $(rf_gatewayd_SOURCES)
+DIST_SOURCES = $(i2c_gatewayd_SOURCES) $(rf_gatewayd_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -184,9 +190,15 @@ AM_CFLAGS = -I$(top_srcdir)/include -Wall @GCOV_CFLAGS@
 CLEANFILES = *~ *.gcno *.gcda *.gcov
 rf_gatewayd_SOURCES = rf_gatewayd.c utils.c srts.c hmap.c list.c urlparser.c \
 					  mqtt.c rf_gateway.c mem.c logging.c homeasy.c gpio.c \
-					  tree.c
+					  tree.c str.c
 
 rf_gatewayd_LDADD = -lmosquitto -lconfig -lpthread \
+					-lrt @GCOV_LIBS@
+
+i2c_gatewayd_SOURCES = utils.c hmap.c list.c urlparser.c str.c \
+					  mqtt.c i2c.c mem.c logging.c gpio.c tree.c
+
+i2c_gatewayd_LDADD = -lmosquitto -lconfig -lpthread \
 					-lrt @GCOV_LIBS@
 
 all: all-am
@@ -202,9 +214,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/Makefile
+	  $(AUTOMAKE) --gnu src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -263,6 +275,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+i2c_gatewayd$(EXEEXT): $(i2c_gatewayd_OBJECTS) $(i2c_gatewayd_DEPENDENCIES) $(EXTRA_i2c_gatewayd_DEPENDENCIES) 
+	@rm -f i2c_gatewayd$(EXEEXT)
+	$(LINK) $(i2c_gatewayd_OBJECTS) $(i2c_gatewayd_LDADD) $(LIBS)
 rf_gatewayd$(EXEEXT): $(rf_gatewayd_OBJECTS) $(rf_gatewayd_DEPENDENCIES) $(EXTRA_rf_gatewayd_DEPENDENCIES) 
 	@rm -f rf_gatewayd$(EXEEXT)
 	$(LINK) $(rf_gatewayd_OBJECTS) $(rf_gatewayd_LDADD) $(LIBS)
@@ -276,6 +291,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gpio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/homeasy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i2c.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logging.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
@@ -283,6 +299,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rf_gatewayd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/srts.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/urlparser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@

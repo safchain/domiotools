@@ -30,6 +30,7 @@
 #include "urlparser.h"
 #include "mqtt.h"
 #include "logging.h"
+#include "str.h"
 
 extern int verbose;
 extern int debug;
@@ -55,12 +56,15 @@ struct mqtt_message {
 };
 
 struct mqtt_subscriber {
+  LIST *topic;
   void *obj;
-  void (*callback)(void *obj, const void *payload, int payloadlen);
+  void (*callback)(void *obj, const char *topic, const void *payload,
+          int payloadlen);
 };
 
 static HMAP *mqtt_brokers;
-static HMAP *mqtt_subscribers;
+static HMAP *mqtt_topics;
+static LIST *mqtt_subscribers;
 
 static struct mqtt_broker *mqtt_broker_alloc(struct mosquitto *mosq,
         struct url *url)
@@ -85,17 +89,6 @@ static void mqtt_broker_free(struct mqtt_broker *broker) {
   hl_list_free(broker->queue);
   free(broker->hostname);
   free(broker);
-}
-
-static char *mqtt_get_subscribers_key(const char *hostname, const char *path)
-{
-  char *key;
-  int len = snprintf(NULL, 0, "%s%s", hostname, path);
-
-  key = xmalloc(len + 1);
-  sprintf(key, "%s%s", hostname, path);
-
-  return key;
 }
 
 static int mqtt_publish_message(struct mqtt_broker *broker)
@@ -163,26 +156,68 @@ static void mqtt_publish_callback(struct mosquitto *mosq, void *obj, int rc)
 }
 */
 
+static int mqtt_topics_match(struct mqtt_subscriber *subscriber,
+        const struct mosquitto_message *message)
+{
+  LIST *topic;
+  char *str1, *str2;
+  unsigned int len1, len2, i1, i2;
+  int rc = 0;
+
+  topic = str_split(message->topic, "/");
+
+  len1 = hl_list_len(subscriber->topic);
+  len2 = hl_list_len(topic);
+
+  if (len2 < len1) {
+    return 0;
+  }
+
+  for (i1 = i2 = 0; i2 != len2; i2++) {
+    if (i1 >= len1) {
+      goto clean;
+    }
+
+    str1 = hl_list_get(subscriber->topic, i1);
+    str2 = hl_list_get(topic, i2);
+
+    if (strcmp(str1, "#") == 0) {
+      rc = 1;
+      goto clean;
+    }
+
+    if (strcmp(str1, "+") == 0) {
+      i1++;
+      continue;
+    }
+
+    if (strcmp(str1, str2) != 0) {
+      goto clean;
+    }
+    i1++;
+  }
+  rc = 1;
+
+clean:
+  hl_list_free(topic);
+
+  return rc;
+}
+
 static void mqtt_message_callback(struct mosquitto *mosq, void *obj,
         const struct mosquitto_message *message)
 {
-  LIST **subscribers;
-  LIST_ITERATOR iterator;
   struct mqtt_subscriber *subscriber;
-  struct mqtt_broker *broker = (struct mqtt_broker *) obj;
+  LIST_ITERATOR iterator;
+  int match;
 
-  char *subscribers_key = mqtt_get_subscribers_key(broker->hostname,
-          message->topic);
-
-  subscribers = (LIST **) hl_hmap_get(mqtt_subscribers, subscribers_key);
-  if (subscribers == NULL) {
-    return;
-  }
-
-  hl_list_init_iterator(*subscribers, &iterator);
+  hl_list_init_iterator(mqtt_subscribers, &iterator);
   while((subscriber = hl_list_iterate(&iterator)) != NULL) {
-    subscriber->callback(subscriber->obj, message->payload,
-            message->payloadlen);
+    match = mqtt_topics_match(subscriber, message);
+    if (match) {
+      subscriber->callback(subscriber->obj, message->topic, message->payload,
+          message->payloadlen);
+    }
   }
 }
 
@@ -411,14 +446,14 @@ clean:
 }
 
 int mqtt_subscribe(const char *input, void *obj,
-        void (*callback)(void *obj, const void *payload, int payloadlen))
+        void (*callback)(void *obj, const char *topic, const void *payload,
+            int payloadlen))
 {
   struct mqtt_subscriber subscriber;
   struct mqtt_broker *broker;
-  LIST **subscribers, *s = NULL;
   struct url *url = NULL;
-  char *subscribers_key;
-  int rc = MQTT_SUCCESS;
+  char *topic = NULL;
+  int len, rc = MQTT_SUCCESS;
 
   url = parse_url(input);
   if (url == NULL) {
@@ -426,54 +461,59 @@ int mqtt_subscribe(const char *input, void *obj,
     return MQTT_BAD_URL;
   }
 
-  subscribers_key = mqtt_get_subscribers_key(url->hostname, url->path);
+  if (!check_mqtt_url(input, url)) {
+    rc = MQTT_BAD_URL;
+    goto clean;
+  }
 
-  subscribers = (LIST **) hl_hmap_get(mqtt_subscribers, subscribers_key);
-  if (subscribers == NULL) {
-    if (!check_mqtt_url(input, url)) {
-      rc = MQTT_BAD_URL;
-      goto clean;
+  broker = mqtt_broker_connect(url, &rc);
+  if (broker == NULL) {
+    goto clean;
+  }
+
+  // convert fragment to topic wildcard
+  if (url->fragment != NULL) {
+    len = strlen(url->path);
+    topic = xcalloc(1, len + 2);
+    strcpy(topic, url->path);
+    *(topic + len) = '#';
+  } else {
+    topic = strdup(url->path);
+    if (topic == NULL) {
+      alloc_error();
     }
+  }
 
-    broker = mqtt_broker_connect(url, &rc);
-    if (broker == NULL) {
-      goto clean;
-    }
-
-    rc = mosquitto_subscribe(broker->mosq, NULL, url->path, 2);
+  if (hl_hmap_get(mqtt_topics, topic) == NULL) {
+    rc = mosquitto_subscribe(broker->mosq, NULL, topic, 2);
     if (rc != MOSQ_ERR_SUCCESS) {
       rc = MQTT_CONNECTION_ERROR;
       goto clean;
     }
-
-    s = hl_list_alloc();
-    hl_hmap_put(mqtt_subscribers, subscribers_key, &s, sizeof(LIST *));
-    subscribers = &s;
+    hl_hmap_put(mqtt_topics, topic, topic, 1);
   }
 
+  subscriber.topic = str_split(topic, "/");
   subscriber.obj = obj;
   subscriber.callback = callback;
 
-  hl_list_push(*subscribers, &subscriber, sizeof(struct mqtt_subscriber));
+  hl_list_push(mqtt_subscribers, &subscriber, sizeof(struct mqtt_subscriber));
 
-  free(subscribers_key);
   free_url(url);
 
   return MQTT_SUCCESS;
 
 clean:
-  free(subscribers_key);
   free_url(url);
-  if (s != NULL) {
-    hl_list_free(s);
-  }
+  free(topic);
 
   return rc;
 }
 
 int mqtt_init() {
   mqtt_brokers = hl_hmap_alloc(32);
-  mqtt_subscribers = hl_hmap_alloc(32);
+  mqtt_topics = hl_hmap_alloc(32);
+  mqtt_subscribers = hl_list_alloc();
 
   mosquitto_lib_init();
 
@@ -481,9 +521,10 @@ int mqtt_init() {
 }
 
 void mqtt_destroy() {
+  struct mqtt_subscriber *subscriber;
   struct mqtt_broker *broker;
-  LIST *subscribers;
-  HMAP_ITERATOR iterator;
+  HMAP_ITERATOR h_iter;
+  LIST_ITERATOR l_iter;
   HNODE *hnode;
   int rc;
 
@@ -491,8 +532,8 @@ void mqtt_destroy() {
     return;
   }
 
-  hl_hmap_init_iterator(mqtt_brokers, &iterator);
-  while((hnode = hl_hmap_iterate(&iterator)) != NULL) {
+  hl_hmap_init_iterator(mqtt_brokers, &h_iter);
+  while((hnode = hl_hmap_iterate(&h_iter)) != NULL) {
     broker = *((struct mqtt_broker **) hnode->value);
 
     rc = pthread_rwlock_wrlock(&(broker->running_rwlock));
@@ -511,12 +552,14 @@ void mqtt_destroy() {
   hl_hmap_free(mqtt_brokers);
   mqtt_brokers = NULL;
 
-  hl_hmap_init_iterator(mqtt_subscribers, &iterator);
-  while((hnode = hl_hmap_iterate(&iterator)) != NULL) {
-    subscribers = *((LIST **)hnode->value);
-    hl_list_free(subscribers);
+  hl_hmap_free(mqtt_topics);
+  mqtt_topics = NULL;
+
+  hl_list_init_iterator(mqtt_subscribers, &l_iter);
+  while((subscriber = hl_list_iterate(&l_iter)) != NULL) {
+    hl_list_free(subscriber->topic);
   }
-  hl_hmap_free(mqtt_subscribers);
+  hl_list_free(mqtt_subscribers);
   mqtt_subscribers = NULL;
 
   mosquitto_lib_cleanup();
