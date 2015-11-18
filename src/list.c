@@ -135,7 +135,7 @@ inline void *hl_list_iterate(LIST_ITERATOR *iterator)
   return value;
 }
 
-inline unsigned int hl_list_count(LIST *list)
+inline unsigned int hl_list_len(LIST *list)
 {
   LIST_NODE *node_ptr = list->nodes;
   unsigned int i = 0;

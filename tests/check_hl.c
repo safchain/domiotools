@@ -34,21 +34,21 @@ START_TEST(test_list_push_pop)
   ck_assert(list != NULL);
 
   hl_list_push(list, string1, strlen(string1) + 1);
-  ck_assert_int_eq(1, hl_list_count(list));
+  ck_assert_int_eq(1, hl_list_len(list));
   ck_assert_str_eq(string1, hl_list_get(list, 0));
   ck_assert_str_eq(string1, hl_list_get_last(list));
 
   hl_list_push(list, string2, strlen(string2) + 1);
-  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_int_eq(2, hl_list_len(list));
   ck_assert_str_eq(string2, hl_list_get(list, 1));
   ck_assert_str_eq(string2, hl_list_get_last(list));
 
   hl_list_pop(list);
-  ck_assert_int_eq(1, hl_list_count(list));
+  ck_assert_int_eq(1, hl_list_len(list));
   ck_assert_str_eq(string1, hl_list_get_last(list));
 
   hl_list_pop(list);
-  ck_assert_int_eq(0, hl_list_count(list));
+  ck_assert_int_eq(0, hl_list_len(list));
 
   ptr = hl_list_get_last(list);
   ck_assert(ptr == NULL);
@@ -67,12 +67,12 @@ START_TEST(test_list_push_unshift)
   ck_assert(list != NULL);
 
   hl_list_push(list, string1, strlen(string1) + 1);
-  ck_assert_int_eq(1, hl_list_count(list));
+  ck_assert_int_eq(1, hl_list_len(list));
   ck_assert_str_eq(string1, hl_list_get(list, 0));
   ck_assert_str_eq(string1, hl_list_get_last(list));
 
   hl_list_unshift(list, string2, strlen(string2) + 1);
-  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_int_eq(2, hl_list_len(list));
   ck_assert_str_eq(string2, hl_list_get(list, 0));
   ck_assert_str_eq(string1, hl_list_get_last(list));
 
@@ -90,12 +90,12 @@ START_TEST(test_list_unshift)
   ck_assert(list != NULL);
 
   hl_list_unshift(list, string1, strlen(string1) + 1);
-  ck_assert_int_eq(1, hl_list_count(list));
+  ck_assert_int_eq(1, hl_list_len(list));
   ck_assert_str_eq(string1, hl_list_get(list, 0));
   ck_assert_str_eq(string1, hl_list_get_last(list));
 
   hl_list_unshift(list, string2, strlen(string2) + 1);
-  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_int_eq(2, hl_list_len(list));
   ck_assert_str_eq(string2, hl_list_get(list, 0));
   ck_assert_str_eq(string1, hl_list_get_last(list));
 
@@ -124,12 +124,12 @@ START_TEST(test_hmap_put_get)
 
   /* check the keys */
   list = hl_hmap_keys(hmap);
-  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_int_eq(2, hl_list_len(list));
   hl_list_free(list);
 
   /* check the values */
   list = hl_hmap_values(hmap);
-  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_int_eq(2, hl_list_len(list));
   hl_list_free(list);
 
   hl_hmap_free(hmap);
@@ -195,11 +195,11 @@ START_TEST(test_hmap_collision)
   hl_hmap_put(hmap, string2, string2, strlen(string2) + 1);
 
   list = hl_hmap_keys(hmap);
-  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_int_eq(2, hl_list_len(list));
   hl_list_free(list);
 
   list = hl_hmap_values(hmap);
-  ck_assert_int_eq(2, hl_list_count(list));
+  ck_assert_int_eq(2, hl_list_len(list));
   hl_list_free(list);
 
   hl_hmap_free(hmap);

@@ -49,7 +49,7 @@ void *hl_list_get_last(LIST *);
 void *hl_list_get(LIST *, unsigned int);
 void hl_list_init_iterator(LIST *, LIST_ITERATOR *);
 void *hl_list_iterate(LIST_ITERATOR *);
-unsigned int hl_list_count(LIST *);
+unsigned int hl_list_len(LIST *);
 void hl_list_reset(LIST *);
 void hl_list_free(LIST *);
 
