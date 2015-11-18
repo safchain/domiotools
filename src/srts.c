@@ -295,7 +295,7 @@ void srts_transmit(unsigned int gpio, unsigned char key,
   write_interval_gap(gpio);
 }
 
-static void unfuscate_payload(unsigned char *bytes,
+static void unobfuscate_payload(unsigned char *bytes,
         struct srts_payload *payload)
 {
   unsigned char *p;
@@ -536,7 +536,7 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
           sync[gpio] = 0;
           index[gpio] = 0;
 
-          unfuscate_payload(bytes[gpio], payload);
+          unobfuscate_payload(bytes[gpio], payload);
           rc = validate_checksum(payload);
           if (rc == 0) {
             return SRTS_BAD_CHECKSUM;

@@ -146,13 +146,19 @@ static int detect_sync(unsigned int gpio, unsigned int type,
   return 0;
 }
 
-static int _read_bit(unsigned int type, unsigned int duration,
-        unsigned char *bit)
+static int _read_bit(unsigned int gpio, unsigned int type,
+        unsigned int duration, unsigned char *bit)
 {
-  static unsigned int pass = 0;
+  static unsigned int pass[MAX_GPIO + 1];
+  static char init = 0;
 
-  if (pass) {
-    pass = 0;
+  if (!init) {
+    memset(pass, 0, sizeof(pass));
+    init = 1;
+  }
+
+  if (pass[gpio]) {
+    pass[gpio] = 0;
 
     if (IS_ON_TIME(duration, 1000, 1900)) {
       *bit = 1;
@@ -164,11 +170,11 @@ static int _read_bit(unsigned int type, unsigned int duration,
       return 1;
     }
   } else if (duration < 800) {
-    pass++;
+    pass[gpio]++;
 
     return 0;
   }
-  pass = 0;
+  pass[gpio] = 0;
 
   return -1;
 }
@@ -178,7 +184,7 @@ static int read_bit(unsigned int gpio, unsigned int type,
 {
   static unsigned int pass[MAX_GPIO + 1];
   static char init = 0;
-  unsigned char b;
+  unsigned char b = 0;
   int rc;
 
   if (!init) {
@@ -186,7 +192,7 @@ static int read_bit(unsigned int gpio, unsigned int type,
     init = 1;
   }
 
-  rc = _read_bit(type, duration, &b);
+  rc = _read_bit(gpio, type, duration, &b);
   if (rc == -1) {
     pass[gpio] = 0;
 
@@ -241,7 +247,7 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
   static unsigned char bytes[MAX_GPIO + 1][4];
   static char init = 0;
   unsigned char bit;
-  unsigned int *i;
+  unsigned short *s1, *s2;
   int rc;
 
   if (!init) {
@@ -268,12 +274,15 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
         sync[gpio] = 0;
         index[gpio] = 3;
 
-        i = (unsigned int *) bytes[gpio];
-        payload->address1 = *i >> 22 & 0x3FF;
-        payload->address2 = *i >> 6 & 0xFFFF;
-        payload->group = (*i >> 5) & 1;
-        payload->ctrl = (*i >> 4) & 1;
-        payload->receiver = *i & 0xF;
+        s1 = (unsigned short *) bytes[gpio];
+        s2 = s1 + 1;
+
+        payload->address1 = *s2 >> 6;
+        payload->address2 = ((*s2 & 0x3f) << 10) + ((*s1 >> 6) & 0X3ff);
+
+        payload->group = (*s1 >> 5) & 1;
+        payload->ctrl = (*s1 >> 4) & 1;
+        payload->receiver = *s1 & 0xF;
 
         return 1;
       }

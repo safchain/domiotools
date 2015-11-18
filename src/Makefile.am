@@ -16,8 +16,9 @@ rf_gatewayd_SOURCES = rf_gatewayd.c utils.c srts.c hmap.c list.c urlparser.c \
 rf_gatewayd_LDADD = -lmosquitto -lconfig -lpthread \
 					-lrt @GCOV_LIBS@
 
-i2c_gatewayd_SOURCES = utils.c hmap.c list.c urlparser.c str.c \
-					  mqtt.c i2c.c mem.c logging.c gpio.c tree.c
+i2c_gatewayd_SOURCES = utils.c hmap.c list.c urlparser.c str.c homeasy.c \
+					  mqtt.c i2c.c mem.c logging.c gpio.c tree.c devices.c \
+					  srts.c
 i2c_gatewayd_LDADD = -lmosquitto -lconfig -lpthread \
 					-lrt @GCOV_LIBS@
 
