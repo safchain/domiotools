@@ -150,7 +150,7 @@ static int srts_lookup_for_publisher(struct srts_payload *payload)
       srts_get_address(payload, &address1, &address2);
       address = (address1 << 16) + address2;
       if (!value || address == value) {
-        ctrl = srts_get_ctrl_str(payload);
+        ctrl = srts_get_ctrl_str(payload->ctrl);
         if (ctrl == NULL) {
           dlog(DLOG, DLOG_ERR, "Somfy RTS, ctrl unknown: %d", payload->ctrl);
           return 0;
@@ -200,7 +200,7 @@ static int homeasy_lookup_for_publisher(struct homeasy_payload *payload)
       pl_address = (payload->address1 << 16) + payload->address2;
       if ((!address || pl_address == address) &&
               (receiver == -1 || payload->receiver == receiver)) {
-        ctrl = homeasy_get_ctrl_str(payload);
+        ctrl = homeasy_get_ctrl_str(payload->ctrl);
         if (ctrl == NULL) {
           dlog(DLOG, DLOG_ERR, "Homeasy, ctrl unknown: %d", payload->ctrl);
           return 0;

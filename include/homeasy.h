@@ -46,7 +46,7 @@ void homeasy_transmit(unsigned int gpio, unsigned short address1,
         unsigned short address2, unsigned char receiver, unsigned char ctrl,
         unsigned char group, unsigned int repeat);
 unsigned char homeasy_get_ctrl_int(const char *ctrl);
-const char *homeasy_get_ctrl_str(struct homeasy_payload *payload);
+const char *homeasy_get_ctrl_str(unsigned char ctrl);
 int homeasy_receive(unsigned int gpio, unsigned int type,
         unsigned int duration, struct homeasy_payload *payload);
 

@@ -292,9 +292,9 @@ int homeasy_receive(unsigned int gpio, unsigned int type,
   return 0;
 }
 
-const char *homeasy_get_ctrl_str(struct homeasy_payload *payload)
+const char *homeasy_get_ctrl_str(const unsigned char ctrl)
 {
-  switch (payload->ctrl) {
+  switch (ctrl) {
     case HOMEASY_ON:
       return "ON";
     case HOMEASY_OFF:

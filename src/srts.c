@@ -432,9 +432,9 @@ static int read_byte(unsigned int gpio, unsigned char bit, unsigned char *byte)
   return 1;
 }
 
-const char *srts_get_ctrl_str(struct srts_payload *payload)
+const char *srts_get_ctrl_str(unsigned char ctrl)
 {
-  switch (payload->ctrl) {
+  switch (ctrl) {
     case SRTS_MY:
       return "MY";
     case SRTS_UP:

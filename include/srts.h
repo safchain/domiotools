@@ -66,7 +66,7 @@ int srts_receive(unsigned int gpio, unsigned int type, unsigned int duration,
         struct srts_payload *payload);
 void srts_get_address(struct srts_payload *payload, unsigned short *address1,
         unsigned short *address2);
-const char *srts_get_ctrl_str(struct srts_payload *payload);
+const char *srts_get_ctrl_str(unsigned char ctrl);
 unsigned char srts_get_ctrl_int(const char *ctrl);
 
 #if !defined(__AVR__) && !defined(__avr__)
